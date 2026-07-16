@@ -1,0 +1,1039 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Daran parvekepuutarha — Tampere</title>
+<link rel="icon" href="data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 64 64'%3E%3Crect width='64' height='64' rx='14' fill='%231E4D3B'/%3E%3Cpath d='M32 52V30' stroke='%23EAF0E9' stroke-width='5' stroke-linecap='round'/%3E%3Cpath d='M32 36c-11 0-17-6-17-15 10 0 17 6 17 15z' fill='%237FBFA0'/%3E%3Cpath d='M32 32c0-10 6-17 16-17 0 10-6 17-16 17z' fill='%23EAF0E9'/%3E%3C/svg%3E">
+<link rel="apple-touch-icon" href="data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 64 64'%3E%3Crect width='64' height='64' rx='14' fill='%231E4D3B'/%3E%3Cpath d='M32 52V30' stroke='%23EAF0E9' stroke-width='5' stroke-linecap='round'/%3E%3Cpath d='M32 36c-11 0-17-6-17-15 10 0 17 6 17 15z' fill='%237FBFA0'/%3E%3Cpath d='M32 32c0-10 6-17 16-17 0 10-6 17-16 17z' fill='%23EAF0E9'/%3E%3C/svg%3E">
+<meta name="theme-color" content="#1E4D3B">
+<script>try{var _t=JSON.parse(localStorage.getItem('theme')||'null');if(_t)document.documentElement.dataset.theme=_t;}catch(e){}</script>
+<style>
+  :root{
+    --paper:#F6F7F3; --cell:#FFFFFF; --line:#DDE3DA; --ink:#1B2420; --dim:#6B7A70;
+    --pine:#1E4D3B; --tomato:#D9472B; --water:#3E86B0; --pollen:#DE9E2E; --sage:#EAF0E9;
+    --radius:12px;
+  }
+  /* dark palette: auto by OS, unless the user forced light; or forced dark by the toggle */
+  @media (prefers-color-scheme: dark){
+    :root:not([data-theme="light"]){ --paper:#141A16; --cell:#1C2420; --line:#2C3830; --ink:#EAF0EA; --dim:#8FA096;
+      --pine:#7FBFA0; --tomato:#F0704F; --water:#6BAED2; --pollen:#E8B85A; --sage:#232E27; }
+    :root:not([data-theme="light"]) .cell .t{color:#AEC0B5}
+  }
+  :root[data-theme="dark"]{ --paper:#141A16; --cell:#1C2420; --line:#2C3830; --ink:#EAF0EA; --dim:#8FA096;
+    --pine:#7FBFA0; --tomato:#F0704F; --water:#6BAED2; --pollen:#E8B85A; --sage:#232E27; }
+  :root[data-theme="dark"] .cell .t{color:#AEC0B5}
+  *{box-sizing:border-box}
+  html,body{margin:0}
+  body{font:15px/1.45 "Avenir Next","Futura","Helvetica Neue",sans-serif;
+    background:var(--paper);color:var(--ink);-webkit-text-size-adjust:100%}
+  main{max-width:860px;margin:0 auto;padding:18px 14px 40vh}
+
+  /* ---- masthead ---- */
+  #topbar{position:sticky;top:0;z-index:15;background:var(--paper)}
+  #topbar.stuck{padding:12px 0 0;border-bottom:2px solid var(--pine)}
+  #topbar.stuck .mast{margin:0}
+  #topbar.stuck .kuu{font-size:22px}
+  #topbar.stuck .nav{margin:6px 0 0}
+  #topbar.stuck .tabs{margin:10px 0 12px}
+  #topbar.stuck .side{padding-bottom:0;font-size:11.5px}
+  .mast{display:flex;align-items:flex-end;justify-content:space-between;gap:10px;flex-wrap:wrap}
+  .kuu{font-family:"Futura","Avenir Next",sans-serif;font-weight:700;letter-spacing:.06em;
+    text-transform:uppercase;font-size:clamp(30px,7vw,52px);line-height:1;color:var(--pine)}
+  .kuu b{color:var(--tomato)}
+  .mast .side{text-align:right;font-size:12.5px;color:var(--dim);padding-bottom:6px;white-space:nowrap}
+  .mast .side .now{font-size:15px;color:var(--ink);font-weight:600}
+  .nav{display:flex;gap:6px;align-items:center;margin:10px 0 4px}
+  .nav button{border:1px solid var(--line);background:var(--cell);color:var(--ink);
+    border-radius:999px;width:34px;height:34px;font-size:16px;cursor:pointer;font-weight:700}
+  .nav .sub{font-size:12px;letter-spacing:.14em;text-transform:uppercase;color:var(--dim);margin-left:6px}
+
+  /* ---- calendar ---- */
+  .cal{margin-top:8px;border-top:2px solid var(--pine)}
+  .dow{display:grid;grid-template-columns:repeat(7,1fr);font-size:11px;letter-spacing:.12em;
+    text-transform:uppercase;color:var(--dim);padding:20px 0 8px;text-align:center}
+  .grid{display:grid;grid-template-columns:repeat(7,1fr);gap:5px}
+  .cell{min-height:74px;min-width:0;background:var(--cell);border:1px solid var(--line);border-radius:var(--radius);
+    padding:6px 7px;cursor:pointer;position:relative;transition:transform .08s ease}
+  @media(hover:hover){.cell:hover{transform:translateY(-1px)}}
+  .cell:focus-visible{outline:2px solid var(--pine);outline-offset:1px}
+  .cell.out{opacity:.32;background:transparent}
+  .cell.past{opacity:.55}
+  .cell.today{border:2px solid var(--pine);background:var(--sage)}
+  .cell.hot{border-color:var(--tomato)}
+  .cell.cold{border-color:var(--water)}
+  .cell .d{font-weight:700;font-size:13px}
+  .cell.today .d::after{content:"·tänään";font-size:9px;letter-spacing:.08em;color:var(--pine);
+    text-transform:uppercase;margin-left:3px}
+  .cell .meta{position:absolute;top:5px;right:6px;display:flex;flex-direction:column;align-items:flex-end;gap:0;line-height:1.05}
+  .cell .meta .wx{font-size:13px}
+  .cell .t{font-size:10.5px;color:var(--dim);font-weight:600}
+  .cell .t.warm{color:var(--tomato)}
+  .seeds{display:flex;flex-wrap:wrap;gap:3px;margin-top:6px}
+  .seed{width:9px;height:9px;border-radius:50%}
+  .seed.water{background:var(--water)}
+  .seed.pollen{background:var(--pollen)}
+  .seed.care{background:var(--pine)}
+  .seed.photo{background:transparent;border:2px solid var(--dim);border-radius:2px;width:8px;height:8px}
+  .seed.more{width:auto;height:auto;font-size:9px;color:var(--dim);line-height:9px}
+  @media(max-width:560px){.cell{min-height:58px;padding:4px 5px;border-radius:9px}
+    .cell .t{display:none}.grid{gap:3px}
+    /* narrow columns cannot fit the "tänään" label; the green frame already marks today */
+    .cell.today .d::after{display:none}
+    /* weather always on its own line under the nav row, same on every month */
+    .mast .side{flex-basis:100%;text-align:left}}
+
+  .legend{display:flex;gap:14px;flex-wrap:wrap;margin:22px 2px 6px;font-size:11.5px;color:var(--dim);
+    letter-spacing:.04em}
+  .legend span{display:inline-flex;align-items:center;gap:5px}
+  .calnote{font-size:12px;color:var(--dim);margin:8px 2px 0;font-style:italic}
+
+  /* ---- season chart ---- */
+  :root{--ph-grow:#93BFA3;--ph-flower:#D793A8;--ph-fruit:#E08A3C;--ph-harvest:var(--tomato)}
+  .season{margin-top:42px;border-top:2px solid var(--pine);padding-top:28px}
+  .season .cap{display:flex;justify-content:space-between;align-items:baseline}
+  .season .cap h2{margin:0;font-family:"Futura","Avenir Next",sans-serif;font-weight:700;
+    letter-spacing:.06em;text-transform:uppercase;font-size:16px;color:var(--pine)}
+  .season .cap span{font-size:11px;color:var(--dim);letter-spacing:.12em;text-transform:uppercase}
+  .ticks{position:relative;height:14px;margin:8px 0 2px 92px;font-size:10px;color:var(--dim)}
+  .ticks b{position:absolute;transform:translateX(-50%);font-weight:600}
+  .srow{display:flex;align-items:center;gap:8px;margin:5px 0;cursor:pointer;border-radius:8px;padding:2px 4px}
+  .srow .save{width:26px;height:26px;flex:none;border-radius:6px;overflow:hidden;border:1px solid var(--line)}
+  .srow .save svg{width:100%;height:100%;display:block}
+  @media(hover:hover){.srow:hover{background:var(--sage)}}
+  .srow:focus-visible{outline:2px solid var(--pine);outline-offset:1px}
+  .srow .lbl{width:104px;flex-shrink:0;font-size:11.5px;color:var(--ink);white-space:nowrap;
+    overflow:hidden;text-overflow:ellipsis;text-align:left}
+  .track{position:relative;flex:1;height:14px;background:var(--sage);border-radius:7px;overflow:hidden}
+  .bar{position:absolute;top:0;height:100%}
+  .bar.grow{background:var(--ph-grow)} .bar.flower{background:var(--ph-flower)}
+  .bar.fruit{background:var(--ph-fruit)} .bar.harvest{background:var(--ph-harvest)}
+  .tline{position:absolute;top:-3px;bottom:-3px;width:2px;background:var(--ink);z-index:2}
+  .season .foot{font-size:11px;color:var(--dim);margin-top:9px;line-height:1.6}
+  .slegend{display:flex;gap:12px;flex-wrap:wrap;margin-top:8px;font-size:11px;color:var(--dim)}
+  .slegend i{display:inline-block;width:10px;height:10px;border-radius:3px;margin-right:4px;vertical-align:-1px}
+
+  /* ---- day sheet ---- */
+  #sheet-backdrop{position:fixed;inset:0;z-index:17;background:rgba(10,14,11,.5);
+    opacity:0;pointer-events:none;transition:opacity .22s ease}
+  #sheet-backdrop.on{opacity:1;pointer-events:auto}
+  body.noscroll{overflow:hidden}
+  .sheet{position:fixed;left:0;right:0;bottom:0;z-index:18;max-width:860px;margin:0 auto;background:var(--cell);
+    border-top:2px solid var(--pine);border-radius:18px 18px 0 0;max-height:90vh;max-height:90dvh;overflow-y:auto;
+    padding:14px 14px 26px;transform:translateY(105%);transition:transform .22s ease;
+    box-shadow:0 -8px 30px rgba(0,0,0,.18)}
+  .sheet.open{transform:none}
+  @media(prefers-reduced-motion:reduce){.cell,.sheet{transition:none}}
+  .sheet .head{display:flex;align-items:center;gap:12px}
+  .sheet .tt{flex:1;min-width:0}
+  .sheet h2{margin:0;font-size:17px;font-weight:700;letter-spacing:.02em}
+  .sheet .wx{font-size:12.5px;color:var(--dim);display:block;margin-top:1px}
+  .feat{width:72px;height:72px;border-radius:16px;overflow:hidden;flex-shrink:0;
+    background:var(--sage);cursor:pointer}
+  .feat img,.feat svg{width:100%;height:100%;object-fit:cover;display:block}
+  .realfig{margin:14px 0 0;width:100%}
+  .photos .realfig img.realph{width:100%;height:auto;max-height:240px;object-fit:cover;
+    border-radius:12px;border:1px solid var(--line)}
+  .realfig figcaption{font-size:11px;color:var(--dim);margin-top:4px}
+  .sheet .close{border:none;background:none;font-size:22px;color:var(--dim);cursor:pointer;padding:2px 6px}
+  .task{display:flex;gap:10px;align-items:flex-start;padding:10px 2px;border-bottom:1px solid var(--line)}
+  .task:last-of-type{border-bottom:none}
+  .task .ico{width:22px;text-align:center;font-size:15px;padding-top:1px}
+  .task .body{flex:1;min-width:0}
+  .task .what{font-weight:600;font-size:14.5px}
+  .task .why{font-size:12.5px;color:var(--dim);margin-top:1px}
+  .task .done-btn{border:1px solid var(--pine);color:var(--pine);background:none;border-radius:999px;
+    padding:5px 12px;font-weight:700;font-size:12px;cursor:pointer;white-space:nowrap}
+  .task.checked{opacity:.45}
+  .task.checked .done-btn{background:var(--pine);color:var(--paper)}
+  .task.alert .what{color:var(--tomato)}
+  .empty{color:var(--dim);padding:14px 2px;font-size:14px}
+  .photos{display:flex;gap:7px;flex-wrap:wrap;margin-top:12px}
+  .photos img{width:82px;height:82px;object-fit:cover;border-radius:10px;border:1px solid var(--line);cursor:pointer}
+  .addph{width:82px;height:82px;border-radius:10px;border:1.5px dashed var(--dim);background:none;
+    color:var(--dim);font-size:22px;cursor:pointer}
+  #viewer{position:fixed;inset:0;background:rgba(10,14,11,.88);display:none;z-index:20;
+    align-items:center;justify-content:center;flex-direction:column;gap:12px;padding:18px}
+  #viewer img{max-width:94vw;max-height:78vh;border-radius:12px}
+  #viewer button{border:1px solid var(--line);background:var(--cell);color:var(--ink);
+    border-radius:999px;padding:8px 16px;font-weight:700;cursor:pointer}
+  #viewer .vnav{position:absolute;top:50%;transform:translateY(-50%);width:46px;height:46px;padding:0;
+    font-size:24px;line-height:1;display:flex;align-items:center;justify-content:center}
+  #viewer #viewer-prev{left:12px} #viewer #viewer-next{right:12px}
+  #viewer .vnav:disabled{opacity:.28;cursor:default}
+  #picker,#coverpick{position:fixed;inset:0;background:rgba(10,14,11,.72);display:none;z-index:30;
+    align-items:flex-end;justify-content:center;padding:0}
+  #picker.open,#coverpick.open{display:flex}
+  .pk-card{background:var(--cell);width:100%;max-width:560px;border-radius:16px 16px 0 0;
+    padding:16px 16px 22px;max-height:80vh;overflow-y:auto;box-shadow:0 -8px 30px rgba(0,0,0,.3)}
+  .pk-head{display:flex;align-items:center;justify-content:space-between;font-weight:800;font-size:16px;margin-bottom:12px}
+  .pk-head button{border:none;background:none;color:var(--dim);font-size:24px;line-height:1;cursor:pointer}
+  .pk-grid{display:grid;grid-template-columns:repeat(auto-fill,minmax(84px,1fr));gap:9px}
+  .pk-grid button{border:1px solid var(--line);background:var(--paper);border-radius:11px;padding:8px 5px;
+    cursor:pointer;color:var(--ink);display:flex;flex-direction:column;align-items:center;gap:5px;font-size:11px;font-weight:600;text-align:center;line-height:1.15}
+  .pk-grid button .av{width:40px;height:40px;border-radius:9px;overflow:hidden;border:1px solid var(--line)}
+  .pk-grid button .av svg{width:100%;height:100%;display:block}
+  .pk-grid button.gen .av{display:flex;align-items:center;justify-content:center;font-size:20px;background:var(--sage)}
+  @media(hover:hover){.pk-grid button:hover{border-color:var(--pine)}}
+  .tabs{display:flex;gap:6px;margin:20px 0 18px;align-items:center;flex-wrap:wrap}
+  .nav .todaybtn{width:auto;height:34px;padding:0 14px;font-size:12px;letter-spacing:.04em;margin-left:2px}
+  .tabs button{border:1px solid var(--line);background:var(--cell);color:var(--dim);
+    border-radius:999px;padding:6px 16px;font-weight:700;font-size:13.5px;cursor:pointer}
+  .tabs button.on{background:var(--pine);border-color:var(--pine);color:#fff}
+  .foot-bar{margin-top:44px;padding:22px 2px 8px;border-top:1px solid var(--line);display:flex;justify-content:center}
+  .theme-switch{display:inline-flex;align-items:center;gap:11px;cursor:pointer;
+    font-size:11px;letter-spacing:.12em;text-transform:uppercase;font-weight:700;color:var(--dim);-webkit-user-select:none;user-select:none}
+  .theme-switch input{position:absolute;opacity:0;width:0;height:0;pointer-events:none}
+  .theme-switch .track{width:46px;height:26px;border-radius:999px;background:var(--line);
+    position:relative;transition:background .15s ease;flex:none}
+  .theme-switch .knob{position:absolute;top:3px;left:3px;width:20px;height:20px;border-radius:50%;
+    background:var(--cell);box-shadow:0 1px 3px rgba(0,0,0,.35);transition:transform .15s ease}
+  .theme-switch input:checked + .track{background:var(--pine)}
+  .theme-switch input:checked + .track .knob{transform:translateX(20px)}
+  .theme-switch input:focus-visible + .track{outline:2px solid var(--pine);outline-offset:2px}
+  .theme-switch .tl.act{color:var(--ink)}
+  #view-gallery{padding-top:20px}
+  .gallery .cap{display:flex;justify-content:space-between;align-items:baseline;gap:10px;margin-bottom:4px}
+  .gallery .cap h2{margin:0;font-family:"Futura","Avenir Next",sans-serif;font-weight:700;
+    letter-spacing:.06em;text-transform:uppercase;font-size:16px;color:var(--pine)}
+  .gallery .cap #gallery-month{font-size:11px;color:var(--dim);letter-spacing:.12em;text-transform:uppercase}
+  .gallery .gp{border-top:1px solid var(--line);padding:24px 0 20px}
+  .gallery .gp:first-child{border-top:none}
+  .gallery .gh{display:flex;align-items:center;gap:13px;margin-bottom:11px}
+  .gallery .gh .av{width:52px;height:52px;border-radius:11px;overflow:hidden;flex:none;border:1px solid var(--line)}
+  .gallery .gh .av svg{width:100%;height:100%;display:block}
+  .gallery .gh h3{font-size:16px;margin:0;font-weight:700}
+  .gallery .gh .cnt{font-size:12px;color:var(--dim);margin-left:auto}
+  .strip{display:flex;flex-wrap:wrap;gap:16px 18px;align-items:flex-start}
+  .dgroup{display:flex;flex-direction:column;gap:7px;min-width:0;max-width:100%}
+  .dhead{display:flex;align-items:center;gap:8px;font-size:11.5px;font-weight:700;color:var(--dim);letter-spacing:.02em}
+  .dhead .dline{flex:1;height:1px;background:color-mix(in srgb,var(--line) 55%,transparent);position:relative}
+  .dhead .dline::before{content:"";position:absolute;left:0;top:50%;width:5px;height:5px;border-radius:50%;background:var(--pine);transform:translateY(-50%)}
+  .dimgs{display:flex;flex-wrap:wrap;gap:8px}
+  .dimgs img{width:84px;height:84px;object-fit:cover;border-radius:10px;border:1px solid var(--line);cursor:pointer;display:block}
+  .gallery .none{color:var(--dim);font-size:13px;font-style:italic;align-self:center;padding:0 4px}
+  /* whole-garden cover */
+  .hero{position:relative;margin-bottom:48px;border-radius:16px;overflow:hidden;border:1px solid var(--line)}
+  .hero.default{min-height:clamp(160px,34vw,260px);background:linear-gradient(135deg,#2E7D52,#93BFA3)}
+  .hero img{display:block;width:100%;height:clamp(160px,34vw,260px);object-fit:cover;cursor:pointer}
+  .hero .hero-cap{position:absolute;left:0;right:0;bottom:0;padding:30px 18px 14px;color:#fff;pointer-events:none;
+    background:linear-gradient(to top,rgba(8,12,9,.72),rgba(8,12,9,.15) 60%,transparent)}
+  .hero .hero-cap b{display:block;font-family:"Futura","Avenir Next",sans-serif;font-weight:800;
+    font-size:clamp(19px,4.4vw,26px);letter-spacing:.02em;line-height:1.05}
+  .hero .hero-cap span{font-size:12px;letter-spacing:.1em;text-transform:uppercase;opacity:.85}
+  .hero .hero-change{position:absolute;top:11px;right:11px;border:none;border-radius:999px;
+    background:rgba(8,12,9,.5);color:#fff;font-size:15px;padding:8px 11px;cursor:pointer;line-height:1;backdrop-filter:blur(3px)}
+  .cp-grid{display:grid;grid-template-columns:repeat(auto-fill,minmax(84px,1fr));gap:9px}
+  .cp-grid button{border:1px solid var(--line);background:var(--paper);border-radius:10px;overflow:hidden;
+    cursor:pointer;padding:0;aspect-ratio:1;position:relative}
+  .cp-grid .cp-photo img{width:100%;height:100%;object-fit:cover;display:block}
+  .cp-grid .cp-photo.sel{outline:3px solid var(--pine);outline-offset:-3px}
+  .cp-grid .cp-new,.cp-grid .cp-def{display:flex;flex-direction:column;align-items:center;justify-content:center;
+    gap:5px;color:var(--dim);font-size:10px;font-weight:600;text-align:center;line-height:1.2}
+  .cp-grid .cp-new span,.cp-grid .cp-def span.lbl{font-size:10px}
+  .cp-grid .cp-new{font-size:22px}
+  .cp-grid .cp-green{width:34px;height:34px;border-radius:8px;background:linear-gradient(135deg,#2E7D52,#93BFA3)}
+  @media(hover:hover){.cp-grid button:hover{border-color:var(--pine)}}
+</style>
+</head>
+<body>
+<main>
+  <div id="hero"></div>
+
+  <div id="tb-top" aria-hidden="true"></div>
+  <div id="topbar">
+    <div class="mast">
+      <div>
+        <div class="kuu" id="kuu">Heinäkuu<b>.</b></div>
+        <div class="nav">
+          <button id="prev" aria-label="Previous month">‹</button>
+          <button id="next" aria-label="Next month">›</button>
+          <button id="today" class="todaybtn" hidden>Tänään</button>
+          <span class="sub" id="subtitle"></span>
+        </div>
+      </div>
+      <div class="side">Tampere · <span class="now" id="now-wx">—</span></div>
+    </div>
+
+    <div class="tabs">
+      <button id="tab-cal" class="on" onclick="showTab('cal')">Kalenteri</button>
+      <button id="tab-gallery" onclick="showTab('gallery')">Kuvat</button>
+    </div>
+  </div>
+
+  <div id="view-cal">
+  <div class="cal">
+    <div class="dow"><span>Ma</span><span>Ti</span><span>Ke</span><span>To</span><span>Pe</span><span>La</span><span>Su</span></div>
+    <div class="grid" id="grid" role="grid"></div>
+  </div>
+  <div class="calnote" id="calnote"></div>
+
+  <div class="legend">
+    <span><i class="seed water" style="display:inline-block"></i> water</span>
+    <span><i class="seed pollen" style="display:inline-block"></i> pollinate</span>
+    <span><i class="seed care" style="display:inline-block"></i> feed / prune</span>
+    <span style="color:var(--tomato)">▢ red frame = heat, vent!</span>
+    <span style="color:var(--water)">▢ blue frame = cold night, close glazing</span>
+    <span><i class="seed photo" style="display:inline-block"></i> photo</span>
+  </div>
+
+  <section class="season">
+    <div class="cap"><h2>Kausi<span style="color:var(--tomato)">.</span></h2><span>Jun – Oct</span></div>
+    <div class="ticks" id="ticks"></div>
+    <div id="season-rows"></div>
+    <div class="slegend">
+      <span><i style="background:var(--ph-grow)"></i>growing</span>
+      <span><i style="background:var(--ph-flower)"></i>flowering</span>
+      <span><i style="background:var(--ph-fruit)"></i>fruiting</span>
+      <span><i style="background:var(--ph-harvest)"></i>harvest</span>
+      <span>▏today</span>
+    </div>
+    <div class="foot">Tap a plant row for its variety guide.</div>
+  </section>
+  </div><!-- /view-cal -->
+
+  <section id="view-gallery" class="gallery" hidden>
+    <div class="cap"><h2>Kuvat<span style="color:var(--tomato)">.</span></h2><span id="gallery-month"></span></div>
+    <div id="gallery-body"></div>
+  </section>
+
+  <footer class="foot-bar">
+    <label class="theme-switch">
+      <span class="tl" data-for="light">Vaalea</span>
+      <input type="checkbox" id="theme-toggle" role="switch" aria-label="Vaalea tai tumma teema">
+      <span class="track" aria-hidden="true"><span class="knob"></span></span>
+      <span class="tl" data-for="dark">Tumma</span>
+    </label>
+  </footer>
+</main>
+
+<div id="sheet-backdrop"></div>
+<div class="sheet" id="sheet" aria-live="polite">
+  <div class="head">
+    <div class="feat" id="sheet-feat" hidden></div>
+    <div class="tt">
+      <h2 id="sheet-title"></h2>
+      <span class="wx" id="sheet-wx"></span>
+    </div>
+    <button class="close" id="sheet-close" aria-label="Close">×</button>
+  </div>
+  <div id="sheet-tasks"></div>
+  <div class="photos" id="sheet-photos"></div>
+</div>
+
+<div id="viewer">
+  <button id="viewer-prev" class="vnav" aria-label="Previous photo">‹</button>
+  <img id="viewer-img" alt="plant photo">
+  <button id="viewer-next" class="vnav" aria-label="Next photo">›</button>
+  <div>
+    <button id="ph-tag">Tag plant</button> <button id="ph-del">Delete</button> <button id="ph-close">Close</button></div>
+</div>
+<div id="picker" role="dialog" aria-label="Which plant is this photo of?">
+  <div class="pk-card">
+    <div class="pk-head">Which plant is this?<button id="pk-cancel" aria-label="Cancel">×</button></div>
+    <div class="pk-grid" id="pk-grid"></div>
+  </div>
+</div>
+<div id="coverpick" role="dialog" aria-label="Valitse kansikuva">
+  <div class="pk-card">
+    <div class="pk-head">Valitse kansikuva<button id="cp-cancel" aria-label="Cancel">×</button></div>
+    <div class="cp-grid" id="cp-grid"></div>
+  </div>
+</div>
+<input type="file" id="ph-input" accept="image/*" multiple hidden>
+
+<script src="garden-data.js"></script>
+<script>
+/* ================= basics ================= */
+const $=s=>document.querySelector(s);
+const store={get:k=>JSON.parse(localStorage.getItem(k)||'null'),set:(k,v)=>localStorage.setItem(k,JSON.stringify(v))};
+let _pushTimer=null,_stateStamp=store.get('stateStamp')||0,_synced=false;   // sync state, declared early: mergeSeed/save() run above the sync block below
+const TAMPERE={la:61.4981,lo:23.7610};
+const iso=d=>`${d.getFullYear()}-${String(d.getMonth()+1).padStart(2,'0')}-${String(d.getDate()).padStart(2,'0')}`;
+const todayISO=()=>iso(new Date());
+const addDays=(s,n)=>{const d=new Date(s);d.setDate(d.getDate()+n);return iso(d);};
+const dBetween=(a,b)=>Math.round((new Date(b)-new Date(a))/86400000);
+const KUUT=['Tammikuu','Helmikuu','Maaliskuu','Huhtikuu','Toukokuu','Kesäkuu','Heinäkuu','Elokuu','Syyskuu','Lokakuu','Marraskuu','Joulukuu'];
+const MON=['January','February','March','April','May','June','July','August','September','October','November','December'];
+const esc=s=>(s||'').replace(/[&<>"]/g,c=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;'}[c]));
+
+/* ================= care knowledge ================= */
+const CARE={
+ basilmint:{stages:['growing','harvesting'],care:{
+   growing:{water:2,why:'Bed dries fast behind glass',
+     weekly:[['care','Pinch basil tips','Above a leaf pair — bushy, no flowers. Trim mint back.'],
+             ['care','Feed basil & mint','Liquid feed, every 2nd week is enough.']]},
+   harvesting:{water:2,why:'Keep harvest coming',
+     weekly:[['care','Harvest basil & mint','Basil from the top, mint outer stems. Pinch any flower buds.']]}}},
+ chilli:{stages:['seedling','vegetative','flowering','fruiting'],care:{
+   seedling:{water:3,why:'Light water only — damping-off kills sprouts',
+     weekly:[['care','Rotate chilli pots','Stops leggy lean toward the glass. Pot up at 4–6 true leaves.']]},
+   vegetative:{water:2,why:'Steady moisture while bulking up',
+     weekly:[['care','Feed chillies','Half-strength liquid feed weekly.']]},
+   flowering:{water:2,why:'Even water so flowers hold',
+     daily:[['pollen','Tap chilli flowers','Midday — no bees behind glass.']],
+     weekly:[['care','Feed chillies high-K','Tomato feed works.']]},
+   fruiting:{water:1,why:'Dry spells make fruit drop',
+     weekly:[['care','Feed chillies','High-K weekly while fruiting.']]}}},
+ tomato:{stages:['seedling','vegetative','flowering','fruiting'],care:{
+   seedling:{water:2,why:'Even moisture',weekly:[]},
+   vegetative:{water:2,why:'Big leaves, big thirst',
+     weekly:[['care','Tomato: side shoots + ties','Snap armpit shoots, tie main stem higher.']]},
+   flowering:{water:1,why:'Uneven water now = blossom end rot later',
+     daily:[['pollen','Shake tomato flower trusses','Midday. No bees, no wind behind glass — no shake, no fruit. Vent hard: pollen sterile over ~32°C.']],
+     weekly:[['care','Tomato feed (high-K)','Weekly from first flowers.'],
+             ['care','Tomato: side shoots + ties','Keep the 1 m stem supported.']]},
+   fruiting:{water:1,why:'Never bone-dry — fruit splits',
+     weekly:[['care','Tomato feed (high-K)','Weekly.'],
+             ['care','Tidy lower leaves','Below lowest truss — airflow against mildew.']]}}},
+ chives:{stages:['growing','harvesting'],care:{
+   growing:{water:3,why:'Easy — top 2 cm dry, then water',weekly:[]},
+   harvesting:{water:3,why:'Cut & come again',
+     weekly:[['care','Harvest chives','Cut whole leaves 2 cm above soil — regrows fast.']]}}},
+ springonion:{stages:['growing','harvesting'],care:{
+   growing:{water:2,why:'Shallow roots, dry fast in glazed heat',
+     weekly:[['care','Re-sow spring onions','A pinch every ~3 weeks keeps supply steady.']]},
+   harvesting:{water:2,why:'Keep moist to the end',
+     weekly:[['care','Pull thickest spring onions','Or cut 3 cm above base to regrow.']]}}},
+ parsley:{stages:['growing','harvesting'],care:{
+   growing:{water:3,why:'Even moisture; bolts in heat — shade on 30°C days',weekly:[]},
+   harvesting:{water:3,why:'Outer stems only',
+     weekly:[['care','Harvest parsley outer stems','Cut at the base, centre keeps producing.']]}}},
+ monstera:{stages:['settling','established'],care:{
+   settling:{water:7,why:'Newly bought — let top 3–4 cm dry first; no feed or repot yet',
+     weekly:[['care','Monstera check','Bright indirect spot, away from draughts/radiators. Wipe dust off leaves.']]},
+   established:{water:7,why:'Top 3–4 cm dry before watering',
+     weekly:[['care','Feed monstera','Balanced feed monthly in season; give the aerial roots something to climb.']]}}},
+ hedera:{stages:['settling','established'],care:{
+   settling:{water:5,why:'Steady (not heavy) water while roots establish; top 2–3 cm dry first',
+     weekly:[['care','Ivy check','Happy in the shady corner. Watch under leaves — spider mites love dry glazed air.']]},
+   established:{water:6,why:'Let surface dry between waterings',
+     weekly:[['care','Trim ivy','Cut wandering vines to shape — regrows from any node. Stays out all winter, hardy to −10°C.']]}}},
+ raspberry:{stages:['settling','fruiting','dormant'],care:{
+   settling:{water:2,why:'New pot behind glass dries fast — keep evenly moist, top 2–3 cm dry, never waterlogged',
+     weekly:[['care','Tie in raspberry canes','Loosely tie new canes to a support/cane so wind and glass heat don\'t snap them. Steady water while roots take hold.'],
+             ['care','Feed raspberries','Half-strength liquid feed weekly while establishing. Watch leaf undersides for spider mites in dry glazed air.']]},
+   fruiting:{water:1,why:'Even water while berries swell — dry spells shrink fruit',
+     daily:[['pollen','Tap raspberry flowers','Midday — few bees behind glass. Berries drop free when dead-ripe.']],
+     weekly:[['care','Pick raspberries','Pick every 2–3 days — ripe ones spoil fast. High-K feed weekly.']]},
+   dormant:{water:7,why:'Barely water over winter — hardy, stays out on the balcony',
+     weekly:[['care','Cut fruited raspberry canes','After fruiting, cut spent (2nd-year) canes to the ground; keep this year\'s new canes for next summer.']]}}},
+ garlic:{stages:['sprouting','bulbing','ready'],care:{
+   sprouting:{water:5,why:'Sparse — wet rots the clove',weekly:[]},
+   bulbing:{water:5,why:'Too wet rots the bulb; keep it in the coolest corner',
+     weekly:[['care','Garlic leaf check','Half the leaves yellow → stop watering, nearly ready.']]},
+   ready:{water:99,why:'Done drinking',
+     weekly:[['care','Lift the garlic?','Half+ leaves brown → lift, dry 2 weeks somewhere airy.']]}}}
+};
+const careOf=p=>(CARE[p.species]?.care[p.stage])||{water:3,why:'',weekly:[],daily:[]};
+const intervalOf=p=>p.intervalOverride||careOf(p).water;
+
+/* ================= state ================= */
+let state=store.get('garden2')||{seedVersion:0,plants:[]};
+(function mergeSeed(){
+  const seed=window.GARDEN_SEED;if(!seed)return;
+  if(seed.version>state.seedVersion){
+    seed.plants.forEach(sp=>{
+      const ex=state.plants.find(p=>p.id===sp.id);
+      if(ex){ex.name=sp.name;ex.species=sp.species;ex.note=sp.note||ex.note;
+        if(sp.water)ex.last=sp.water;                    // "watered on this day" from the seed
+        if(sp.stage&&sp.stage!==ex.stage){ex.stage=sp.stage;(ex.history=ex.history||[]).push({date:todayISO(),stage:sp.stage});}}
+      else{const {water,...rest}=sp;state.plants.push({...rest,last:water||todayISO(),history:[{date:todayISO(),stage:sp.stage}]});}
+    });
+    state.plants=state.plants.filter(p=>seed.plants.some(sp=>sp.id===p.id)||p.userAdded);
+    state.seedVersion=seed.version;save();
+  }
+})();
+(function resetTasks(){                    // clear the backlog: mark every plant watered today so nothing shows overdue
+  const seed=window.GARDEN_SEED;if(!seed||!seed.resetTasksOn)return;
+  if(state.resetTasksOn!==seed.resetTasksOn){
+    const T=todayISO();
+    state.plants.forEach(p=>{p.last=T;});
+    state.resetTasksOn=seed.resetTasksOn;
+    store.set('prevWater',{});             // drop stale un-check stashes
+    store.set('doneLog',{});               // clear old done marks
+    save();
+  }
+})();
+function save(){store.set('garden2',state);pushState();}
+let doneLog=store.get('doneLog')||{};   // {"2026-07-16":["taskkey",...]}
+
+/* ================= weather (Tampere, auto) ================= */
+let forecast=store.get('forecastT3');   // T3: daily records now carry rh (mean humidity)
+async function loadWx(){
+  try{
+    const u=`https://api.open-meteo.com/v1/forecast?latitude=${TAMPERE.la}&longitude=${TAMPERE.lo}`+
+      `&current=temperature_2m,relative_humidity_2m&daily=temperature_2m_max,temperature_2m_min,precipitation_probability_max,relative_humidity_2m_mean`+
+      `&forecast_days=14&timezone=auto`;
+    const d=await(await fetch(u)).json();
+    forecast={fetched:todayISO(),nowT:d.current.temperature_2m,rh:d.current.relative_humidity_2m,
+      days:Object.fromEntries(d.daily.time.map((t,i)=>[t,{tmax:d.daily.temperature_2m_max[i],tmin:d.daily.temperature_2m_min[i],pop:d.daily.precipitation_probability_max[i],rh:d.daily.relative_humidity_2m_mean?.[i]}]))};
+    store.set('forecastT3',forecast);
+  }catch(e){/* offline: keep old forecast */}
+  render();
+}
+const wxOf=date=>forecast?.days?.[date];
+const wxIcon=w=>!w?'':w.pop>=60?'🌧️':w.pop>=30?'🌦️':w.tmax>=27?'☀️':w.tmax>=18?'⛅':'☁️';
+const heatFactor=t=>t>=32?0.5:t>=28?0.65:t>=24?0.8:1;
+const weeklyIco=w=>/feed/i.test(w)?'🍽️':/re-sow|sow/i.test(w)?'🌱':/harvest|lift|pull/i.test(w)?'🧺'
+  :/rotate/i.test(w)?'🔄':/check/i.test(w)?'🔍':/pinch|shoot|trim|tidy|prune|leaf/i.test(w)?'✂️':'🌿';
+
+/* ================= task engine ================= */
+/* returns Map isoDate -> [{cat,ico,what,why,key,plantId?}] for [today .. horizon] */
+function buildTasks(horizonISO){
+  const map={};const T=todayISO();
+  const push=(date,t)=>{(map[date]=map[date]||[]).push(t);};
+  state.plants.forEach(p=>{
+    let last=p.last;
+    for(let d=T;d<=horizonISO;d=addDays(d,1)){
+      const f=wxOf(d)?heatFactor(wxOf(d).tmax):1;
+      const eff=Math.max(1,Math.round(intervalOf(p)*f));
+      if(dBetween(last,d)>=eff){
+        const over=d===T&&dBetween(last,d)>eff;
+        push(d,{cat:'water',ico:'💧',what:`Water ${p.name}`+(over?' (overdue)':''),
+          why:careOf(p).why,key:'w|'+p.id,plantId:p.id});
+        last=d;
+      }
+    }
+    const c=careOf(p);
+    (c.daily||[]).forEach(([cat,what,why])=>{
+      for(let d=T;d<=horizonISO;d=addDays(d,1))
+        push(d,{cat,ico:cat==='pollen'?'✋':'🌱',what,why,key:cat+'|'+p.id+'|'+what});
+    });
+    (c.weekly||[]).forEach(([cat,what,why])=>{
+      for(let d=T;d<=horizonISO;d=addDays(d,1))
+        if(new Date(d).getDay()===0)push(d,{cat,ico:weeklyIco(what),what,why,key:'wk|'+p.id+'|'+what});
+    });
+  });
+  // dedupe identical daily tasks (both tomatoes → one line)
+  for(const d in map){
+    const seen={};map[d]=map[d].filter(t=>{if(t.cat==='water')return true;
+      if(seen[t.what])return false;seen[t.what]=1;return true;});
+    const wx=wxOf(d);
+    if(wx&&wx.tmax>=27)map[d].unshift({cat:'alert',ico:'🔥',
+      what:`${Math.round(wx.tmax)}°C — vent by noon`,
+      why:'Glazed balcony bakes. Shade parsley + chilli sprouts; tomato pollen dies over ~32°C.',key:'heat|'+d});
+    if(wx&&wx.tmin<=10)map[d].unshift({cat:'alert',ico:'❄️',
+      what:`Cold night ~${Math.round(wx.tmin)}°C — close the glazing`,
+      why:'Tomato fruit-set stalls near 10°C; chilli sprouts sulk under 12°C. Tuck tender pots against the house wall.',key:'cold|'+d});
+  }
+  return map;
+}
+
+/* ================= calendar render ================= */
+let view=(()=>{const n=new Date();return{y:n.getFullYear(),m:n.getMonth()};})();
+let tasks={},photoDates=new Set(),openDate=null;
+
+function render(){
+  const T=todayISO();
+  const first=new Date(view.y,view.m,1);
+  const daysIn=new Date(view.y,view.m+1,0).getDate();
+  const lead=(first.getDay()+6)%7;                     // Monday-first
+  const horizon=iso(new Date(view.y,view.m+1,7));
+  tasks=buildTasks(horizon>addDays(T,60)?addDays(T,60):horizon);
+
+  $('#kuu').innerHTML=`${KUUT[view.m]}<b>.</b>`;
+  $('#subtitle').textContent=`${MON[view.m]} ${view.y}`;
+  const now=new Date();$('#today').hidden=(view.y===now.getFullYear()&&view.m===now.getMonth());   // show only when off the current month
+  const tw=wxOf(todayISO());
+  $('#now-wx').innerHTML=forecast
+    ?`<span title="${tw?`High ${Math.round(tw.tmax)}° / low ${Math.round(tw.tmin)}° · rain ${tw.pop}% today, outside the glass`:'weather'}">${wxIcon(tw)||'🌡️'}</span> ${Math.round(forecast.nowT)}° now · <span title="Relative humidity: how much moisture the air holds, 0 to 100%. High = muggy, slow drying; low = plants dry out fast.">${forecast.rh}% RH</span>`
+    :'loading weather…';
+
+  let html='';
+  for(let i=0;i<lead;i++)html+='<div class="cell out" aria-hidden="true"></div>';
+  for(let d=1;d<=daysIn;d++){
+    const date=iso(new Date(view.y,view.m,d));
+    const list=tasks[date]||[];
+    const wx=wxOf(date);
+    const hot=wx&&wx.tmax>=27;
+    const cold=wx&&wx.tmin<=10;
+    const cls=['cell',date===T?'today':'',date<T?'past':'',hot?'hot':cold?'cold':''].join(' ');
+    const seeds=list.filter(t=>t.cat!=='alert').slice(0,6)
+      .map(t=>`<i class="seed ${t.cat==='water'?'water':t.cat==='pollen'?'pollen':'care'}"></i>`).join('')
+      +(list.filter(t=>t.cat!=='alert').length>6?'<i class="seed more">+</i>':'')
+      +(photoDates.has(date)?'<i class="seed photo"></i>':'');
+    const wxTip=wx?`High ${Math.round(wx.tmax)}° / low ${Math.round(wx.tmin)}° · rain ${wx.pop}%`+(wx.rh!=null?` · ${Math.round(wx.rh)}% RH`:'')+` (outside the glass)`:'';
+    html+=`<div class="${cls}" tabindex="0" role="gridcell" data-date="${date}" aria-label="${date}${wx?', '+wxTip:''}">
+      <span class="d">${d}</span>
+      ${wx?`<span class="meta" title="${wxTip}"><span class="wx">${wxIcon(wx)}</span><span class="t ${wx.tmax>=27?'warm':''}">${Math.round(wx.tmax)}°</span></span>`:''}
+      <div class="seeds">${seeds}</div></div>`;
+  }
+  $('#grid').innerHTML=html;
+  $('#grid').querySelectorAll('.cell[data-date]').forEach(c=>{
+    c.onclick=()=>openSheet(c.dataset.date);
+    c.onkeydown=e=>{if(e.key==='Enter'||e.key===' '){e.preventDefault();openSheet(c.dataset.date);}};
+  });
+  const winEnd=addDays(T,60),mStart=iso(new Date(view.y,view.m,1)),mEnd=iso(new Date(view.y,view.m,daysIn));
+  $('#calnote').textContent=(mEnd<T||mStart>winEnd)
+    ?'Day tasks are planned for the next ~8 weeks only — the season chart below spans the whole summer.':'';
+  if(openDate)fillSheet(openDate);
+}
+function refreshView(){render();if(!$('#view-gallery').hidden)renderGallery();}   // month nav drives both the calendar and the photo gallery
+function stepMonth(d){view.m+=d;if(view.m<0){view.m=11;view.y--;}if(view.m>11){view.m=0;view.y++;}refreshView();}
+$('#prev').onclick=()=>stepMonth(-1);
+$('#next').onclick=()=>stepMonth(1);
+$('#today').onclick=()=>{const n=new Date();view.y=n.getFullYear();view.m=n.getMonth();refreshView();};
+
+/* ================= day sheet ================= */
+function showSheet(){$('#sheet').classList.add('open');$('#sheet-backdrop').classList.add('on');document.body.classList.add('noscroll');}
+function hideSheet(){$('#sheet').classList.remove('open');$('#sheet-backdrop').classList.remove('on');document.body.classList.remove('noscroll');openDate=null;openPlantKey=null;$('#sheet').scrollTop=0;}
+function openSheet(date){openDate=date;openPlantKey=null;fillSheet(date);showSheet();}
+$('#sheet-close').onclick=hideSheet;
+$('#sheet-backdrop').onclick=hideSheet;   // tap the dimmed area to close
+function fillSheet(date){
+  const feat=$('#sheet-feat');feat.hidden=true;feat.innerHTML='';feat.onclick=null;
+  const T=todayISO();
+  const d=new Date(date);
+  $('#sheet-title').textContent=(date===T?'Tänään · ':'')+
+    ['Su','Ma','Ti','Ke','To','Pe','La'][d.getDay()]+' '+d.getDate()+'.'+(d.getMonth()+1)+'.';
+  const wx=wxOf(date);
+  $('#sheet-wx').textContent=wx?`${wxIcon(wx)} ${Math.round(wx.tmax)}° / ${Math.round(wx.tmin)}° · rain ${wx.pop}%`+(wx.rh!=null?` · ${Math.round(wx.rh)}% RH`:'')+` (outside the glass)`:'';
+  const list=tasks[date]||[];
+  const done=doneLog[date]||[];
+  $('#sheet-tasks').innerHTML=list.length?list.map(t=>{
+    const isDone=done.includes(t.key);
+    const can=date===T&&t.cat!=='alert';
+    return `<div class="task ${t.cat==='alert'?'alert':''} ${isDone?'checked':''}">
+      <div class="ico">${t.ico}</div>
+      <div class="body"><div class="what">${esc(t.what)}</div>
+        ${t.why?`<div class="why">${esc(t.why)}</div>`:''}</div>
+      ${can?`<button class="done-btn" onclick="markDone('${date}','${t.key}')">${isDone?'Done ✓':'Done'}</button>`:''}
+    </div>`;}).join(''):
+    `<div class="empty">${date<T?'Past day — photos below.':'Nothing due. Enjoy the balcony ☀️'}</div>`;
+  renderPhotos(date);
+}
+let prevWater=store.get('prevWater')||{};
+window.markDone=(date,key)=>{
+  const l=doneLog[date]=doneLog[date]||[];
+  const isWater=key.startsWith('w|'), id=key.slice(2), stash=date+'|'+id;
+  if(l.includes(key)){                                  // un-check
+    doneLog[date]=l.filter(k=>k!==key);
+    if(isWater){const p=state.plants.find(x=>x.id===id);
+      if(p&&stash in prevWater){p.last=prevWater[stash];delete prevWater[stash];store.set('prevWater',prevWater);save();}}
+  }else{                                                // check
+    l.push(key);
+    if(isWater){const p=state.plants.find(x=>x.id===id);
+      if(p){prevWater[stash]=p.last;store.set('prevWater',prevWater);p.last=date;save();}}
+  }
+  store.set('doneLog',doneLog);pushState();render();   // water paths already save(); this covers doneLog-only toggles
+};
+
+/* ================= photos (shared, via Worker + KV) ================= */
+/* Photos live on the server so everyone with the link sees them.
+   Viewing is public; adding/deleting needs the passphrase (stored once per device). */
+let PHOTOS=[];                                    // cached list: [{id,date,plant,ct,created}]
+const photoURL=id=>'/api/photos/'+id;
+function applyPhotos(){                            // refresh views from the current PHOTOS cache
+  PHOTOS.forEach(p=>{if(p.plant==='takala')p.plant='takala-1';});   // legacy tag
+  photoDates=new Set(PHOTOS.map(x=>x.date));
+  render();renderHero();
+  if(!$('#view-gallery').hidden)renderGallery();
+}
+/* ---- whole-garden cover: a chosen photo, or a green default ---- */
+let coverId='';
+async function loadCover(){
+  try{const r=await fetch('/api/cover');if(r.ok)coverId=(await r.json()).id||'';}catch(e){/* keep */}
+  renderHero();
+}
+function renderHero(){
+  const el=$('#hero');
+  const cap=`<div class="hero-cap"><b>Daran parvekepuutarha</b><span>Tampere · lasitettu parveke</span></div>
+    <button class="hero-change" onclick="openCover()" aria-label="Valitse kansikuva" title="Valitse kansikuva">📷</button>`;
+  const has=coverId&&PHOTOS.some(p=>p.id===coverId);       // deleted/unknown cover → fall back to green
+  if(has){el.className='hero';el.innerHTML=`<img src="${photoURL(coverId)}" alt="Kansikuva" onclick="viewPhoto('${coverId}')">${cap}`;}
+  else{el.className='hero default';el.innerHTML=cap;}
+}
+window.openCover=()=>{
+  const imgs=PHOTOS.slice().sort((a,b)=>(b.created||0)-(a.created||0));
+  $('#cp-grid').innerHTML=
+    `<button class="cp-new" onclick="addCover()">📷<span>Lataa uusi<br>(tämän päivän kuviin)</span></button>`+
+    `<button class="cp-def${coverId?'':' sel'}" onclick="setCover('')"><span class="cp-green"></span><span class="lbl">Vihreä<br>oletus</span></button>`+
+    imgs.map(x=>`<button class="cp-photo${x.id===coverId?' sel':''}" onclick="setCover('${x.id}')" aria-label="cover ${x.date}"><img src="${photoURL(x.id)}" alt="" loading="lazy" decoding="async"></button>`).join('');
+  $('#coverpick').classList.add('open');
+};
+function closeCover(){$('#coverpick').classList.remove('open');coverMode=false;}
+window.setCover=async id=>{
+  const r=await apiWrite('PUT','/api/cover?id='+encodeURIComponent(id||''));
+  if(r&&r.ok){coverId=id;renderHero();}
+  closeCover();
+};
+$('#cp-cancel').onclick=closeCover;
+$('#coverpick').onclick=e=>{if(e.target.id==='coverpick')closeCover();};
+let coverMode=false;
+window.addCover=()=>{coverMode=true;openDate=null;openPlantKey=null;$('#ph-input').click();};   // upload → today's photos + set as cover
+async function loadPhotos(){
+  try{const r=await fetch('/api/photos');if(r.ok)PHOTOS=await r.json();}
+  catch(e){/* offline: keep cache */}
+  applyPhotos();
+}
+async function apiWrite(method,path,body,ct){     // authenticated call; prompts for passphrase once
+  let pass=store.get('uploadPass');
+  if(!pass){pass=prompt('Salasana kuvien muokkaamiseen / passphrase to add or edit photos:');
+    if(!pass)return null;store.set('uploadPass',pass);}
+  const r=await fetch(path,{method,headers:{'authorization':'Bearer '+pass,...(ct?{'content-type':ct}:{})},body});
+  if(r.status===401){store.set('uploadPass',null);alert('Väärä salasana / wrong passphrase.');return null;}
+  return r;
+}
+
+/* ================= state sync (task list shared across the owner's devices, via Worker + KV) ================= */
+function pushState(){                       // debounced snapshot -> server (owner only)
+  if(!_synced)return;                       // hold pushes until the first pull, so load-time migration cannot clobber a newer server doc
+  clearTimeout(_pushTimer);
+  _pushTimer=setTimeout(async()=>{
+    const pass=store.get('uploadPass');if(!pass)return;   // no pass = local-only, no prompt
+    _stateStamp=Date.now();store.set('stateStamp',_stateStamp);
+    const doc={updatedAt:_stateStamp,garden2:state,doneLog};
+    try{await fetch('/api/state',{method:'PUT',
+      headers:{'authorization':'Bearer '+pass,'content-type':'application/json'},
+      body:JSON.stringify(doc)});}catch(e){/* offline: retry on next change/focus */}
+  },800);
+}
+async function pullState(){                  // adopt server doc if it is newer than ours
+  try{
+    const r=await fetch('/api/state');if(!r.ok)return;
+    const doc=await r.json();
+    if(!doc||typeof doc.updatedAt!=='number'||doc.updatedAt<=_stateStamp)return;
+    if(doc.garden2){Object.keys(state).forEach(k=>delete state[k]);
+      Object.assign(state,doc.garden2);store.set('garden2',state);}
+    if(doc.doneLog){doneLog=doc.doneLog;store.set('doneLog',doneLog);}
+    _stateStamp=doc.updatedAt;store.set('stateStamp',_stateStamp);
+    render();
+  }catch(e){/* offline: keep local */}
+  finally{_synced=true;}                     // enable pushes once the first adopt attempt is done (even offline)
+}
+function renderPhotos(date){
+  const box=$('#sheet-photos');
+  const mine=PHOTOS.filter(x=>x.date===date).sort((a,b)=>(b.created||0)-(a.created||0));
+  box.innerHTML=mine.map(x=>`<img src="${photoURL(x.id)}" data-id="${x.id}" onclick="viewPhoto('${x.id}')" alt="photo ${date}" loading="lazy" decoding="async">`).join('')+
+    (date<=todayISO()?`<button class="addph" onclick="addPhoto()" aria-label="Add photo">📷</button>`:'');   // no adding to a future day
+}
+window.addPhoto=()=>{coverMode=false;$('#ph-input').click();};                      // day-sheet add (dated to the open day), then pick the plant
+async function uploadOne(blob,date,plant){         // returns the created record, or null on failure
+  const r=await apiWrite('POST','/api/photos?date='+encodeURIComponent(date)+'&plant='+encodeURIComponent(plant||''),blob,blob.type||'image/jpeg');
+  if(r&&r.ok){const rec=await r.json();PHOTOS.push(rec);applyPhotos();return rec;}   // optimistic: show at once (KV list lags)
+  return null;
+}
+async function savePhotos(blobs,date,plant){       // upload a batch; each shows as soon as it lands
+  for(const blob of blobs){if(!await uploadOne(blob,date,plant))break;}   // stop the batch if auth fails
+}
+let pendingBlobs=null,pendingDate=null;
+$('#ph-input').onchange=async e=>{
+  const files=[...e.target.files];e.target.value='';
+  if(coverMode){coverMode=false;closeCover();          // new cover → save into today's photos (Koko parveke) + set as cover
+    if(files.length){const blob=await shrink(files[0]);const rec=await uploadOne(blob,todayISO(),'');if(rec)await setCover(rec.id);}return;}
+  if(!files.length||(!openDate&&!openPlantKey))return;
+  const blobs=await Promise.all(files.map(shrink));
+  if(openPlantKey){savePhotos(blobs,openDate||todayISO(),openPlantKey);return;}  // already tagged to a plant
+  pendingBlobs=blobs;pendingDate=openDate||todayISO();openPicker();               // day photos → ask which plant (applies to all)
+};
+/* ---- plant picker: tag a day photo to the plant it shows ---- */
+function openPicker(){
+  const g=$('#pk-grid');
+  g.innerHTML=SEASON.filter(r=>PROFILE[r.key]).map(r=>
+    `<button onclick="pickPlant('${r.key}')"><span class="av">${ART[r.key]||''}</span>${esc(r.lbl)}</button>`).join('')
+    +`<button class="gen" onclick="pickPlant('')"><span class="av">🪴</span>Koko parveke<br>(no plant)</button>`;
+  $('#picker').classList.add('open');
+}
+function closePicker(){$('#picker').classList.remove('open');pendingBlobs=null;pendingDate=null;retagKey=null;}
+let retagKey=null;
+window.pickPlant=async key=>{
+  if(retagKey){                                            // re-tag an existing photo
+    const rk=retagKey;
+    const r=await apiWrite('PATCH','/api/photos/'+rk+'?plant='+encodeURIComponent(key||''));
+    if(r&&r.ok){const p=PHOTOS.find(x=>x.id===rk);if(p)p.plant=key;applyPhotos();}
+  }else if(pendingBlobs){const b=pendingBlobs,d=pendingDate;closePicker();await savePhotos(b,d,key);return;}
+  closePicker();
+};
+$('#pk-cancel').onclick=closePicker;
+$('#picker').onclick=e=>{if(e.target.id==='picker')closePicker();};
+function shrink(file){return new Promise(res=>{
+  const img=new Image();img.onload=()=>{
+    const s=Math.min(1,1000/Math.max(img.width,img.height));
+    const cv=document.createElement('canvas');cv.width=img.width*s;cv.height=img.height*s;
+    cv.getContext('2d').drawImage(img,0,0,cv.width,cv.height);
+    cv.toBlob(b=>res(b||file),'image/jpeg',.82);};
+  img.src=URL.createObjectURL(file);});}
+let viewerKey=null,viewerList=[],viewerIdx=-1;
+// navigate in the order the photos are shown: the open day sheet, else the Kuvat gallery
+function currentPhotoList(){
+  const src=$('#sheet').classList.contains('open')?'#sheet-photos':'#gallery-body';
+  const have=new Set(PHOTOS.map(p=>p.id));
+  return [...document.querySelectorAll(src+' img[data-id]')].map(i=>i.dataset.id).filter(id=>have.has(id));
+}
+function showViewerAt(i){
+  if(i<0||i>=viewerList.length)return;
+  viewerIdx=i;viewerKey=viewerList[i];
+  $('#viewer-img').src=photoURL(viewerKey);
+  $('#viewer-prev').disabled=i<=0;
+  $('#viewer-next').disabled=i>=viewerList.length-1;
+}
+function openViewer(){$('#viewer').style.display='flex';document.body.classList.add('noscroll');}
+function closeViewer(){$('#viewer').style.display='none';if(!$('#sheet').classList.contains('open'))document.body.classList.remove('noscroll');}
+window.viewPhoto=id=>{viewerList=currentPhotoList();viewerIdx=viewerList.indexOf(id);viewerKey=id;
+  if(viewerIdx<0){viewerList=[id];viewerIdx=0;}   // one-off (e.g. cover) with no surrounding set
+  showViewerAt(viewerIdx);openViewer();};
+$('#viewer-prev').onclick=()=>showViewerAt(viewerIdx-1);
+$('#viewer-next').onclick=()=>showViewerAt(viewerIdx+1);
+$('#viewer').onclick=e=>{if(e.target.id==='viewer')closeViewer();};   // tap the dark area to close
+$('#ph-close').onclick=closeViewer;
+$('#ph-tag').onclick=()=>{if(!viewerKey)return;retagKey=viewerKey;closeViewer();openPicker();};
+document.addEventListener('keydown',e=>{
+  const vOpen=$('#viewer').style.display==='flex';
+  if(e.key==='Escape'){
+    if($('#coverpick').classList.contains('open'))closeCover();
+    else if($('#picker').classList.contains('open'))closePicker();
+    else if(vOpen)closeViewer();
+    else if($('#sheet').classList.contains('open'))hideSheet();
+  }else if(vOpen){
+    if(e.key==='ArrowLeft')showViewerAt(viewerIdx-1);
+    else if(e.key==='ArrowRight')showViewerAt(viewerIdx+1);
+  }
+});
+$('#ph-del').onclick=async()=>{
+  const dk=viewerKey;
+  const r=await apiWrite('DELETE','/api/photos/'+dk);
+  if(r&&r.ok){
+    PHOTOS=PHOTOS.filter(x=>x.id!==dk);
+    if(dk===coverId)setCover('');            // was the cover → fall back to green default
+    applyPhotos();
+    viewerList=currentPhotoList();
+    if(viewerList.length)showViewerAt(Math.min(viewerIdx,viewerList.length-1));
+    else closeViewer();
+  }
+};
+
+/* ================= tabs + photo gallery ================= */
+window.showTab=t=>{
+  const cal=t==='cal';
+  $('#view-cal').hidden=!cal;$('#view-gallery').hidden=cal;
+  $('#tab-cal').classList.toggle('on',cal);$('#tab-gallery').classList.toggle('on',!cal);
+  if(!cal)renderGallery();
+  store.set('tab',cal?'cal':'gallery');   // remember which tab so a refresh stays put
+};
+const shortDate=isoStr=>{const d=new Date(isoStr);return d.getDate()+'.'+(d.getMonth()+1)+'.';};
+function renderGallery(){
+  const body=$('#gallery-body');
+  const all=PHOTOS.slice().sort((a,b)=>(a.date||'').localeCompare(b.date||'')||(a.created||0)-(b.created||0));   // by photo date, oldest first
+  // each date is a block (date header + line over its own photos); blocks flow inline and share a row when there is space
+  const strip=list=>{
+    const groups=[];
+    list.forEach(x=>{const g=groups[groups.length-1];
+      if(g&&g.date===x.date)g.items.push(x);else groups.push({date:x.date,items:[x]});});
+    return groups.map(g=>`<div class="dgroup">
+      <div class="dhead"><span>${shortDate(g.date)}</span><i class="dline"></i></div>
+      <div class="dimgs">${g.items.map(x=>`<img src="${photoURL(x.id)}" data-id="${x.id}" onclick="viewPhoto('${x.id}')" alt="photo ${x.date}" loading="lazy" decoding="async">`).join('')}</div>
+    </div>`).join('');
+  };
+  // month-scoped: show only the month the shared nav is on. Adding is allowed only in the current month.
+  const mkey=`${view.y}-${String(view.m+1).padStart(2,'0')}`;
+  const month=all.filter(x=>(x.date||'').startsWith(mkey));
+  $('#gallery-month').textContent=`${KUUT[view.m]} ${view.y}`;
+  let html='';
+  SEASON.forEach(r=>{                                        // Kuvat is view-only; add photos from the calendar day
+    const key=r.key,pr=PROFILE[key];if(!pr)return;
+    const mine=month.filter(x=>x.plant===key);
+    html+=`<div class="gp"><div class="gh">
+      <div class="av">${ART[key]||''}</div>
+      <h3>${esc(pr.t)}</h3><span class="cnt">${mine.length?mine.length+' photo'+(mine.length>1?'s':''):''}</span></div>
+      <div class="strip">${mine.length?strip(mine):'<span class="none">Ei kuvia tältä kuulta</span>'}</div></div>`;
+  });
+  const loose=month.filter(x=>!x.plant);
+  if(loose.length)html+=`<div class="gp"><div class="gh"><h3>Koko parveke · day photos</h3><span class="cnt">${loose.length}</span></div>
+    <div class="strip">${strip(loose)}</div></div>`;
+  body.innerHTML=html;
+}
+
+/* ================= season chart + plant profiles ================= */
+const SEASON=[
+ {key:'tigerella',lbl:'Tigerella',ph:[['flower','2026-06-29','2026-08-01'],['fruit','2026-08-01','2026-08-20'],['harvest','2026-08-20','2026-10-01']]},
+ {key:'noire',lbl:'Noire de Crimée',ph:[['flower','2026-06-29','2026-08-01'],['fruit','2026-08-01','2026-08-15'],['harvest','2026-08-15','2026-10-01']]},
+ {key:'maurin',lbl:'Maurin Makea',ph:[['fruit','2026-07-21','2026-08-12'],['harvest','2026-08-12','2026-09-10']]},
+ {key:'takala-1',lbl:'Takalan Herkku 1',ph:[['grow','2026-07-21','2026-10-05']]},
+ {key:'takala-2',lbl:'Takalan Herkku 2',ph:[['grow','2026-07-21','2026-10-05']]},
+ {key:'parsley',lbl:'Parsley',ph:[['grow','2026-06-29','2026-08-25'],['harvest','2026-08-25','2026-10-05']]},
+ {key:'chilli',lbl:'Lombardo ×2',ph:[['grow','2026-07-10','2026-08-05'],['flower','2026-08-05','2026-08-20'],['fruit','2026-08-20','2026-09-05'],['harvest','2026-09-05','2026-09-30']]},
+ {key:'basilmint',lbl:'Basil & mint',ph:[['grow','2026-06-29','2026-08-05'],['harvest','2026-08-05','2026-09-30']]},
+ {key:'chives',lbl:'Chives',ph:[['grow','2026-06-29','2026-08-15'],['harvest','2026-08-15','2026-10-05']]},
+ {key:'springonion',lbl:'Spring onion',ph:[['grow','2026-06-29','2026-08-20'],['harvest','2026-08-20','2026-10-05']]},
+ {key:'garlic',lbl:'Garlic',ph:[['grow','2026-06-29','2026-08-10'],['harvest','2026-08-10','2026-09-15']]},
+ {key:'monstera',lbl:'Monstera',ph:[['grow','2026-06-29','2026-10-05']]},
+ {key:'hedera',lbl:'Ivy',ph:[['grow','2026-06-29','2026-10-05']]},
+];
+const PROFILE={
+ basilmint:{t:'Basil “Italiano Classico” & Mint',src:'Biltema seeds · mint as plant',ids:['basil-mint'],
+   body:['Classic Genovese basil. Pinch above a leaf pair weekly — bushy, no flowers. Hates cold: sulks under 12°C nights.',
+     'Mint is invasive — divider in the shared bed, or trim its roots each month. Harvest mint outer stems, basil from the top.',
+     'Feed the bed liquid fertilizer every 2 weeks.']},
+ chilli:{t:'Chilli “Lombardo”',src:'Biltema 14-2867',ids:['chilli-1','chilli-2'],
+   body:['Mild Italian frying chilli — long fruit, green ripening to red. Early and productive.',
+     'Seedlings: water lightly only when top 1 cm is dry (damping-off kills sprouts). Max light, rotate pots so they don\'t lean. Pot up at 4–6 true leaves.',
+     'From flowering: tap flowers midday (no bees behind glass), feed high-K weekly.',
+     'Pick green for mild crunch or red for sweeter warmth — picking often = more fruit.']},
+ tigerella:{t:'Tomato “Tigerella”',src:'Nelson Garden',ids:['tomato-1'],
+   body:['Striped heirloom cordon — needs stake, pinch side shoots weekly.',
+     'Shake flower trusses daily at midday to set fruit behind glass.',
+     'Water deep and even — uneven water = split fruit + blossom end rot. High-K feed weekly.',
+     'Ripe when the stripes turn orange-red. Handles cool Tampere summers well.']},
+ noire:{t:'Tomato “Noire de Crimée”',src:'Nelson Garden',ids:['tomato-2'],
+   body:['Black beefsteak cordon — tall, hungry. Feed generously: high-K weekly from first flowers.',
+     'Shake trusses daily at midday. Stake well — big fruit gets heavy.',
+     'Ripe when SOFT, not by colour — it stays dark brown-red, darkest on top. Squeeze gently, don\'t wait for red.',
+     'Early variety with a long harvest — expect fruit from mid-August.']},
+ chives:{t:'Chives (Ruohosipuli)',src:'Biltema 14-2818',ids:['chives'],
+   body:['Perennial and frost-hardy — leave the bed on the balcony over winter, it returns early spring. Your one plant that outlives the season.',
+     'Cut whole leaves 2 cm above soil — regrows in days. Harvesting often keeps it productive.',
+     'Water when top 2 cm dry. Light feed monthly is plenty.']},
+ springonion:{t:'Spring onion (Pillisipuli)',src:'Biltema 14-2807',ids:['spring-onion'],
+   body:['Early, fast variety with long thick white stems.',
+     'Keep evenly moist — shallow roots dry fast in glazed heat.',
+     'Harvest whole at pencil thickness, thickest first. Re-sow a pinch every 3 weeks for steady supply into autumn.']},
+ parsley:{t:'Curly parsley (Persilja)',src:'Biltema 14-2820',ids:['parsley'],
+   body:['Curly, dark green type. The marathon runner — germination up to 4 weeks is normal.',
+     'Even moisture, deep soil. Bolts in heat: shade it on 30°C+ days.',
+     'Harvest outer stems at the base only — the centre keeps producing to late autumn. Moves to a windowsill for winter.']},
+ monstera:{t:'Monstera deliciosa',src:'IKEA · indoors',ids:['monstera'],
+   body:['Newly bought — let it settle a few weeks in a bright indirect spot, away from draughts and radiators. No feeding or repotting yet.',
+     'Water only when the top 3–4 cm of soil is dry, roughly weekly. Overwatering is the one thing that kills it.',
+     'Wipe the big leaves now and then — dust blocks light. Once settled, feed monthly in season and give the aerial roots a pole to climb.']},
+ hedera:{t:'Ivy · Hedera helix',src:'IKEA · balcony',ids:['hedera'],
+   body:['The tough one — happy in the shady corner where nothing else grows, and frost-hardy to about −10°C. Stays out all winter with the chives.',
+     'While it establishes: steady but light watering, top 2–3 cm dry between waterings. Never soggy.',
+     'Check leaf undersides — spider mites love warm dry glazed air. Trim wandering vines anytime; it regrows from any node.']},
+ maurin:{t:'Raspberry “Maurin Makea”',src:'Finnish summer raspberry',ids:['rasp-maurin'],
+   body:['A Finnish summer (floricane) raspberry prized for very sweet berries. Ahead of the other two — it has set green fruit already (Jul 2026), ripening red over the coming weeks.',
+     'Now fruiting: keep the water even so berries swell without splitting — top 2–3 cm dry between waterings, never bone-dry or soggy. High-K feed weekly. Pick every 2–3 days once they colour up; dead-ripe berries pull free with a light tug.',
+     'Tie the fruiting canes to a support so glass heat and wind don\'t snap them. Watch leaf undersides for spider mites in dry glazed air.',
+     'Frost-hardy — leave it out on the balcony over winter with the chives and ivy. After the canes finish fruiting, cut those spent canes to the ground and keep this year\'s fresh canes for next summer.']},
+ 'takala-1':{t:'Raspberry “Takalan Herkku” 1',src:'New pot · Finnish summer raspberry',ids:['rasp-takala-1'],
+   body:['A hardy Finnish summer (floricane) raspberry with large, sweet berries — a reliable home-garden favourite. Just potted: new canes grow this year, main crop next summer.',
+     'Even moisture, top 2–3 cm dry between waterings — never waterlogged. New pot dries fast behind glass; steady water while establishing. Half-strength feed weekly.',
+     'Tie the new canes to a support against wind and glass heat; check leaf undersides for spider mites.',
+     'Very hardy — overwinters on the balcony. Cut spent (fruited) canes to the ground after they crop; keep this year\'s canes for next summer\'s berries.']},
+ 'takala-2':{t:'Raspberry “Takalan Herkku” 2',src:'New pot · Finnish summer raspberry',ids:['rasp-takala-2'],
+   body:['The second Takalan Herkku pot — same hardy Finnish summer raspberry, large sweet berries. Just potted: new canes grow this year, main crop next summer.',
+     'Even moisture, top 2–3 cm dry between waterings — never waterlogged. New pot dries fast behind glass; steady water while establishing. Half-strength feed weekly.',
+     'Give it its own cane/support and room from pot 1 for airflow; check leaf undersides for spider mites.',
+     'Very hardy — overwinters on the balcony. Cut spent (fruited) canes to the ground after they crop; keep this year\'s canes for next summer\'s berries.']},
+ garlic:{t:'Garlic pot',src:'from cloves',ids:['garlic'],
+   body:['Water sparingly — wet soil rots the bulb. Coolest corner of the balcony; glazed heat rushes it.',
+     'When half the leaves yellow: stop watering. When half are brown: lift the bulb.',
+     'Dry lifted bulbs 2 weeks somewhere airy before storing.']},
+};
+function renderSeason(){
+  const S=new Date('2026-06-29'),E=new Date('2026-10-05');
+  const pos=d=>Math.max(0,Math.min(100,(new Date(d)-S)/(E-S)*100));
+  $('#ticks').innerHTML=[['Jul','2026-07-01'],['Aug','2026-08-01'],['Sep','2026-09-01'],['Oct','2026-10-01']]
+    .map(([l,d])=>`<b style="left:${pos(d)}%">${l}</b>`).join('');
+  const t=pos(todayISO());
+  $('#season-rows').innerHTML=SEASON.map(r=>`<div class="srow" data-key="${r.key}" tabindex="0" role="button" aria-label="${r.lbl} guide">
+    <span class="save">${ART[r.key]||''}</span>
+    <span class="lbl">${r.lbl}</span>
+    <div class="track">${r.ph.map(([c,f,to])=>
+      `<div class="bar ${c}" style="left:${pos(f)}%;width:${Math.max(pos(to)-pos(f),1.5)}%" title="${c}"></div>`).join('')}
+      ${t>=0&&t<=100?`<div class="tline" style="left:${t}%"></div>`:''}
+    </div></div>`).join('');
+  document.querySelectorAll('.srow').forEach(r=>{
+    r.onclick=()=>openPlant(r.dataset.key);
+    r.onkeydown=e=>{if(e.key==='Enter'||e.key===' '){e.preventDefault();openPlant(r.dataset.key);}};
+  });
+}
+
+/* ---- plant profile sheet ---- */
+/* flat botanical art per plant — swapped for your latest photo once one exists */
+const ART={
+ basilmint:`<svg viewBox="0 0 80 80" xmlns="http://www.w3.org/2000/svg"><rect width="80" height="80" fill="#93BFA3"/><path d="M30 62C14 50 16 28 30 16c6 10 8 34 0 46z" fill="#1E4D3B"/><path d="M50 64C38 54 40 34 52 22c8 8 10 32-2 42z" fill="#2E7D52"/><path d="M52 22c-2 14-2 28-2 42" stroke="#93BFA3" stroke-width="2" fill="none"/><path d="M30 16c0 16 0 30 0 46" stroke="#93BFA3" stroke-width="2" fill="none"/></svg>`,
+ chilli:`<svg viewBox="0 0 80 80" xmlns="http://www.w3.org/2000/svg"><rect width="80" height="80" fill="#F2D8AC"/><path d="M24 18c-2 22 4 40 18 46 6 3 10-2 6-6C36 48 32 34 32 18z" fill="#D9472B"/><path d="M52 26c4 16 0 30-8 36-5 4-10 0-7-4 8-8 10-20 9-32z" fill="#2E7D52"/><path d="M28 12c2 4 4 6 4 6h-8s2-2 4-6z" fill="#1E4D3B"/><path d="M50 20c1 4 2 6 2 6l-7-1s3-2 5-5z" fill="#1E4D3B"/></svg>`,
+ tigerella:`<svg viewBox="0 0 80 80" xmlns="http://www.w3.org/2000/svg"><rect width="80" height="80" fill="#F6E3C5"/><circle cx="40" cy="46" r="25" fill="#D9472B"/><path d="M28 26q-7 20 0 40M40 22q-4 24 0 48M52 26q7 20 0 40" stroke="#E08A3C" stroke-width="5" stroke-linecap="round" fill="none"/><path d="M40 14l3 7h7l-5 5 2 7-7-4-7 4 2-7-5-5h7z" fill="#1E4D3B"/></svg>`,
+ noire:`<svg viewBox="0 0 80 80" xmlns="http://www.w3.org/2000/svg"><rect width="80" height="80" fill="#D7C4B0"/><ellipse cx="40" cy="48" rx="27" ry="21" fill="#6E3B3F"/><path d="M13 48a27 21 0 0 1 54 0c-8-10-18-14-27-14s-19 4-27 14z" fill="#4A2A31"/><path d="M30 30q-3 18 2 36M50 30q3 18-2 36" stroke="#5C3136" stroke-width="3" fill="none"/><path d="M40 22l3 6h6l-4 5 1 6-6-3-6 3 1-6-4-5h6z" fill="#1E4D3B"/></svg>`,
+ chives:`<svg viewBox="0 0 80 80" xmlns="http://www.w3.org/2000/svg"><rect width="80" height="80" fill="#EAF0E9"/><path d="M26 70V26M36 70V18M46 70V24M56 70V32" stroke="#2E7D52" stroke-width="5" stroke-linecap="round"/><circle cx="36" cy="14" r="7" fill="#D793A8"/><circle cx="56" cy="28" r="6" fill="#C77E96"/></svg>`,
+ springonion:`<svg viewBox="0 0 80 80" xmlns="http://www.w3.org/2000/svg"><rect width="80" height="80" fill="#93BFA3"/><path d="M28 70V44M40 70V42M52 70V44" stroke="#F6F7F3" stroke-width="8" stroke-linecap="round"/><path d="M28 44 22 16M28 44l4-26M40 42l-3-28M40 42l5-28M52 44l-4-26M52 44l6-24" stroke="#1E4D3B" stroke-width="4" stroke-linecap="round"/></svg>`,
+ parsley:`<svg viewBox="0 0 80 80" xmlns="http://www.w3.org/2000/svg"><rect width="80" height="80" fill="#F6E3C5"/><path d="M40 72V40M40 48l-14-8M40 48l14-8" stroke="#2E7D52" stroke-width="4" stroke-linecap="round"/><g fill="#1E4D3B"><circle cx="40" cy="26" r="9"/><circle cx="26" cy="32" r="8"/><circle cx="54" cy="32" r="8"/><circle cx="32" cy="20" r="7"/><circle cx="48" cy="20" r="7"/></g><g fill="#2E7D52"><circle cx="40" cy="18" r="6"/><circle cx="22" cy="26" r="5"/><circle cx="58" cy="26" r="5"/></g></svg>`,
+ garlic:`<svg viewBox="0 0 80 80" xmlns="http://www.w3.org/2000/svg"><rect width="80" height="80" fill="#EAF0E9"/><path d="M40 24c-14 4-22 14-22 26 0 12 10 18 22 18s22-6 22-18c0-12-8-22-22-26z" fill="#F6F7F3" stroke="#1E4D3B" stroke-width="3"/><path d="M40 26v40M30 28q-4 20 2 38M50 28q4 20-2 38" stroke="#1E4D3B" stroke-width="2.5" fill="none"/><path d="M40 24c-2-8 2-14 6-16-1 6 0 10-2 16z" fill="#2E7D52"/></svg>`,
+ monstera:`<svg viewBox="0 0 80 80" xmlns="http://www.w3.org/2000/svg"><rect width="80" height="80" fill="#F6E3C5"/><path d="M40 4v10" stroke="#1E4D3B" stroke-width="3" stroke-linecap="round"/><path d="M40 16C34 8 22 6 14 13 6 20 4 31 7 40c3 12 13 24 25 30q8 4 16 0c12-6 22-18 25-30 3-9 1-20-7-27-8-7-20-5-26 3Z" fill="#1E4D3B"/><path d="M6 40l29-8M12 54l24-9M22 66l15-9M74 40l-29-8M68 54l-24-9M58 66l-15-9" stroke="#F6E3C5" stroke-width="2.2" stroke-linecap="round"/><path d="M40 21v46" stroke="#F6E3C5" stroke-width="1.8"/></svg>`,
+ hedera:`<svg viewBox="0 0 80 80" xmlns="http://www.w3.org/2000/svg"><rect width="80" height="80" fill="#EAF0E9"/><path d="M14 66q26-4 52-44" stroke="#2E7D52" stroke-width="3" fill="none"/><path d="M30 54l-8-2 2-8 8 2zM46 40l-8-1 1-8 8 1zM60 26l-7-1 1-7 7 1z" fill="#1E4D3B"/><path d="M24 46l6 6M39 33l6 5M54 20l5 5" stroke="#2E7D52" stroke-width="2"/></svg>`,
+ maurin:`<svg viewBox="0 0 80 80" xmlns="http://www.w3.org/2000/svg"><rect width="80" height="80" fill="#EAF0E9"/><path d="M40 40c-8 0-14 4-14 14 0 9 7 14 14 14s14-5 14-14c0-10-6-14-14-14z" fill="#B23A5B"/><g fill="#C9557A"><circle cx="34" cy="52" r="4.4"/><circle cx="46" cy="52" r="4.4"/><circle cx="40" cy="49" r="4.4"/><circle cx="31" cy="60" r="4.4"/><circle cx="49" cy="60" r="4.4"/><circle cx="40" cy="58" r="4.4"/><circle cx="35" cy="66" r="4.2"/><circle cx="45" cy="66" r="4.2"/></g><path d="M40 40l0-8" stroke="#2E7D52" stroke-width="3"/><path d="M40 34c-8-2-14-8-14-8 6 0 12 2 14 6 2-4 8-6 14-6 0 0-6 6-14 8z" fill="#2E7D52"/></svg>`,
+};
+ART['takala-1']=ART['takala-2']=ART.maurin;
+/* real reference photos — Wikimedia Commons, hotlinked (need internet) */
+const REAL={
+ basilmint:['https://upload.wikimedia.org/wikipedia/commons/9/97/Ocimum_basilicum_8zz.jpg','Genovese basil · Wikimedia'],
+ chilli:['https://upload.wikimedia.org/wikipedia/commons/4/46/Fefferoni.jpg','Italian frying peppers · Wikimedia'],
+ tigerella:['https://upload.wikimedia.org/wikipedia/commons/6/6c/Balkoncontent_Tomatensorte_Tigerella.jpg','Tigerella on the vine · Wikimedia'],
+ noire:['https://upload.wikimedia.org/wikipedia/commons/thumb/2/2c/Black_krim_tomato.jpg/1280px-Black_krim_tomato.jpg','Noire de Crimée (Black Krim) · Wikimedia'],
+ chives:['https://upload.wikimedia.org/wikipedia/commons/thumb/4/49/Allium_schoenoprasum_-_Bombus_lapidarius_-_Tootsi.jpg/1280px-Allium_schoenoprasum_-_Bombus_lapidarius_-_Tootsi.jpg','Chives in flower · Wikimedia'],
+ springonion:['https://upload.wikimedia.org/wikipedia/commons/f/fc/2010-06-19-supermarkt-by-RalfR-32.jpg','Spring onions · Wikimedia'],
+ parsley:['https://upload.wikimedia.org/wikipedia/commons/b/bf/Parsley100.jpg','Curly parsley · Wikimedia'],
+ garlic:['https://upload.wikimedia.org/wikipedia/commons/4/49/Opened_garlic_bulb_with_garlic_clove.jpg','Garlic bulb · Wikimedia'],
+ monstera:['https://www.ikea.com/fi/en/images/products/monstera-deliciosa-potted-plant-swiss-cheese-plant__1177967_pe895590_s5.jpg?f=xl','Monstera deliciosa · IKEA'],
+ hedera:['https://www.ikea.com/fi/en/images/products/hedera-helix-potted-plant-ivy__0902464_pe594502_s5.jpg?f=xl','Hedera helix · IKEA'],
+ maurin:['https://upload.wikimedia.org/wikipedia/commons/thumb/1/12/Raspberry_%2852479964737%29.jpg/1280px-Raspberry_%2852479964737%29.jpg','Ripe raspberries · Wikimedia'],
+ 'takala-1':['https://upload.wikimedia.org/wikipedia/commons/6/67/Raspberries_-_geograph.org.uk_-_506621.jpg','Raspberries on the cane · Wikimedia'],
+ 'takala-2':['https://upload.wikimedia.org/wikipedia/commons/6/67/Raspberries_-_geograph.org.uk_-_506621.jpg','Raspberries on the cane · Wikimedia'],
+};
+let openPlantKey=null;
+function openPlant(key){
+  const pr=PROFILE[key];if(!pr)return;
+  openDate=null;openPlantKey=key;                  // sheet now shows a plant, not a day
+  $('#sheet-title').textContent=pr.t;
+  $('#sheet-wx').textContent=pr.src;
+  const plants=pr.ids.map(id=>state.plants.find(p=>p.id===id)).filter(Boolean);
+  const meta=plants.map(p=>{
+    const since=dBetween(p.last,todayISO());
+    return `<div class="task"><div class="ico">🪴</div><div class="body">
+      <div class="what">${esc(p.name)}</div>
+      <div class="why">stage: ${p.stage} · watered ${since===0?'today':since+'d ago'} · every ~${intervalOf(p)}d</div>
+    </div></div>`;}).join('');
+  $('#sheet-tasks').innerHTML=meta+pr.body.map(b=>
+    `<div class="task"><div class="ico">›</div><div class="body"><div class="why" style="font-size:13.5px;color:var(--ink)">${esc(b)}</div></div></div>`).join('');
+  const feat=$('#sheet-feat');
+  feat.hidden=false;feat.innerHTML=ART[key]||'';feat.onclick=null;
+  const real=REAL[key];
+  $('#sheet-photos').innerHTML=real?`<figure class="realfig">
+    <img class="realph" src="${real[0]}" alt="${esc(real[1])}" loading="lazy"
+      onerror="this.parentElement.style.display='none'">
+    <figcaption>${esc(real[1])}</figcaption></figure>`:'';
+  showSheet();
+}
+
+/* ================= theme toggle ================= */
+const effectiveTheme=()=>document.documentElement.dataset.theme||(matchMedia('(prefers-color-scheme:dark)').matches?'dark':'light');
+function syncThemeBtn(){
+  const dark=effectiveTheme()==='dark';
+  $('#theme-toggle').checked=dark;
+  document.querySelectorAll('.theme-switch .tl').forEach(l=>l.classList.toggle('act',l.dataset.for===(dark?'dark':'light')));
+}
+function applyTheme(next){
+  document.documentElement.dataset.theme=next;store.set('theme',next);
+  const tc=document.querySelector('meta[name=theme-color]');if(tc)tc.setAttribute('content',next==='dark'?'#141A16':'#1E4D3B');
+  syncThemeBtn();
+}
+$('#theme-toggle').onchange=e=>applyTheme(e.target.checked?'dark':'light');
+syncThemeBtn();
+
+/* ================= go ================= */
+const _topbar=$('#topbar'), _tbtop=$('#tb-top');
+// Compact when the bar pins to the top. Two thresholds (hysteresis) plus a
+// state guard so subpixel scroll wobble at the pin line (or a scroll clamp when
+// the shrunk header changes page height) can't flip the compact class on and off
+// in a loop. Shrink once the sentinel is 8px above the top, restore only after it
+// drops 24px back down. rAF keeps it to at most one check per frame.
+let _stuck=false, _tbTick=false;
+function syncTopbar(){
+  _tbTick=false;
+  const top=_tbtop.getBoundingClientRect().top;
+  if(!_stuck && top<-8){_stuck=true;_topbar.classList.add('stuck');}
+  else if(_stuck && top>24){_stuck=false;_topbar.classList.remove('stuck');}
+}
+addEventListener('scroll',()=>{if(!_tbTick){_tbTick=true;requestAnimationFrame(syncTopbar);}},{passive:true});
+syncTopbar();
+renderSeason();
+render();renderHero();
+showTab(store.get('tab')||'cal');            // restore the tab the user last had open
+if(!forecast||forecast.fetched!==todayISO())loadWx();   // loadWx() re-renders when it resolves
+loadPhotos();loadCover();
+pullState();                                             // adopt newer server state (task list synced across devices)
+addEventListener('visibilitychange',()=>{if(!document.hidden)pullState();});
+</script>
+</body>
+</html>
