@@ -347,7 +347,7 @@
 /* ================= basics ================= */
 const $=s=>document.querySelector(s);
 const store={get:k=>JSON.parse(localStorage.getItem(k)||'null'),set:(k,v)=>localStorage.setItem(k,JSON.stringify(v))};
-let _pushTimer=null,_stateStamp=store.get('stateStamp')||0,_synced=false;   // sync state, declared early: mergeSeed/save() run above the sync block below
+let _pushTimer=null,_stateStamp=store.get('stateStamp')||0,_synced=false,_syncAsked=false;   // sync state, declared early: mergeSeed/save() run above the sync block below
 const TAMPERE={la:61.4981,lo:23.7610};
 const iso=d=>`${d.getFullYear()}-${String(d.getMonth()+1).padStart(2,'0')}-${String(d.getDate()).padStart(2,'0')}`;
 const todayISO=()=>iso(new Date());
@@ -495,6 +495,9 @@ function buildTasks(horizonISO){
         last=d;
       }
     }
+    // if today's watering was already marked done, keep it visible (rendered checked) instead of vanishing
+    if(T<=horizonISO&&(doneLog[T]||[]).includes('w|'+p.id)&&!(map[T]||[]).some(t=>t.key==='w|'+p.id))
+      push(T,{cat:'water',ico:'💧',what:`Water ${p.name}`,why:careOf(p).why,key:'w|'+p.id,plantId:p.id});
     const c=careOf(p);
     (c.daily||[]).forEach(([cat,what,why])=>{
       for(let d=T;d<=horizonISO;d=addDays(d,1))
@@ -681,26 +684,37 @@ function pushState(){                       // debounced snapshot -> server (own
   if(!_synced)return;                       // hold pushes until the first pull, so load-time migration cannot clobber a newer server doc
   clearTimeout(_pushTimer);
   _pushTimer=setTimeout(async()=>{
-    const pass=store.get('uploadPass');if(!pass)return;   // no pass = local-only, no prompt
+    let pass=store.get('uploadPass');
+    if(!pass){                              // first change on this device: ask once to turn on cross-device sync
+      if(_syncAsked)return;_syncAsked=true;
+      pass=prompt('Passphrase to sync tasks across your devices (same one as photos):');
+      if(!pass)return;store.set('uploadPass',pass);
+    }
     _stateStamp=Date.now();store.set('stateStamp',_stateStamp);
     const doc={updatedAt:_stateStamp,garden2:state,doneLog};
-    try{await fetch('/api/state',{method:'PUT',
+    try{const r=await fetch('/api/state',{method:'PUT',
       headers:{'authorization':'Bearer '+pass,'content-type':'application/json'},
-      body:JSON.stringify(doc)});}catch(e){/* offline: retry on next change/focus */}
+      body:JSON.stringify(doc)});
+      if(r&&r.status===401){store.set('uploadPass',null);}   // wrong pass, ask again on next change
+    }catch(e){/* offline: retry on next change/focus */}
   },800);
 }
-async function pullState(){                  // adopt server doc if it is newer than ours
+async function pullState(){                  // adopt server doc if it is newer; seed it if empty and we can write
   try{
-    const r=await fetch('/api/state');if(!r.ok)return;
+    const r=await fetch('/api/state',{cache:'no-store'});if(!r.ok)return;
     const doc=await r.json();
-    if(!doc||typeof doc.updatedAt!=='number'||doc.updatedAt<=_stateStamp)return;
-    if(doc.garden2){Object.keys(state).forEach(k=>delete state[k]);
-      Object.assign(state,doc.garden2);store.set('garden2',state);}
-    if(doc.doneLog){doneLog=doc.doneLog;store.set('doneLog',doneLog);}
-    _stateStamp=doc.updatedAt;store.set('stateStamp',_stateStamp);
-    render();
+    const fresh=doc&&typeof doc.updatedAt==='number';
+    if(fresh&&doc.updatedAt>_stateStamp){    // server is newer: adopt it
+      if(doc.garden2){Object.keys(state).forEach(k=>delete state[k]);
+        Object.assign(state,doc.garden2);store.set('garden2',state);}
+      if(doc.doneLog){doneLog=doc.doneLog;store.set('doneLog',doneLog);}
+      _stateStamp=doc.updatedAt;store.set('stateStamp',_stateStamp);
+      render();
+    }else if(!fresh&&store.get('uploadPass')){ // server empty and this device can write: seed it now
+      _synced=true;pushState();
+    }
   }catch(e){/* offline: keep local */}
-  finally{_synced=true;}                     // enable pushes once the first adopt attempt is done (even offline)
+  finally{_synced=true;}                      // enable pushes once the first adopt attempt is done (even offline)
 }
 function renderPhotos(date){
   const box=$('#sheet-photos');

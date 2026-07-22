@@ -110,7 +110,7 @@ async function handlePhotos(req, env, url) {
 async function handleState(req, env) {
   if (req.method === 'GET') {
     const doc = await env.PHOTOS.get('state:garden');
-    return new Response(doc || '{}', { headers: { 'content-type': 'application/json' } });
+    return new Response(doc || '{}', { headers: { 'content-type': 'application/json', 'cache-control': 'no-store' } });
   }
   if (req.method === 'PUT') {
     if (!isAuthed(req, env)) return new Response('Unauthorized', { status: 401 });
