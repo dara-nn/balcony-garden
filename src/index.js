@@ -1,7 +1,7 @@
 // Balcony garden — Worker: serves the static site + a small shared-photo API backed by KV.
 // Viewing photos is public; adding / editing / deleting requires the UPLOAD_PASS secret.
 
-import { readStatus, KEYS } from './garden.js';
+import { readStatus, writeStatus, KEYS, upsertPlant } from './garden.js';
 
 const json = (data, status = 200) =>
   new Response(JSON.stringify(data), { status, headers: { 'content-type': 'application/json' } });
@@ -42,6 +42,16 @@ export default {
       return new Response(JSON.stringify(doc), {
         headers: { 'content-type': 'application/json', 'cache-control': 'no-store' },
       });
+    }
+    if (url.pathname.startsWith('/api/status/') && req.method === 'PUT') {
+      if (!isAuthed(req, env)) return new Response('Unauthorized', { status: 401 });
+      const plantId = decodeURIComponent(url.pathname.slice('/api/status/'.length));
+      if (!plantId) return new Response('Missing plant id', { status: 400 });
+      let fields;
+      try { fields = await req.json(); } catch { return new Response('Bad JSON', { status: 400 }); }
+      const doc = upsertPlant(await readStatus(env), plantId, fields, Date.now());
+      await writeStatus(env, doc);
+      return new Response(JSON.stringify(doc.plants[plantId]), { headers: { 'content-type': 'application/json' } });
     }
     return env.ASSETS.fetch(req); // everything else = the static site
   },

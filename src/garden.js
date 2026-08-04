@@ -18,3 +18,9 @@ export async function readPlan(env) {
 export async function writePlan(env, doc) {
   await env.PHOTOS.put(KEYS.plan, JSON.stringify(doc));
 }
+
+export function upsertPlant(doc, plantId, fields, now) {
+  const prev = doc.plants[plantId] || { id: plantId, notes: [], history: [] };
+  const plant = { notes: [], history: [], ...prev, ...fields, id: plantId, updatedAt: now };
+  return { ...doc, updatedAt: now, plants: { ...doc.plants, [plantId]: plant } };
+}
