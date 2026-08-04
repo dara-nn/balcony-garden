@@ -68,6 +68,9 @@ export default {
     }
     return env.ASSETS.fetch(req); // everything else = the static site
   },
+  async scheduled(event, env, ctx) {
+    ctx.waitUntil(replan(env, { trigger: 'cron' }));
+  },
 };
 
 async function handlePhotos(req, env, url) {
