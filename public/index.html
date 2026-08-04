@@ -692,7 +692,7 @@ function pushState(){                       // debounced snapshot -> server (own
     }
     _stateStamp=Date.now();store.set('stateStamp',_stateStamp);
     const doc={updatedAt:_stateStamp,garden2:state,doneLog};
-    try{const r=await fetch('/api/state',{method:'PUT',
+    try{const r=await fetch('/api/progress',{method:'PUT',
       headers:{'authorization':'Bearer '+pass,'content-type':'application/json'},
       body:JSON.stringify(doc)});
       if(r&&r.status===401){store.set('uploadPass',null);}   // wrong pass, ask again on next change
@@ -701,7 +701,7 @@ function pushState(){                       // debounced snapshot -> server (own
 }
 async function pullState(){                  // adopt server doc if it is newer; seed it if empty and we can write
   try{
-    const r=await fetch('/api/state',{cache:'no-store'});if(!r.ok)return;
+    const r=await fetch('/api/progress',{cache:'no-store'});if(!r.ok)return;
     const doc=await r.json();
     const fresh=doc&&typeof doc.updatedAt==='number';
     if(fresh&&doc.updatedAt>_stateStamp){    // server is newer: adopt it

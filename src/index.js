@@ -34,7 +34,7 @@ export default {
     if (url.pathname === '/api/photos' || url.pathname.startsWith('/api/photos/')) {
       return handlePhotos(req, env, url);
     }
-    if (url.pathname === '/api/state') {
+    if (url.pathname === '/api/progress') {
       return handleState(req, env);
     }
     if (url.pathname === '/api/status' && req.method === 'GET') {
@@ -137,7 +137,11 @@ async function handlePhotos(req, env, url) {
 // One KV doc; reads public, writes need the passphrase. Whole-blob last-write-wins by updatedAt.
 async function handleState(req, env) {
   if (req.method === 'GET') {
-    const doc = await env.PHOTOS.get('state:garden');
+    let doc = await env.PHOTOS.get(KEYS.progress);
+    if (!doc) {
+      const legacy = await env.PHOTOS.get('state:garden'); // one-time migration read
+      if (legacy) doc = legacy;
+    }
     return new Response(doc || '{}', { headers: { 'content-type': 'application/json', 'cache-control': 'no-store' } });
   }
   if (req.method === 'PUT') {
@@ -146,7 +150,7 @@ async function handleState(req, env) {
     if (!body) return new Response('Empty body', { status: 400 });
     let parsed;
     try { parsed = JSON.parse(body); } catch (e) { return new Response('Bad JSON', { status: 400 }); }
-    await env.PHOTOS.put('state:garden', JSON.stringify(parsed));
+    await env.PHOTOS.put(KEYS.progress, JSON.stringify(parsed));
     return json(parsed);
   }
   return new Response('Method not allowed', { status: 405 });
