@@ -510,7 +510,7 @@ async function seedStatus(){                       // upsert seeded plants the s
   for(const sp of seed.plants){
     const cur=statusDoc.plants[sp.id];
     if(cur&&cur.stage)continue;                     // already present
-    await api('/api/status/'+encodeURIComponent(sp.id),{
+    await api('/api/status/'+encodeURIComponent(sp.id)+'?seed=1',{
       method:'PUT',
       headers:{'content-type':'application/json'},
       body:JSON.stringify({name:sp.name,species:sp.species,stage:sp.stage,lastWatered:sp.water||todayISO()}),
@@ -679,7 +679,7 @@ function fillSheet(date){
     const isDone=done.includes(t.key);
     const can=date===T&&t.cat!=='alert';
     return `<div class="task ${t.cat==='alert'?'alert':''} ${isDone?'checked':''}">
-      <div class="ico">${t.ico}</div>
+      <div class="ico">${esc(t.ico)}</div>
       <div class="body"><div class="what">${esc(t.what)}</div>
         ${t.why?`<div class="why">${esc(t.why)}</div>`:''}</div>
       ${can?`<button class="done-btn" onclick="markDone('${date}','${t.key}')">${isDone?'Done ✓':'Done'}</button>`:''}

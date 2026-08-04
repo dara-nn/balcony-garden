@@ -119,40 +119,42 @@ async function photoPart(env, id) {
 function todayISO() { return new Date().toISOString().slice(0, 10); }
 
 export async function replan(env, { trigger } = {}) {
-  const status = await readStatus(env);
-  if (!Object.keys(status.plants).length) return;
-  const today = todayISO();
-  let forecast;
   try {
-    forecast = parseForecast(await (await fetch(FORECAST_URL)).json());
-  } catch { return; } // network failure: leave stores intact
+    const status = await readStatus(env);
+    if (!Object.keys(status.plants).length) return;
+    const today = todayISO();
+    let forecast;
+    try {
+      forecast = parseForecast(await (await fetch(FORECAST_URL)).json());
+    } catch { return; } // network failure: leave stores intact
 
-  let photoPartsByPlant;
-  try {
-    const photos = await listPhotos(env);
-    photoPartsByPlant = {};
-    for (const id of Object.keys(status.plants)) {
-      const picks = selectPhotos(photos, id, today);
-      const parts = [];
-      for (const p of picks) { const part = await photoPart(env, p.id); if (part) parts.push(part); }
-      photoPartsByPlant[id] = parts;
-    }
-  } catch { return; } // photo-gathering failure (KV or encoding): leave stores intact
+    let photoPartsByPlant;
+    try {
+      const photos = await listPhotos(env);
+      photoPartsByPlant = {};
+      for (const id of Object.keys(status.plants)) {
+        const picks = selectPhotos(photos, id, today);
+        const parts = [];
+        for (const p of picks) { const part = await photoPart(env, p.id); if (part) parts.push(part); }
+        photoPartsByPlant[id] = parts;
+      }
+    } catch { return; } // photo-gathering failure (KV or encoding): leave stores intact
 
-  const body = buildGeminiBody(status, forecast, today, photoPartsByPlant);
-  const url = `https://generativelanguage.googleapis.com/v1beta/models/${MODEL}:generateContent`;
-  let res;
-  try {
-    res = await fetch(url, { method: 'POST',
-      headers: { 'content-type': 'application/json', 'x-goog-api-key': env.GEMINI_API_KEY },
-      body: JSON.stringify(body) });
-  } catch { return; } // network failure: leave stores intact
-  if (!res.ok) return;
-  let aiPlants;
-  try { aiPlants = parsePlanResponse(await res.json()); } catch { return; }
+    const body = buildGeminiBody(status, forecast, today, photoPartsByPlant);
+    const url = `https://generativelanguage.googleapis.com/v1beta/models/${MODEL}:generateContent`;
+    let res;
+    try {
+      res = await fetch(url, { method: 'POST',
+        headers: { 'content-type': 'application/json', 'x-goog-api-key': env.GEMINI_API_KEY },
+        body: JSON.stringify(body) });
+    } catch { return; } // network failure: leave stores intact
+    if (!res.ok) return;
+    let aiPlants;
+    try { aiPlants = parsePlanResponse(await res.json()); } catch { return; }
 
-  const now = Date.now();
-  const merged = mergePlan(status, aiPlants, today, now);
-  await writeStatus(env, merged.status);
-  await writePlan(env, merged.plan);
+    const now = Date.now();
+    const merged = mergePlan(status, aiPlants, today, now);
+    await writeStatus(env, merged.status);
+    await writePlan(env, merged.plan);
+  } catch { return; } // safety net: replan runs in ctx.waitUntil — no throw may escape
 }

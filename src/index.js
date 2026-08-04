@@ -58,7 +58,7 @@ export default {
       try { fields = await req.json(); } catch { return new Response('Bad JSON', { status: 400 }); }
       const doc = upsertPlant(await readStatus(env), plantId, fields, Date.now());
       await writeStatus(env, doc);
-      ctx.waitUntil(replan(env, { trigger: 'note' }));
+      if (url.searchParams.get('seed') !== '1') ctx.waitUntil(replan(env, { trigger: 'note' }));
       return new Response(JSON.stringify(doc.plants[plantId]), { headers: { 'content-type': 'application/json' } });
     }
     if (url.pathname === '/api/notes' && req.method === 'POST') {
