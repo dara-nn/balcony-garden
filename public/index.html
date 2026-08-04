@@ -458,6 +458,30 @@ let state=store.get('garden2')||{seedVersion:0,plants:[]};
 function save(){store.set('garden2',state);pushState();}
 let doneLog=store.get('doneLog')||{};   // {"2026-07-16":["taskkey",...]}
 
+/* ================= server status (plant condition: stage/last/intervalOverride) ================= */
+let statusDoc=store.get('statusDoc')||{updatedAt:0,plants:{}};
+async function loadStatus(){
+  try{
+    const r=await fetch('/api/status',{cache:'no-store'});
+    if(r.ok){statusDoc=await r.json();store.set('statusDoc',statusDoc);}
+  }catch(e){/* offline: keep cached */}
+}
+async function seedStatus(){                       // upsert seeded plants the server doesn't have yet, once per seed version
+  const seed=window.GARDEN_SEED;if(!seed)return;
+  if(store.get('statusSeedVersion')===seed.version)return;
+  for(const sp of seed.plants){
+    const cur=statusDoc.plants[sp.id];
+    if(cur&&cur.stage)continue;                     // already present
+    await api('/api/status/'+encodeURIComponent(sp.id),{
+      method:'PUT',
+      headers:{'content-type':'application/json'},
+      body:JSON.stringify({name:sp.name,species:sp.species,stage:sp.stage,lastWatered:sp.water||todayISO()}),
+    });
+  }
+  store.set('statusSeedVersion',seed.version);
+  await loadStatus();
+}
+
 /* ================= weather (Tampere, auto) ================= */
 let forecast=store.get('forecastT3');   // T3: daily records now carry rh (mean humidity)
 async function loadWx(){
@@ -479,11 +503,23 @@ const weeklyIco=w=>/feed/i.test(w)?'🍽️':/re-sow|sow/i.test(w)?'🌱':/harve
   :/rotate/i.test(w)?'🔄':/check/i.test(w)?'🔍':/pinch|shoot|trim|tidy|prune|leaf/i.test(w)?'✂️':'🌿';
 
 /* ================= task engine ================= */
+function plantsForRender(){                         // plant condition (stage/last/intervalOverride) from statusDoc, falling back to the seed
+  const seed=window.GARDEN_SEED;if(!seed)return[];
+  return seed.plants.map(sp=>{
+    const s=statusDoc.plants[sp.id]||{};
+    return{
+      id:sp.id,name:sp.name,species:sp.species,
+      stage:s.stage||sp.stage,
+      last:s.lastWatered||sp.water||todayISO(),
+      intervalOverride:s.intervalOverride,
+    };
+  });
+}
 /* returns Map isoDate -> [{cat,ico,what,why,key,plantId?}] for [today .. horizon] */
 function buildTasks(horizonISO){
   const map={};const T=todayISO();
   const push=(date,t)=>{(map[date]=map[date]||[]).push(t);};
-  state.plants.forEach(p=>{
+  plantsForRender().forEach(p=>{
     let last=p.last;
     for(let d=T;d<=horizonISO;d=addDays(d,1)){
       const f=wxOf(d)?heatFactor(wxOf(d).tmax):1;
@@ -676,6 +712,13 @@ async function apiWrite(method,path,body,ct){     // authenticated call; prompts
     if(!pass)return null;store.set('uploadPass',pass);}
   const r=await fetch(path,{method,headers:{'authorization':'Bearer '+pass,...(ct?{'content-type':ct}:{})},body});
   if(r.status===401){store.set('uploadPass',null);alert('Väärä salasana / wrong passphrase.');return null;}
+  return r;
+}
+async function api(path,opts={}){                 // authenticated fetch; silent no-op (no prompt) if this device has no passphrase yet
+  const pass=store.get('uploadPass');
+  if(!pass)return null;
+  const r=await fetch(path,{...opts,headers:{...(opts.headers||{}),authorization:'Bearer '+pass}});
+  if(r.status===401)store.set('uploadPass',null);
   return r;
 }
 
@@ -1045,6 +1088,7 @@ renderSeason();
 render();renderHero();
 showTab(store.get('tab')||'cal');            // restore the tab the user last had open
 if(!forecast||forecast.fetched!==todayISO())loadWx();   // loadWx() re-renders when it resolves
+loadStatus().then(async()=>{await seedStatus();render();});   // seed server status once (no-ops without a passphrase), then re-render
 loadPhotos();loadCover();
 pullState();                                             // adopt newer server state (task list synced across devices)
 addEventListener('visibilitychange',()=>{if(!document.hidden)pullState();});
