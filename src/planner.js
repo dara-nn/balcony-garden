@@ -82,3 +82,64 @@ export function mergePlan(statusDoc, aiPlants, today, now) {
     plan: { generatedAt: now, through: addDaysISO(today, 13), plants: planPlants },
   };
 }
+
+const FORECAST_URL =
+  'https://api.open-meteo.com/v1/forecast?latitude=61.4978&longitude=23.7610' +
+  '&daily=temperature_2m_max,temperature_2m_min,precipitation_probability_max,relative_humidity_2m_mean' +
+  '&forecast_days=14&timezone=auto';
+const MODEL = 'gemini-2.5-flash';
+
+async function listPhotos(env) {
+  const out = []; let cursor;
+  do {
+    const page = await env.PHOTOS.list({ prefix: 'photo:', cursor });
+    for (const k of page.keys) out.push({ id: k.name.slice('photo:'.length), ...(k.metadata || {}) });
+    cursor = page.list_complete ? null : page.cursor;
+  } while (cursor);
+  return out;
+}
+
+async function photoPart(env, id) {
+  const obj = await env.PHOTOS.getWithMetadata('photo:' + id, { type: 'arrayBuffer' });
+  if (!obj || !obj.value) return null;
+  const b64 = btoa(String.fromCharCode(...new Uint8Array(obj.value)));
+  return { inline_data: { mime_type: (obj.metadata && obj.metadata.ct) || 'image/jpeg', data: b64 } };
+}
+
+function todayISO() { return new Date().toISOString().slice(0, 10); }
+
+export async function replan(env, { trigger } = {}) {
+  const status = await readStatus(env);
+  if (!Object.keys(status.plants).length) return;
+  const today = todayISO();
+  let forecast;
+  try {
+    forecast = parseForecast(await (await fetch(FORECAST_URL)).json());
+  } catch { return; } // network failure: leave stores intact
+
+  const photos = await listPhotos(env);
+  const photoPartsByPlant = {};
+  for (const id of Object.keys(status.plants)) {
+    const picks = selectPhotos(photos, id, today);
+    const parts = [];
+    for (const p of picks) { const part = await photoPart(env, p.id); if (part) parts.push(part); }
+    photoPartsByPlant[id] = parts;
+  }
+
+  const body = buildGeminiBody(status, forecast, today, photoPartsByPlant);
+  const url = `https://generativelanguage.googleapis.com/v1beta/models/${MODEL}:generateContent`;
+  let res;
+  try {
+    res = await fetch(url, { method: 'POST',
+      headers: { 'content-type': 'application/json', 'x-goog-api-key': env.GEMINI_API_KEY },
+      body: JSON.stringify(body) });
+  } catch { return; } // network failure: leave stores intact
+  if (!res.ok) return;
+  let aiPlants;
+  try { aiPlants = parsePlanResponse(await res.json()); } catch { return; }
+
+  const now = Date.now();
+  const merged = mergePlan(status, aiPlants, today, now);
+  await writeStatus(env, merged.status);
+  await writePlan(env, merged.plan);
+}

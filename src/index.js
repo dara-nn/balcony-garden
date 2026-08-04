@@ -2,6 +2,7 @@
 // Viewing photos is public; adding / editing / deleting requires the UPLOAD_PASS secret.
 
 import { readStatus, writeStatus, KEYS, upsertPlant, applyNoteOp } from './garden.js';
+import { replan } from './planner.js';
 
 const json = (data, status = 200) =>
   new Response(JSON.stringify(data), { status, headers: { 'content-type': 'application/json' } });
@@ -15,7 +16,7 @@ const isAuthed = (req, env) => {
 };
 
 export default {
-  async fetch(req, env) {
+  async fetch(req, env, ctx) {
     const url = new URL(req.url);
     if (url.pathname === '/api/cover') {
       if (req.method === 'GET') {
@@ -51,6 +52,7 @@ export default {
       try { fields = await req.json(); } catch { return new Response('Bad JSON', { status: 400 }); }
       const doc = upsertPlant(await readStatus(env), plantId, fields, Date.now());
       await writeStatus(env, doc);
+      ctx.waitUntil(replan(env, { trigger: 'note' }));
       return new Response(JSON.stringify(doc.plants[plantId]), { headers: { 'content-type': 'application/json' } });
     }
     if (url.pathname === '/api/notes' && req.method === 'POST') {
@@ -61,6 +63,7 @@ export default {
       try { doc = applyNoteOp(await readStatus(env), body, Date.now()); }
       catch (e) { return new Response(e.message, { status: 400 }); }
       await writeStatus(env, doc);
+      ctx.waitUntil(replan(env, { trigger: 'note' }));
       return new Response(JSON.stringify(doc.plants[body.plantId]), { headers: { 'content-type': 'application/json' } });
     }
     return env.ASSETS.fetch(req); // everything else = the static site
