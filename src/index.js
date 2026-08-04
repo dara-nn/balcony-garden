@@ -1,6 +1,8 @@
 // Balcony garden — Worker: serves the static site + a small shared-photo API backed by KV.
 // Viewing photos is public; adding / editing / deleting requires the UPLOAD_PASS secret.
 
+import { readStatus, KEYS } from './garden.js';
+
 const json = (data, status = 200) =>
   new Response(JSON.stringify(data), { status, headers: { 'content-type': 'application/json' } });
 
@@ -34,6 +36,12 @@ export default {
     }
     if (url.pathname === '/api/state') {
       return handleState(req, env);
+    }
+    if (url.pathname === '/api/status' && req.method === 'GET') {
+      const doc = await readStatus(env);
+      return new Response(JSON.stringify(doc), {
+        headers: { 'content-type': 'application/json', 'cache-control': 'no-store' },
+      });
     }
     return env.ASSETS.fetch(req); // everything else = the static site
   },
