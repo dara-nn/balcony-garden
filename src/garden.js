@@ -24,3 +24,20 @@ export function upsertPlant(doc, plantId, fields, now) {
   const plant = { notes: [], history: [], ...prev, ...fields, id: plantId, updatedAt: now };
   return { ...doc, updatedAt: now, plants: { ...doc.plants, [plantId]: plant } };
 }
+
+export function applyNoteOp(doc, { plantId, op, id, date, text }, now) {
+  const plant = doc.plants[plantId];
+  if (!plant) throw new Error('unknown plant');
+  let notes = plant.notes || [];
+  if (op === 'add') {
+    notes = [...notes, { id: id || `note-${now}`, date, text, createdAt: now }];
+  } else if (op === 'edit') {
+    notes = notes.map((n) => (n.id === id ? { ...n, text, ...(date ? { date } : {}) } : n));
+  } else if (op === 'delete') {
+    notes = notes.filter((n) => n.id !== id);
+  } else {
+    throw new Error('unknown op');
+  }
+  const updated = { ...plant, notes, updatedAt: now };
+  return { ...doc, updatedAt: now, plants: { ...doc.plants, [plantId]: updated } };
+}

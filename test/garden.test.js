@@ -1,6 +1,6 @@
 import { test } from 'node:test';
 import assert from 'node:assert/strict';
-import { readStatus, KEYS, upsertPlant } from '../src/garden.js';
+import { readStatus, KEYS, upsertPlant, applyNoteOp } from '../src/garden.js';
 
 // minimal in-memory KV stub matching the Workers KV surface we use
 function fakeKV(initial = {}) {
@@ -39,4 +39,25 @@ test('upsertPlant merges without dropping existing keys', () => {
   const out = upsertPlant(doc, 'a', { stage: 'harvesting' }, 200);
   assert.equal(out.plants.a.stage, 'harvesting');
   assert.equal(out.plants.a.notes.length, 1);
+});
+
+const base = () => ({ updatedAt: 0, plants: { a: { id: 'a', notes: [], history: [] } } });
+
+test('applyNoteOp add appends a note', () => {
+  const out = applyNoteOp(base(), { plantId: 'a', op: 'add', id: 'n1', date: '2026-07-26', text: 'yellow leaves' }, 10);
+  assert.equal(out.plants.a.notes.length, 1);
+  assert.equal(out.plants.a.notes[0].text, 'yellow leaves');
+  assert.equal(out.plants.a.notes[0].createdAt, 10);
+});
+
+test('applyNoteOp edit and delete', () => {
+  let doc = applyNoteOp(base(), { plantId: 'a', op: 'add', id: 'n1', date: '2026-07-26', text: 'x' }, 1);
+  doc = applyNoteOp(doc, { plantId: 'a', op: 'edit', id: 'n1', text: 'y' }, 2);
+  assert.equal(doc.plants.a.notes[0].text, 'y');
+  doc = applyNoteOp(doc, { plantId: 'a', op: 'delete', id: 'n1' }, 3);
+  assert.equal(doc.plants.a.notes.length, 0);
+});
+
+test('applyNoteOp throws for unknown plant', () => {
+  assert.throws(() => applyNoteOp(base(), { plantId: 'zzz', op: 'add', text: 'x' }, 1), /unknown plant/);
 });
