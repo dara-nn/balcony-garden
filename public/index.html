@@ -148,6 +148,31 @@
   .task.checked .done-btn{background:var(--pine);color:var(--paper)}
   .task.alert .what{color:var(--tomato)}
   .empty{color:var(--dim);padding:14px 2px;font-size:14px}
+
+  /* ---- per-plant status + notes (in the plant guide sheet) ---- */
+  .status{padding:10px 2px;border-bottom:1px solid var(--line)}
+  .status:last-of-type{border-bottom:none}
+  .status .stat-name{font-weight:600;font-size:14.5px;margin-bottom:3px}
+  .status .stat-row{font-size:12.5px;color:var(--dim);margin:3px 0;display:flex;flex-wrap:wrap;align-items:center;gap:4px}
+  .status .stat-row label{display:flex;align-items:center;gap:4px;color:var(--ink)}
+  .status .stat-row select,.status .stat-row input[type=date]{font:inherit;font-size:12.5px;color:var(--ink);
+    background:var(--cell);border:1px solid var(--line);border-radius:6px;padding:2px 5px}
+  .status .issues{margin:4px 0;padding-left:18px;font-size:12.5px;color:var(--tomato)}
+  .status .obs{margin:4px 0;font-size:12.5px;color:var(--dim);font-style:italic}
+  .status .notes{margin-top:8px}
+  .status .notes>b{font-size:12px;letter-spacing:.06em;text-transform:uppercase;color:var(--dim)}
+  .note-add{display:flex;gap:6px;margin:6px 0}
+  .note-add .note-input{flex:1;min-width:0;font:inherit;font-size:13px;color:var(--ink);
+    background:var(--cell);border:1px solid var(--line);border-radius:8px;padding:6px 9px}
+  .note-add .note-save{border:1px solid var(--pine);color:var(--pine);background:none;border-radius:8px;
+    padding:6px 12px;font-weight:700;font-size:12.5px;cursor:pointer;white-space:nowrap}
+  .note-list{list-style:none;margin:0;padding:0}
+  .note-list li{display:flex;align-items:baseline;gap:6px;padding:5px 0;border-bottom:1px solid var(--line);font-size:13px}
+  .note-list li:last-child{border-bottom:none}
+  .note-list .note-date{color:var(--dim);font-size:11.5px;white-space:nowrap}
+  .note-list .note-text{flex:1;min-width:0}
+  .note-list .none{color:var(--dim);font-size:12.5px}
+  .note-edit,.note-del{border:none;background:none;color:var(--dim);cursor:pointer;font-size:13px;padding:2px 4px}
   .photos{display:flex;gap:7px;flex-wrap:wrap;margin-top:12px}
   .photos img{width:82px;height:82px;object-fit:cover;border-radius:10px;border:1px solid var(--line);cursor:pointer}
   .addph{width:82px;height:82px;border-radius:10px;border:1.5px dashed var(--dim);background:none;
@@ -1028,20 +1053,95 @@ const REAL={
  'takala-1':['https://upload.wikimedia.org/wikipedia/commons/6/67/Raspberries_-_geograph.org.uk_-_506621.jpg','Raspberries on the cane · Wikimedia'],
  'takala-2':['https://upload.wikimedia.org/wikipedia/commons/6/67/Raspberries_-_geograph.org.uk_-_506621.jpg','Raspberries on the cane · Wikimedia'],
 };
+/* ---- per-plant status + notes block (sourced from statusDoc; falls back to state.plants for name/species) ---- */
+function statusBlock(id){
+  const s=statusDoc.plants[id]||{};
+  const fb=state.plants.find(p=>p.id===id)||{};
+  const name=s.name||fb.name||id;
+  const species=s.species||fb.species;
+  const stage=s.stage||fb.stage||'';
+  const lastWatered=s.lastWatered||fb.last||todayISO();
+  const since=dBetween(lastWatered,todayISO());
+  const interval=intervalOf({species,stage,intervalOverride:s.intervalOverride});
+  const h=s.health||{overall:'',issues:[]};
+  const issues=(h.issues||[]).map(i=>
+    `<li>${esc(i.type||'')}: ${esc(i.label||'')} (${esc(String(i.severity??''))})</li>`).join('');
+  const stages=Array.from(new Set([...(CARE[species]?.stages||[]),...(stage?[stage]:[])]));
+  const stageOpts=stages.map(st=>`<option value="${esc(st)}"${st===stage?' selected':''}>${esc(st)}</option>`).join('');
+  const notes=(s.notes||[]).slice().sort((a,b)=>(a.date<b.date?1:a.date>b.date?-1:0))
+    .map(n=>`<li data-note="${esc(n.id)}" data-pid="${esc(id)}">
+      <span class="note-date">${esc(n.date)}</span><span class="note-text">${esc(n.text)}</span>
+      <button class="note-edit" data-id="${esc(n.id)}" data-pid="${esc(id)}" aria-label="edit note">✎</button>
+      <button class="note-del" data-id="${esc(n.id)}" data-pid="${esc(id)}" aria-label="delete note">🗑</button>
+    </li>`).join('');
+  return `
+    <div class="status" data-pid="${esc(id)}">
+      <div class="stat-name">${esc(name)}</div>
+      <div class="stat-row">
+        <label>Vaihe / stage: <select class="stage-sel" data-pid="${esc(id)}">${stageOpts}</select></label>
+        <span>· watered ${since===0?'today':since+'d ago'} · every ~${interval}d</span>
+      </div>
+      <div class="stat-row">
+        <label>Kastettu / watered on: <input type="date" class="water-inp" data-pid="${esc(id)}" value="${esc(lastWatered)}"></label>
+        <span>· Kunto / health: ${esc(h.overall||'—')}</span>
+      </div>
+      ${issues?`<ul class="issues">${issues}</ul>`:''}
+      ${s.observations?`<div class="obs">${esc(s.observations)}</div>`:''}
+      <div class="notes">
+        <b>Muistiinpanot / Notes</b>
+        <div class="note-add"><input class="note-input" data-pid="${esc(id)}" placeholder="Lisää / add note…">
+          <button class="note-save" data-pid="${esc(id)}">Lisää</button></div>
+        <ul class="note-list">${notes||'<li class="none">Ei muistiinpanoja / no notes yet</li>'}</ul>
+      </div>
+    </div>`;
+}
+/* single delegated listener on the persistent #sheet container — survives openPlant() re-rendering #sheet-tasks */
+function wireStatusEvents(){
+  const sheet=$('#sheet');
+  const afterWrite=async r=>{                 // r===null: passphrase prompt was cancelled, do nothing
+    if(!r)return;
+    if(!r.ok){alert('Tallennus epäonnistui / save failed.');return;}   // e.g. note write before the plant has a status entry yet
+    await loadStatus();openPlant(openPlantKey);render();
+  };
+  sheet.addEventListener('change',async e=>{
+    const sel=e.target.closest('.stage-sel');
+    if(sel){await afterWrite(await apiWrite('PUT','/api/status/'+encodeURIComponent(sel.dataset.pid),JSON.stringify({stage:sel.value}),'application/json'));return;}
+    const dt=e.target.closest('.water-inp');
+    if(dt){await afterWrite(await apiWrite('PUT','/api/status/'+encodeURIComponent(dt.dataset.pid),JSON.stringify({lastWatered:dt.value}),'application/json'));return;}
+  });
+  sheet.addEventListener('click',async e=>{
+    const save=e.target.closest('.note-save');
+    if(save){
+      const id=save.dataset.pid;
+      const input=sheet.querySelector(`.note-input[data-pid="${CSS.escape(id)}"]`);
+      const text=(input?.value||'').trim();if(!text)return;
+      await afterWrite(await apiWrite('POST','/api/notes',JSON.stringify({plantId:id,op:'add',date:todayISO(),text}),'application/json'));
+      return;
+    }
+    const del=e.target.closest('.note-del');
+    if(del){
+      await afterWrite(await apiWrite('POST','/api/notes',JSON.stringify({plantId:del.dataset.pid,op:'delete',id:del.dataset.id}),'application/json'));
+      return;
+    }
+    const ed=e.target.closest('.note-edit');
+    if(ed){
+      const li=ed.closest('[data-note]');
+      const cur=li?.querySelector('.note-text')?.textContent||'';
+      const text=prompt('Muokkaa / edit note',cur);if(text==null)return;
+      await afterWrite(await apiWrite('POST','/api/notes',JSON.stringify({plantId:ed.dataset.pid,op:'edit',id:ed.dataset.id,text}),'application/json'));
+      return;
+    }
+  });
+}
+wireStatusEvents();
 let openPlantKey=null;
 function openPlant(key){
   const pr=PROFILE[key];if(!pr)return;
   openDate=null;openPlantKey=key;                  // sheet now shows a plant, not a day
   $('#sheet-title').textContent=pr.t;
   $('#sheet-wx').textContent=pr.src;
-  const plants=pr.ids.map(id=>state.plants.find(p=>p.id===id)).filter(Boolean);
-  const meta=plants.map(p=>{
-    const since=dBetween(p.last,todayISO());
-    return `<div class="task"><div class="ico">🪴</div><div class="body">
-      <div class="what">${esc(p.name)}</div>
-      <div class="why">stage: ${p.stage} · watered ${since===0?'today':since+'d ago'} · every ~${intervalOf(p)}d</div>
-    </div></div>`;}).join('');
-  $('#sheet-tasks').innerHTML=meta+pr.body.map(b=>
+  const status=pr.ids.map(id=>statusBlock(id)).join('');
+  $('#sheet-tasks').innerHTML=status+pr.body.map(b=>
     `<div class="task"><div class="ico">›</div><div class="body"><div class="why" style="font-size:13.5px;color:var(--ink)">${esc(b)}</div></div></div>`).join('');
   const feat=$('#sheet-feat');
   feat.hidden=false;feat.innerHTML=ART[key]||'';feat.onclick=null;
