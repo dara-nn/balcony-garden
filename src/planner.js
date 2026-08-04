@@ -99,10 +99,20 @@ async function listPhotos(env) {
   return out;
 }
 
+export function bytesToBase64(buf) {
+  const bytes = new Uint8Array(buf);
+  let bin = '';
+  const CHUNK = 0x8000; // 32KB, safely under the arg-count limit
+  for (let i = 0; i < bytes.length; i += CHUNK) {
+    bin += String.fromCharCode(...bytes.subarray(i, i + CHUNK));
+  }
+  return btoa(bin);
+}
+
 async function photoPart(env, id) {
   const obj = await env.PHOTOS.getWithMetadata('photo:' + id, { type: 'arrayBuffer' });
   if (!obj || !obj.value) return null;
-  const b64 = btoa(String.fromCharCode(...new Uint8Array(obj.value)));
+  const b64 = bytesToBase64(obj.value);
   return { inline_data: { mime_type: (obj.metadata && obj.metadata.ct) || 'image/jpeg', data: b64 } };
 }
 
@@ -117,14 +127,17 @@ export async function replan(env, { trigger } = {}) {
     forecast = parseForecast(await (await fetch(FORECAST_URL)).json());
   } catch { return; } // network failure: leave stores intact
 
-  const photos = await listPhotos(env);
-  const photoPartsByPlant = {};
-  for (const id of Object.keys(status.plants)) {
-    const picks = selectPhotos(photos, id, today);
-    const parts = [];
-    for (const p of picks) { const part = await photoPart(env, p.id); if (part) parts.push(part); }
-    photoPartsByPlant[id] = parts;
-  }
+  let photoPartsByPlant;
+  try {
+    const photos = await listPhotos(env);
+    photoPartsByPlant = {};
+    for (const id of Object.keys(status.plants)) {
+      const picks = selectPhotos(photos, id, today);
+      const parts = [];
+      for (const p of picks) { const part = await photoPart(env, p.id); if (part) parts.push(part); }
+      photoPartsByPlant[id] = parts;
+    }
+  } catch { return; } // photo-gathering failure (KV or encoding): leave stores intact
 
   const body = buildGeminiBody(status, forecast, today, photoPartsByPlant);
   const url = `https://generativelanguage.googleapis.com/v1beta/models/${MODEL}:generateContent`;

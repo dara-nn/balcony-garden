@@ -1,6 +1,6 @@
 import { test } from 'node:test';
 import assert from 'node:assert/strict';
-import { selectPhotos, parseForecast, parsePlanResponse, mergePlan } from '../src/planner.js';
+import { selectPhotos, parseForecast, parsePlanResponse, mergePlan, bytesToBase64 } from '../src/planner.js';
 
 test('selectPhotos filters by plant+date and caps', () => {
   const list = [
@@ -35,4 +35,18 @@ test('mergePlan writes condition to status and tasks to plan with stable keys', 
   assert.equal(s2.plants.a.health.overall, 'struggling');
   assert.equal(plan.plants.a['2026-07-26'][0].key, 'ai|a|2026-07-26|0');
   assert.equal(plan.through, '2026-08-08');
+});
+
+test('bytesToBase64 round-trips known small bytes', () => {
+  const bytes = new Uint8Array([104, 105]); // "hi"
+  assert.equal(bytesToBase64(bytes), 'aGk=');
+});
+
+test('bytesToBase64 encodes a large buffer without throwing', () => {
+  const bytes = new Uint8Array(200000);
+  for (let i = 0; i < bytes.length; i++) bytes[i] = i % 256;
+  let out;
+  assert.doesNotThrow(() => { out = bytesToBase64(bytes); });
+  assert.equal(typeof out, 'string');
+  assert.ok(out.length > 0);
 });
