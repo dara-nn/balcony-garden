@@ -24,16 +24,67 @@ function addDaysISO(iso, n) {
   return d.toISOString().slice(0, 10);
 }
 
+// Gemini structured output cannot emit dynamic object keys (a map keyed by plant
+// id comes back empty), so the plan is an ARRAY of plant objects each carrying its
+// own `id`. mergePlan normalises it back to the id-keyed map the client expects.
+const ISSUE_SCHEMA = {
+  type: 'object',
+  properties: {
+    type: { type: 'string', enum: ['pest', 'disease', 'nutrient', 'water', 'stress', 'damage'] },
+    label: { type: 'string' },
+    severity: { type: 'string', enum: ['mild', 'moderate', 'severe'] },
+  },
+  required: ['type', 'label', 'severity'],
+};
+const TASK_SCHEMA = {
+  type: 'object',
+  properties: {
+    cat: { type: 'string', enum: ['water', 'pollen', 'care', 'alert'] },
+    what: { type: 'string' },
+    why: { type: 'string' },
+  },
+  required: ['cat', 'what', 'why'],
+};
 const PLAN_SCHEMA = {
   type: 'object',
   properties: {
     plants: {
-      type: 'object',
-      // per-plant objects are validated by prompt; Gemini responseSchema supports
-      // nested object/array/string/enum. Keep the schema permissive on the map keys.
+      type: 'array',
+      items: {
+        type: 'object',
+        properties: {
+          id: { type: 'string' },
+          health: {
+            type: 'object',
+            properties: {
+              overall: { type: 'string', enum: ['thriving', 'steady', 'struggling'] },
+              issues: { type: 'array', items: ISSUE_SCHEMA },
+            },
+            required: ['overall', 'issues'],
+          },
+          observations: { type: 'string' },
+          stage: { type: 'string' },
+          days: {
+            type: 'array',
+            items: {
+              type: 'object',
+              properties: {
+                date: { type: 'string' },
+                tasks: { type: 'array', items: TASK_SCHEMA },
+              },
+              required: ['date', 'tasks'],
+            },
+          },
+        },
+        required: ['id', 'health', 'observations', 'days'],
+      },
     },
   },
+  required: ['plants'],
 };
+
+// Task icon is derived from the category, never taken from model output.
+const CAT_ICON = { water: '💧', pollen: '✋', care: '🌿', alert: '⚠️' };
 
 export function buildGeminiBody(statusDoc, forecast, today, photoPartsByPlant) {
   const context = { today, plants: statusDoc.plants, forecast: forecast.days };
@@ -46,7 +97,9 @@ export function buildGeminiBody(statusDoc, forecast, today, photoPartsByPlant) {
       parts: [{ text:
         'You are a balcony-garden care planner for a glazed balcony in Tampere, Finland. ' +
         'Given each plant\'s status, recent notes, same-day photos, and the 14-day forecast, ' +
-        'produce the per-plant task list for the next 14 days. Task categories: water, pollen, care, alert. ' +
+        'produce a task list for the next 14 days. EVERY plant in the context MUST appear as an ' +
+        'entry in plants[] (with its exact id), even if healthy — assess its health and give it ' +
+        'at least the appropriate watering days. Task categories: water, pollen, care, alert. ' +
         'Each open health issue must get a matching task (pest->treat, nutrient->feed, water->adjust). ' +
         STAGES_HINT + ' Return JSON matching the schema. Keep "why" short.' }],
     },
@@ -56,15 +109,19 @@ export function buildGeminiBody(statusDoc, forecast, today, photoPartsByPlant) {
 }
 
 export function parsePlanResponse(geminiJson) {
-  const text = geminiJson?.candidates?.[0]?.content?.parts?.[0]?.text;
+  // Thinking models can prepend a thought part with no `.text`; take the first text part.
+  const parts = geminiJson?.candidates?.[0]?.content?.parts || [];
+  const text = parts.find((p) => typeof p?.text === 'string')?.text;
   if (!text) throw new Error('no plan text in response');
-  return JSON.parse(text).plants;
+  return JSON.parse(text).plants || [];
 }
 
+// aiPlants is an ARRAY of {id, health, observations, stage?, days:[{date, tasks:[{cat,what,why}]}]}.
 export function mergePlan(statusDoc, aiPlants, today, now) {
   const plants = { ...statusDoc.plants };
   const planPlants = {};
-  for (const [id, r] of Object.entries(aiPlants || {})) {
+  for (const r of aiPlants || []) {
+    const id = r && r.id; if (!id) continue;
     const prev = plants[id]; if (!prev) continue;
     plants[id] = { ...prev,
       health: r.health ?? prev.health,
@@ -72,8 +129,15 @@ export function mergePlan(statusDoc, aiPlants, today, now) {
       stage: r.stage ?? prev.stage,
       updatedAt: now };
     const days = {};
-    for (const [date, tasks] of Object.entries(r.days || {})) {
-      days[date] = (tasks || []).map((t, i) => ({ ...t, key: `ai|${id}|${date}|${i}` }));
+    for (const day of r.days || []) {
+      if (!day || !day.date) continue;
+      days[day.date] = (day.tasks || []).map((t, i) => ({
+        cat: t.cat,
+        ico: CAT_ICON[t.cat] || '🌿',   // derived from category, never from model output
+        what: t.what,
+        why: t.why,
+        key: `ai|${id}|${day.date}|${i}`,
+      }));
     }
     planPlants[id] = days;
   }
@@ -87,7 +151,7 @@ const FORECAST_URL =
   'https://api.open-meteo.com/v1/forecast?latitude=61.4978&longitude=23.7610' +
   '&daily=temperature_2m_max,temperature_2m_min,precipitation_probability_max,relative_humidity_2m_mean' +
   '&forecast_days=14&timezone=auto';
-const MODEL = 'gemini-2.5-flash';
+const MODEL = 'gemini-flash-latest';
 
 async function listPhotos(env) {
   const out = []; let cursor;

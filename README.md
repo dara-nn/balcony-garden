@@ -42,18 +42,6 @@ Three KV docs, one job each, deliberately *not* named alike so "state" and "stat
 
 **The calendar's task engine** ([`buildTasks()`](public/index.html) in `public/index.html`) overlays the AI plan day-by-day for whatever `plan:garden` actually covers (up to 14 days out, `through`), and falls back to the original deterministic per-plant interval math for everything else: days beyond the 14-day plan horizon, plants with no plan yet, or — if a re-plan call fails outright (network error, bad response, missing key) — the *entire* board, since the stores are simply left untouched on failure. The deterministic engine was the whole app before this feature; it never got removed, it just moved from "the plan" to "the plan's safety net."
 
-## Decision-making process
-
-A few choices are worth explaining, because they weren't the only options:
-
-- **Gemini free tier, plain REST, from the Worker.** `gemini-2.5-flash` is multimodal (it can read the same-day photos directly, no separate vision step) and supports structured JSON output via `responseSchema`, so the response is `JSON.parse`-able without a fragile prompt-and-hope. Called as a raw `fetch` with `x-goog-api-key` — no SDK, no extra dependency, fits the "one Worker file" spirit of the rest of the app. Honest caveat: on the free tier, Google may use the submitted note text and photos to improve their models. Fine for a hobby balcony; worth knowing before you point this at anything sensitive.
-- **Server-owned status.** `status:garden` isn't a cache of client state — the Worker is the only writer of plant condition (aside from progress, which is deliberately separate). That means notes, health and stage are consistent no matter which device asked for them, and the AI planner can update health without racing a client's local edit.
-- **Three stores, three names, on purpose.** `status` (what's true now), `plan` (what the AI recommends next), `progress` (what's been done) look similar but answer different questions, and earlier this was just one blob called `state:garden` — renamed and split specifically so "state" and "status" stop being interchangeable in the code and in my own head.
-- **The deterministic engine stays.** No AI call is ever a single point of failure for "does the calendar show today's watering." `buildTasks()` is dumb and reliable; the AI plan only gets to override it where it has actually produced something.
-- **Daily cron + note-triggered re-plan**, not just one or the other. The cron keeps the plan fresh even on days I don't touch anything (forecast shifts, plants age a day). The note trigger means "I saw a pest today" reshapes the plan now, not tomorrow at 3am.
-- **Trust through transparency, not an undo button.** Notes are freely editable and deletable, every AI-generated task carries a short "why," and the UI shows a relative "last updated" time for the plan (`Päivitetty / updated Nh ago`). No AI action is destructive or hidden — the worst it does is suggest a task — so instead of building an undo/audit trail, the app just makes it easy to see what the AI is looking at and change it.
-- **Health as `{overall, issues[]}`**, not a free-text blob. Each issue has a `type` (pest/nutrient/water/...), so the planner's system prompt can require a matching task per issue (pest → treat, nutrient → feed, water → adjust) instead of hoping the model remembers to mention it.
-
 ## Task sync
 
 Done checkmarks sync across my devices through a `GET/PUT /api/progress` endpoint on the Worker (renamed from `/api/state`; the old KV key `state:garden` is read once as a fallback if the new one is empty). It stores one KV doc (`progress:garden`) holding `{ updatedAt, garden2, doneLog }`.
@@ -89,47 +77,6 @@ All reads are public. All writes need `Authorization: Bearer <UPLOAD_PASS>`.
 | `/api/cover` | `GET`/`PUT` | Read or set the whole-garden cover photo id (`PUT` auth; empty id = default). |
 
 **Cron:** a `scheduled` handler runs daily at 03:00 UTC (`triggers.crons` in `wrangler.jsonc`) and calls the same `replan()` used by note/status writes, so the plan stays current even on days nothing changes by hand.
-
-## Local development
-
-```bash
-npm install
-npm run dev   # wrangler dev
-```
-
-`wrangler dev` serves the static site and all APIs together. Reads work without any secret; writes need `UPLOAD_PASS`, and the planner needs `GEMINI_API_KEY` (see below) — without it, re-plan calls fail silently and the calendar just runs on the deterministic engine.
-
-Put local secrets in a git-ignored `.dev.vars` file at the repo root:
-
-```
-UPLOAD_PASS=whatever-passphrase
-GEMINI_API_KEY=your-key-here
-```
-
-## Deploy
-
-```bash
-npm run deploy   # wrangler deploy
-```
-
-One-time setup on the Cloudflare account:
-
-- Create the KV namespace and wire its id to the `PHOTOS` binding in [`wrangler.jsonc`](wrangler.jsonc).
-- Set the write passphrase as a Worker secret:
-
-  ```bash
-  npx wrangler secret put UPLOAD_PASS
-  ```
-
-  This authorises all writes: photos, cover, notes, status edits and task-progress sync. It lives only as a Cloudflare secret, never in this repo.
-
-- Set the Gemini key as a Worker secret:
-
-  ```bash
-  npx wrangler secret put GEMINI_API_KEY
-  ```
-
-  It's a free key from [Google AI Studio](https://aistudio.google.com/apikey). On the free tier, Google may use the note text and photos sent to Gemini to improve their models — fine for this hobby project, but worth knowing. Without this secret the re-plan step just fails quietly on every trigger and the app keeps working off the deterministic engine.
 
 ## Editing the plant list
 
