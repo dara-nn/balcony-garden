@@ -1,6 +1,6 @@
 import { test } from 'node:test';
 import assert from 'node:assert/strict';
-import { readStatus, KEYS, upsertPlant, applyNoteOp, dropDerivedNotes } from '../src/garden.js';
+import { readStatus, KEYS, upsertPlant, applyNoteOp, dropDerivedNotes, recordStage } from '../src/garden.js';
 
 // minimal in-memory KV stub matching the Workers KV surface we use
 function fakeKV(initial = {}) {
@@ -29,7 +29,7 @@ test('upsertPlant creates a plant with defaults', () => {
   const out = upsertPlant(doc, 'tomato-1', { name: 'Tigerella', species: 'tomato', stage: 'flowering' }, 100);
   assert.equal(out.plants['tomato-1'].stage, 'flowering');
   assert.deepEqual(out.plants['tomato-1'].notes, []);
-  assert.deepEqual(out.plants['tomato-1'].history, []);
+  assert.deepEqual(out.plants['tomato-1'].history, [{ date: '1970-01-01', stage: 'flowering' }]);
   assert.equal(out.plants['tomato-1'].updatedAt, 100);
   assert.equal(out.updatedAt, 100);
 });
@@ -92,4 +92,41 @@ test('dropDerivedNotes ignores plants that are gone', () => {
 
 test('applyNoteOp throws for unknown plant', () => {
   assert.throws(() => applyNoteOp(base(), { plantId: 'zzz', op: 'add', text: 'x' }, 1), /unknown plant/);
+});
+
+test('recordStage appends the first stage it is given', () => {
+  assert.deepEqual(recordStage(undefined, 'flowering', '2026-09-29'),
+    [{ date: '2026-09-29', stage: 'flowering' }]);
+});
+
+test('recordStage appends when the stage changes', () => {
+  const prev = { history: [{ date: '2026-08-01', stage: 'growing' }] };
+  assert.deepEqual(recordStage(prev, 'flowering', '2026-09-29'), [
+    { date: '2026-08-01', stage: 'growing' },
+    { date: '2026-09-29', stage: 'flowering' },
+  ]);
+});
+
+test('recordStage does nothing when the stage is unchanged', () => {
+  const prev = { stage: 'flowering', history: [{ date: '2026-08-01', stage: 'flowering' }] };
+  assert.deepEqual(recordStage(prev, 'flowering', '2026-09-29'),
+    [{ date: '2026-08-01', stage: 'flowering' }]);
+});
+
+test('recordStage leaves history alone when no stage is supplied', () => {
+  const prev = { stage: 'flowering', history: [{ date: '2026-08-01', stage: 'flowering' }] };
+  assert.deepEqual(recordStage(prev, undefined, '2026-09-29'),
+    [{ date: '2026-08-01', stage: 'flowering' }]);
+});
+
+test('upsertPlant records a stage change', () => {
+  const doc = { updatedAt: 0, plants: { a: { id: 'a', stage: 'growing', notes: [], history: [] } } };
+  const out = upsertPlant(doc, 'a', { stage: 'flowering' }, Date.parse('2026-09-29T10:00:00Z'));
+  assert.deepEqual(out.plants.a.history, [{ date: '2026-09-29', stage: 'flowering' }]);
+});
+
+test('upsertPlant does not record a write that leaves the stage alone', () => {
+  const doc = { updatedAt: 0, plants: { a: { id: 'a', stage: 'growing', notes: [], history: [] } } };
+  const out = upsertPlant(doc, 'a', { lastWatered: '2026-09-29' }, Date.parse('2026-09-29T10:00:00Z'));
+  assert.deepEqual(out.plants.a.history, []);
 });

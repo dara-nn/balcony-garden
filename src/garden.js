@@ -19,9 +19,18 @@ export async function writePlan(env, doc) {
   await env.PHOTOS.put(KEYS.plan, JSON.stringify(doc));
 }
 
+/* The bar wants to know when a plant actually changed, not when the seed file
+   was last edited. Every write that moves the stage leaves a dated mark here. */
+export function recordStage(prev, stage, date) {
+  const history = (prev && prev.history) || [];
+  if (!stage || (prev && prev.stage === stage)) return history;
+  return [...history, { date, stage }];
+}
+
 export function upsertPlant(doc, plantId, fields, now) {
   const prev = doc.plants[plantId] || { id: plantId, notes: [], history: [] };
-  const plant = { notes: [], history: [], ...prev, ...fields, id: plantId, updatedAt: now };
+  const history = recordStage(prev, fields.stage, new Date(now).toISOString().slice(0, 10));
+  const plant = { notes: [], ...prev, ...fields, history, id: plantId, updatedAt: now };
   return { ...doc, updatedAt: now, plants: { ...doc.plants, [plantId]: plant } };
 }
 
