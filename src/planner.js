@@ -53,8 +53,16 @@ const CARE_SCHEMA = {
           observations: { type: 'string' },
           stage: { type: 'string' },
           guidance: { type: 'string' },
+          upcoming: {
+            type: 'array',
+            items: {
+              type: 'object',
+              properties: { stage: { type: 'string' }, date: { type: 'string' } },
+              required: ['stage', 'date'],
+            },
+          },
         },
-        required: ['id', 'health', 'observations', 'guidance'],
+        required: ['id', 'health', 'observations', 'guidance', 'upcoming'],
       },
     },
   },
@@ -74,6 +82,11 @@ export function buildGeminiBody(statusDoc, forecast, today, photoPartsByPlant) {
         'Given each plant\'s status, recent notes, same-day photos, and the 14-day forecast, ' +
         'write current care guidance for every plant. EVERY plant in the context MUST appear as ' +
         'an entry in plants[] (with its exact id), even if healthy. ' +
+        'observations is one or two sentences saying what the plant is doing right now, in plain ' +
+        'words, as the status line under its chart. Describe what you can see, not what to do. ' +
+        'upcoming is the stage changes you expect over the next three months, each with the date ' +
+        'you expect it, earliest first. Use the plant\'s allowed stages. Give an empty array when ' +
+        'you expect no change, and never repeat a stage the plant is already in. ' +
         'guidance is two to four short sentences of plain advice for right now: how often to ' +
         'water it at the moment, what to feed it, what to watch for. Never give a date, a day ' +
         'of the week or a deadline, and never write it as a checklist. The guidance is shown ' +
@@ -114,7 +127,13 @@ export function mergePlan(statusDoc, aiPlants, today, now) {
       stage: r.stage ?? prev.stage,
       history: recordStage(prev, r.stage, today),
       updatedAt: now };
-    if (r.guidance) carePlants[id] = { guidance: r.guidance };
+    if (r.guidance) {
+      const upcoming = (r.upcoming || [])
+        .filter((u) => u && u.stage && u.date)
+        .map((u) => ({ stage: u.stage, date: u.date }))
+        .sort((a, b) => a.date.localeCompare(b.date));
+      carePlants[id] = { guidance: r.guidance, upcoming };
+    }
   }
   return {
     status: { ...statusDoc, updatedAt: now, plants },

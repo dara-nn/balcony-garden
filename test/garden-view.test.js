@@ -1,6 +1,6 @@
 import { test } from 'node:test';
 import assert from 'node:assert/strict';
-import { groupByArea, daysSince, waterLabel, historyStream, phaseOfStage, seasonSpans, photosInView } from '../public/garden-view.js';
+import { groupByArea, daysSince, waterLabel, historyStream, phaseOfStage, seasonSpans, photosInView, chartWindow, monthTicks } from '../public/garden-view.js';
 
 const p = (id, area) => ({ id, name: id, area });
 
@@ -183,4 +183,108 @@ test('a photo tagged to a plant that is gone is dropped from both views', () => 
   const photos = [{ id: 'x', plant: 'deleted-plant' }];
   assert.deepEqual(photosInView(photos, ['tomato-1'], true), []);
   assert.deepEqual(photosInView(photos, ['tomato-1'], false), []);
+});
+
+/* ---- chart window ---- */
+
+test('the window starts at the earliest thing known and ends 3 months out at least', () => {
+  const w = chartWindow({
+    spans: [[['grow', '2026-07-01', '2026-08-01']]],
+    histories: [[{ date: '2026-06-10', stage: 'growing' }]],
+    upcomings: [[]],
+    today: '2026-09-29',
+    monthsAhead: 3,
+  });
+  assert.equal(w.start, '2026-06-10');   // earlier than any span
+  assert.equal(w.end, '2026-12-29');     // today + 3 months, past the last span
+});
+
+test('a predicted change beyond 3 months stretches the window to reach it', () => {
+  const w = chartWindow({
+    spans: [[['grow', '2026-07-01', '2026-08-01']]],
+    histories: [[]],
+    upcomings: [[{ stage: 'flowering', date: '2027-04-01' }]],
+    today: '2026-09-29',
+    monthsAhead: 3,
+  });
+  assert.equal(w.end, '2027-04-01');
+});
+
+test('a span running past 3 months is not cut off', () => {
+  const w = chartWindow({
+    spans: [[['harvest', '2026-07-01', '2027-06-01']]],
+    histories: [[]], upcomings: [[]], today: '2026-09-29', monthsAhead: 3,
+  });
+  assert.equal(w.end, '2027-06-01');
+});
+
+test('a garden with nothing recorded still gets a usable window', () => {
+  const w = chartWindow({ spans: [], histories: [], upcomings: [], today: '2026-09-29', monthsAhead: 3 });
+  assert.ok(w.start <= '2026-09-29');
+  assert.ok(w.end >= '2026-12-29');
+});
+
+test('month ticks cover the window, first of each month', () => {
+  const ticks = monthTicks('2026-06-10', '2026-10-05');
+  assert.deepEqual(ticks.map((t) => t.date), ['2026-07-01', '2026-08-01', '2026-09-01', '2026-10-01']);
+  assert.deepEqual(ticks.map((t) => t.label), ['Jul', 'Aug', 'Sep', 'Oct']);
+});
+
+test('month ticks cross a year boundary', () => {
+  const ticks = monthTicks('2026-11-15', '2027-02-02');
+  assert.deepEqual(ticks.map((t) => t.label), ['Dec', 'Jan', 'Feb']);
+});
+
+/* ---- predicted future ---- */
+
+test('a predicted change moves a future boundary', () => {
+  const out = seasonSpans(DEF, [], [{ stage: 'harvesting', date: '2026-09-20' }], '2026-12-29');
+  assert.deepEqual(out.find((s) => s[0] === 'harvest').slice(0, 2), ['harvest', '2026-09-20']);
+});
+
+test('a predicted stage the species table lacks is appended, running to the window end', () => {
+  const out = seasonSpans(DEF, [], [{ stage: 'fruiting', date: '2026-11-01' }], '2026-12-29');
+  const last = out[out.length - 1];
+  assert.deepEqual(last, ['fruit', '2026-11-01', '2026-12-29']);
+});
+
+test('two predicted changes run one into the next', () => {
+  const out = seasonSpans(DEF, [],
+    [{ stage: 'fruiting', date: '2026-11-01' }, { stage: 'dormant', date: '2026-12-01' }], '2026-12-29');
+  const fruit = out.find((s) => s[0] === 'fruit');
+  assert.deepEqual(fruit, ['fruit', '2026-11-01', '2026-12-01']);
+});
+
+test('a recorded change always beats a prediction for the same phase', () => {
+  const out = seasonSpans(DEF, [{ date: '2026-08-20', stage: 'flowering' }],
+    [{ stage: 'flowering', date: '2026-09-15' }], '2026-12-29');
+  assert.equal(out.find((s) => s[0] === 'flower')[1], '2026-08-20');
+});
+
+test('no predictions leaves the old two-argument behaviour intact', () => {
+  assert.deepEqual(seasonSpans(DEF, [], [], '2026-12-29'), DEF);
+  assert.deepEqual(seasonSpans(DEF, []), DEF);
+});
+
+test('predictions never invert a span', () => {
+  const out = seasonSpans(DEF, [{ date: '2026-09-25', stage: 'harvesting' }],
+    [{ stage: 'flowering', date: '2026-12-01' }], '2026-12-29');
+  for (const [, from, to] of out) assert.ok(from <= to, `${from} is after ${to}`);
+});
+
+test('a prediction later than the span it names pushes that span out, it does not collapse it', () => {
+  // Real case: garlic's table has harvest 10 Aug to 15 Sep, the planner expects
+  // harvesting to start 5 Oct. The bar must show harvest ahead, not lose it.
+  const garlic = [['grow', '2026-06-29', '2026-08-10'], ['harvest', '2026-08-10', '2026-09-15']];
+  const out = seasonSpans(garlic, [], [{ stage: 'harvesting', date: '2026-10-05' }], '2026-12-29');
+  assert.deepEqual(out, [
+    ['grow', '2026-06-29', '2026-10-05'],
+    ['harvest', '2026-10-05', '2026-12-29'],
+  ]);
+});
+
+test('a span still ends where the next one begins', () => {
+  const out = seasonSpans(DEF, [{ date: '2026-08-20', stage: 'flowering' }], [], '2026-12-29');
+  assert.equal(out[0][2], out[1][1]);
+  assert.equal(out[1][2], out[2][1]);
 });

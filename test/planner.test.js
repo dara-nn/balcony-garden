@@ -70,7 +70,8 @@ test('mergePlan turns guidance into the care doc', () => {
   const ai = [{ id: 'a', guidance: 'Water every two days. Feed weekly.',
     health: { label: 'thirsty', tone: 'watch', issues: [] }, observations: 'dry soil' }];
   const out = mergePlan(status, ai, '2026-09-29', 1000);
-  assert.deepEqual(out.care, { generatedAt: 1000, plants: { a: { guidance: 'Water every two days. Feed weekly.' } } });
+  assert.deepEqual(out.care, { generatedAt: 1000,
+    plants: { a: { guidance: 'Water every two days. Feed weekly.', upcoming: [] } } });
   assert.equal(out.care.through, undefined);
 });
 
@@ -98,4 +99,27 @@ test('parsePlanResponse reads guidance out of a thinking response', () => {
     { text: JSON.stringify({ plants: [{ id: 'a', guidance: 'Water it.' }] }) },
   ] } }] };
   assert.deepEqual(parsePlanResponse(body), [{ id: 'a', guidance: 'Water it.' }]);
+});
+
+test('mergePlan carries the expected upcoming changes into the care doc', () => {
+  const status = { updatedAt: 0, plants: { a: { id: 'a', stage: 'flowering', notes: [], history: [] } } };
+  const ai = [{ id: 'a', guidance: 'Water it.', health: { label: 'fine', tone: 'good', issues: [] },
+    observations: 'doing well', upcoming: [{ stage: 'fruiting', date: '2026-11-01' }] }];
+  const out = mergePlan(status, ai, '2026-09-29', 1000);
+  assert.deepEqual(out.care.plants.a.upcoming, [{ stage: 'fruiting', date: '2026-11-01' }]);
+});
+
+test('a plant with no expected changes gets an empty list, not undefined', () => {
+  const status = { updatedAt: 0, plants: { a: { id: 'a', notes: [], history: [] } } };
+  const ai = [{ id: 'a', guidance: 'Water it.', health: { label: 'fine', tone: 'good', issues: [] }, observations: '' }];
+  const out = mergePlan(status, ai, '2026-09-29', 1000);
+  assert.deepEqual(out.care.plants.a.upcoming, []);
+});
+
+test('an expected change with no date is dropped', () => {
+  const status = { updatedAt: 0, plants: { a: { id: 'a', notes: [], history: [] } } };
+  const ai = [{ id: 'a', guidance: 'Water it.', health: { label: 'f', tone: 'good', issues: [] }, observations: '',
+    upcoming: [{ stage: 'fruiting' }, { stage: 'harvesting', date: '2026-12-01' }] }];
+  const out = mergePlan(status, ai, '2026-09-29', 1000);
+  assert.deepEqual(out.care.plants.a.upcoming, [{ stage: 'harvesting', date: '2026-12-01' }]);
 });

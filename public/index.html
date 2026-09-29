@@ -78,31 +78,60 @@
   .sect > .hd .meta{margin-left:auto;font-size:13px;color:var(--dim)}
   .sect > .hd .meta b{font-weight:600;color:var(--tomato)}
   /* the plant list: one row per plant, health in words, season bar, guidance */
+  /* One column for the names, so every bar starts and ends at the same x and
+     the month scale above them lines up with all of them. */
+  .sect{--namecol:300px}
   .prow{padding:10px 0;border-bottom:1px solid var(--rule)}
-  .phead{display:flex;align-items:center;gap:var(--s2);flex-wrap:wrap}
-  .pname{display:flex;align-items:center;gap:var(--s2);background:none;border:0;padding:0;
-    font:inherit;color:inherit;cursor:pointer;text-align:left}
+  .phead{display:grid;grid-template-columns:var(--namecol) 1fr;align-items:center;gap:var(--s2)}
+  .pname{display:flex;align-items:baseline;flex-wrap:wrap;gap:2px var(--s2);background:none;
+    border:0;padding:0;font:inherit;color:inherit;cursor:pointer;text-align:left;min-width:0}
+  .pname .art{align-self:center}
   .pname em{font-style:normal;color:var(--dim);font-size:.85em}
   .hl{font-size:.85em;padding:1px 8px;border-radius:var(--r-pill)}
   .hl.good{background:color-mix(in srgb,var(--leaf) 16%,transparent);color:var(--pine)}
   .hl.watch{background:color-mix(in srgb,var(--water) 16%,transparent);color:var(--water)}
   .hl.bad{background:color-mix(in srgb,var(--tomato) 16%,transparent);color:var(--tomato)}
-  .water{margin-left:auto;font-size:.85em;color:var(--dim)}
+  .water{font-size:.85em;color:var(--dim)}
+  .wline{display:flex;align-items:center;gap:var(--s1);margin:2px 0 4px}
+  /* Two paragraphs that read differently: what it is doing, then what to do.
+     A label each, on one shared column so the prose lines up. */
+  .status,.guide{display:grid;grid-template-columns:58px 1fr;gap:var(--s2);
+    margin:3px 0 0;font-size:.92em;line-height:1.45}
+  .lbl{font-size:10.5px;letter-spacing:.09em;text-transform:uppercase;font-weight:600;
+    color:var(--dim);padding-top:.32em}
+  .status{color:var(--dim)}
+  .status.watch>span{color:var(--water)} .status.bad>span{color:var(--tomato)}
+  .status>span{color:var(--ink)}
+  .guide{color:var(--ink)}
+  .legend{display:flex;align-items:center;gap:var(--s3);flex-wrap:wrap;
+    margin:var(--s2) 0 var(--s4);font-size:12.5px;color:var(--dim)}
+  .legend span{display:flex;align-items:center;gap:5px}
+  .legend .sep{width:1px;height:12px;background:var(--rule);padding:0}
+  .sw{width:14px;height:6px;border-radius:3px;display:inline-block}
+  .sw.grow{background:var(--ph-grow)} .sw.flower{background:var(--ph-flower)}
+  .sw.fruit{background:var(--ph-fruit)} .sw.harvest{background:var(--ph-harvest)}
+  .sw.future{background:var(--dim);opacity:.4}
   .drop{background:none;border:0;padding:2px 4px;cursor:pointer;opacity:.35;font-size:.95em}
   .drop:hover,.drop:focus-visible{opacity:1}
-  .monthscale{position:relative;height:1em;margin:4px 0;font-size:.75em;color:var(--dim)}
-  .monthscale b{position:absolute;font-weight:400}
-  .prow .track{display:block;position:relative;height:6px;border-radius:3px;
-    background:var(--rule);margin:6px 0;overflow:hidden}
+  .chart{min-width:0}
+  .monthscale{position:relative;height:.95em;margin:0 0 3px;font-size:11px;color:var(--dim);opacity:.75}
+  .monthscale b{position:absolute;font-weight:400;transform:translateX(-50%)}
+  .prow .track{position:relative;height:6px;border-radius:3px;
+    background:var(--rule);overflow:hidden}
+  .prow .track .bar.future{opacity:.4}
+  .sect>.prow:first-of-type{padding-top:0}
   .prow .track .bar{position:absolute;top:0;height:100%;border-radius:3px}
   .prow .track .bar.grow{background:var(--ph-grow)} .prow .track .bar.flower{background:var(--ph-flower)}
   .prow .track .bar.fruit{background:var(--ph-fruit)} .prow .track .bar.harvest{background:var(--ph-harvest)}
   .prow .track .tline{position:absolute;top:-2px;width:2px;height:10px;background:var(--ink)}
-  .guide{margin:6px 0 0;font-size:.92em;line-height:1.45}
   .hrow{padding:var(--s2) 0;border-bottom:1px solid var(--rule)}
   .striplabel{align-self:center;padding:0 var(--s2);font-size:12px;color:var(--dim)}
   .wchk{display:flex;align-items:center;gap:6px;font-size:.85em;color:var(--dim)}
-  @media (max-width:520px){.water{margin-left:0;width:100%;order:9}}
+  @media (max-width:760px){
+    .sect{--namecol:1fr}
+    .phead{grid-template-columns:1fr;gap:6px}
+    .status,.guide{grid-template-columns:48px 1fr;gap:6px}
+  }
 
   /* a sub-heading inside a section: smaller, its own rule, its own air */
   .sub{display:flex;align-items:baseline;gap:var(--s2);margin:var(--s5) 0 var(--s2);font-size:15px;
@@ -458,7 +487,7 @@ stored on this device only, so it is asked once.</p>
 <script src="garden-data.js"></script>
 <script type="module">
 import { weatherAlerts, normalizeHealth } from './care-rules.js';
-import { groupByArea, waterLabel, historyStream, seasonSpans, photosInView } from './garden-view.js';
+import { groupByArea, waterLabel, historyStream, seasonSpans, photosInView, chartWindow, monthTicks } from './garden-view.js';
 
 /* ================= basics ================= */
 const $=s=>document.querySelector(s);
@@ -1089,40 +1118,84 @@ function dockHTML(){
 }
 
 /* ---- the chart ---- */
-/* One month scale per area group, not one per plant. */
-function monthScaleHTML(){
-  const months=[['Jul','2026-07-01'],['Aug','2026-08-01'],['Sep','2026-09-01'],['Oct','2026-10-01']];
-  return `<div class="monthscale">${months.map(([l,d])=>
-    `<b style="left:${spos(d)}%">${l}</b>`).join('')}</div>`;
+/* One window for the whole chart, recomputed each render so every bar and the
+   scale above them share the same axis. */
+let WIN={start:todayISO(),end:todayISO()};
+const upcomingFor=id=>((careDoc&&careDoc.plants&&careDoc.plants[id])||{}).upcoming||[];
+function refreshWindow(){
+  const list=plants();
+  WIN=chartWindow({
+    spans:list.map(p=>(SEASON.find(r=>r.key===KEY_BY_ID[p.id])||{}).ph||[]),
+    histories:list.map(p=>(statusDoc.plants[p.id]||{}).history||[]),
+    upcomings:list.map(p=>upcomingFor(p.id)),
+    today:todayISO(),monthsAhead:3});
+}
+/* Position on the shared axis, 0 to 100. */
+const wpos=d=>{
+  const a=Date.parse(WIN.start+'T00:00:00Z'),b=Date.parse(WIN.end+'T00:00:00Z');
+  if(!(b>a))return 0;
+  return Math.max(0,Math.min(100,(Date.parse(d+'T00:00:00Z')-a)/(b-a)*100));
+};
+
+const PHASE_LABEL={grow:'Growing',flower:'Flowering',fruit:'Green fruit',harvest:'Harvest'};
+const niceDate=d=>{const x=new Date(d+'T00:00:00Z');
+  return `${x.getUTCDate()} ${['Jan','Feb','Mar','Apr','May','Jun','Jul','Aug','Sep','Oct','Nov','Dec'][x.getUTCMonth()]}`;};
+
+/* The legend sits once at the top of the section, not under every chart. */
+function legendHTML(){
+  return `<div class="legend">${Object.entries(PHASE_LABEL).map(([k,l])=>
+    `<span><i class="sw ${k}"></i>${l}</span>`).join('')}
+    <span class="sep"></span><span><i class="sw future"></i>Expected</span></div>`;
 }
 
+function monthScaleHTML(){
+  return `<div class="monthscale">${monthTicks(WIN.start,WIN.end).map(t=>
+    `<b style="left:${wpos(t.date)}%">${t.label}</b>`).join('')}</div>`;
+}
+
+/* Everything up to today is what happened, everything after it is expectation,
+   so each span is drawn twice when it straddles today: solid, then faded. */
 function seasonBarHTML(p){
   const row=SEASON.find(r=>r.key===KEY_BY_ID[p.id]);
-  const spans=seasonSpans(row?row.ph:[],(statusDoc.plants[p.id]||{}).history||[]);
-  const t=spos(todayISO());
-  return `<span class="track">${spans.map(([c,f,to])=>
-    `<i class="bar ${c}" style="left:${spos(f)}%;width:${Math.max(spos(to)-spos(f),1.5)}%" title="${c}"></i>`).join('')}
-    ${t>=0&&t<=100?`<i class="tline" style="left:${t}%"></i>`:''}</span>`;
+  const spans=seasonSpans(row?row.ph:[],(statusDoc.plants[p.id]||{}).history||[],
+    upcomingFor(p.id),WIN.end);
+  const T=todayISO(),t=wpos(T);
+  const piece=(c,f,to,future)=>{
+    const l=wpos(f),w=wpos(to)-l;
+    if(w<=0)return '';
+    return `<i class="bar ${c}${future?' future':''}" style="left:${l}%;width:${Math.max(w,1.2)}%"
+      title="${esc(PHASE_LABEL[c]||c)}, ${esc(niceDate(f))} to ${esc(niceDate(to))}${future?' (expected)':''}"></i>`;
+  };
+  return `<span class="track">${spans.map(([c,f,to])=>{
+      if(to<=T)return piece(c,f,to,false);
+      if(f>=T)return piece(c,f,to,true);
+      return piece(c,f,T,false)+piece(c,T,to,true);
+    }).join('')}
+    ${t>=0&&t<=100?`<i class="tline" style="left:${t}%" title="Today"></i>`:''}</span>`;
 }
 
-/* Health in words, not a symbol. A plant the server has never seen still draws
-   a complete row: no status, no guidance, no history. */
+/* Four rows: what it is and where it is in the season, when it was watered,
+   what it is doing now, and what to do about it. */
 function plantRowHTML(p){
   const h=p.health,care=(careDoc&&careDoc.plants&&careDoc.plants[p.id])||null;
+  const status=p.observations||'';
   return `<article class="prow ${touched.has(p.id)?'touched':''}">
     <div class="phead">
       <button class="pname" data-act="plant" data-val="${esc(p.id)}">
         <span class="art">${avatarFor(p.id)}</span>
         <b>${esc(p.name)}</b><em>${esc(p.stage)}</em>
       </button>
-      ${h?`<span class="hl ${h.tone}">${esc(h.label)}</span>`:''}
+      <div class="chart">${monthScaleHTML()}${seasonBarHTML(p)}</div>
+    </div>
+    <div class="wline">
       <span class="water">${esc(waterLabel(p.last,todayISO()))}</span>
       <button class="drop" data-act="water" data-val="${esc(p.id)}"
         aria-label="Mark ${esc(p.name)} watered today" title="Mark watered today">💧</button>
     </div>
-    ${seasonBarHTML(p)}
-    <p class="guide">${care&&care.guidance?esc(care.guidance)
-      :'No guidance yet. Add a note, or wait for tonight\'s update.'}</p>
+    <p class="status ${h?esc(h.tone):''}"><b class="lbl">Status</b><span>${
+      status?esc(status):'No reading yet.'}</span></p>
+    <p class="guide"><b class="lbl">Care</b><span>${care&&care.guidance?esc(care.guidance)
+      :'No guidance yet. Add a note, or wait for tonight\'s update.'}</span></p>
   </article>`;
 }
 
@@ -1206,10 +1279,10 @@ function entryHTML(e){
 function allPlantsHTML(){
   const T=todayISO(),all=plants();
   return `<section class="sect">
+    ${legendHTML()}
     ${groupByArea(all).map(g=>`
       <div class="sub"><span>${esc(g.label)}</span><span class="n">${g.plants.length}</span></div>
       ${g.area==='balcony'?wxHTML(T):''}
-      ${monthScaleHTML()}
       ${g.plants.map(plantRowHTML).join('')}`).join('')}
     ${historyHTML(all,true)}
   </section>`;
@@ -1223,17 +1296,20 @@ function plantHTML(p){
     <div class="hd"><h2>${esc(pr.t||p.name)}</h2>
       <span class="meta">${p.area==='indoor'?'Indoor':'Balcony'} · ${esc(p.stage)}</span></div>
 
-    <div class="phead">
-      ${h?`<span class="hl ${h.tone}">${esc(h.label)}</span>`:''}
-      <span class="water">${esc(waterLabel(p.last,todayISO()))}</span>
-      <button class="drop" data-act="water" data-val="${esc(p.id)}"
-        aria-label="Mark watered today" title="Mark watered today">💧</button>
+    ${legendHTML()}
+    <div class="prow">
+      <div class="phead"><span class="pname"></span>
+        <div class="chart">${monthScaleHTML()}${seasonBarHTML(p)}</div></div>
+      <div class="wline">
+        <span class="water">${esc(waterLabel(p.last,todayISO()))}</span>
+        <button class="drop" data-act="water" data-val="${esc(p.id)}"
+          aria-label="Mark watered today" title="Mark watered today">💧</button>
+      </div>
+      <p class="status ${h?esc(h.tone):''}"><b class="lbl">Status</b><span>${
+        p.observations?esc(p.observations):'No reading yet.'}</span></p>
+      <p class="guide"><b class="lbl">Care</b><span>${care&&care.guidance?esc(care.guidance)
+        :'No guidance yet. Add a note, or wait for tonight\'s update.'}</span></p>
     </div>
-    <div class="prow bare">${monthScaleHTML()}${seasonBarHTML(p)}</div>
-
-    <p class="guide">${care&&care.guidance?esc(care.guidance)
-      :'No guidance yet. Add a note, or wait for tonight\'s update.'}</p>
-    ${p.observations?`<p class="prose dimmed">${esc(p.observations)}</p>`:''}
 
     ${historyHTML([p],false)}
 
@@ -1276,6 +1352,7 @@ function renderLock(){
 
 /* ---- put the page together ---- */
 function renderAll(){
+  refreshWindow();
   const a=document.activeElement,keep=a&&a.dataset&&a.dataset.ta?a.selectionStart:null;
   $('#page').innerHTML=
     `<header class="mast">
