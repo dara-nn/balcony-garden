@@ -85,7 +85,9 @@
   .phead{display:grid;grid-template-columns:var(--namecol) 1fr;align-items:center;gap:var(--s2)}
   .pname{display:flex;align-items:baseline;flex-wrap:wrap;gap:2px var(--s2);background:none;
     border:0;padding:0;font:inherit;color:inherit;cursor:pointer;text-align:left;min-width:0}
-  .pname .art{align-self:center}
+  .pname .art{align-self:center;width:34px;height:34px;flex:none;overflow:hidden;
+    border-radius:var(--r-sm)}
+  .pname .art svg{width:100%;height:100%;display:block}
   .pname em{font-style:normal;color:var(--dim);font-size:.85em}
   .hl{font-size:.85em;padding:1px 8px;border-radius:var(--r-pill)}
   .hl.good{background:color-mix(in srgb,var(--leaf) 16%,transparent);color:var(--pine)}
