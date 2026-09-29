@@ -1252,6 +1252,8 @@ function dockHTML(){
         <div class="acts">
           <button data-act="attach" aria-label="Lisää kuva">📷</button>
           <span class="sp"></span>
+          ${p?`<label class="wchk"><input type="checkbox" data-act="watered-chk"
+            ${staged.watered?'checked':''}> watered today</label>`:''}
           <button class="save ${can?'on':''}" data-act="save" ${can?'':'disabled'}>Tallenna</button>
         </div>
       </div>
@@ -1472,50 +1474,26 @@ function allPlantsHTML(){
 /* ---- one plant, in full ---- */
 function plantHTML(p){
   const key=KEY_BY_ID[p.id],pr=PROFILE[key]||{t:p.name,body:[],src:''};
-  const s=stateOf(p),row=SEASON.find(r=>r.key===key);
-  const mine=photosFor(p.id);
-  const notes=shown(p.notes).slice().sort((a,b)=>(b.date||'').localeCompare(a.date||''));
-  const hist=plantHistory(p);
-  const T=todayISO();
-  const mine_today=flatTasks(T).filter(t=>t.pid===p.id);
+  const h=p.health,care=(careDoc&&careDoc.plants&&careDoc.plants[p.id])||null;
   return `<section class="sect">
     <div class="hd"><h2>${esc(pr.t||p.name)}</h2>
-      <span class="meta">${AREA_LABEL[p.area]} · ${esc(p.stage)}</span></div>
-    <p class="lede ${s.tone}"><span class="mk">${s.mk}</span>${esc(s.text)}<em>${esc(s.meta)}</em></p>
-    ${p.observations?`<p class="prose dimmed">${esc(p.observations)}</p>`:''}
-    ${mine_today.length?`<div class="list">${mine_today.map(t=>taskRowHTML(T,t)).join('')}</div>`:''}
+      <span class="meta">${p.area==='indoor'?'Indoor':'Balcony'} · ${esc(p.stage)}</span></div>
 
-    <div class="sub"><span>Kausi</span><span class="n">${esc(phaseNow(p.id))}</span></div>
-    <div class="seasonstrip">
-      <span class="scale">${[['Kesä','2026-07-01'],['Elo','2026-08-01'],['Syys','2026-09-01'],['Loka','2026-10-01']]
-        .map(([l,d])=>`<b style="left:${spos(d)}%">${l}</b>`).join('')}</span>
-      <span class="track">${(row?row.ph:[]).map(([c,f,t])=>
-        `<i class="bar ${c}" style="left:${spos(f)}%;width:${Math.max(spos(t)-spos(f),1.5)}%"></i>`).join('')}</span>
-      <span class="scale"><b class="today" style="left:${spos(T)}%">▏tänään</b></span>
+    <div class="phead">
+      ${h?`<span class="hl ${h.tone}">${esc(h.label)}</span>`:''}
+      <span class="water">${esc(waterLabel(p.last,todayISO()))}</span>
+      <button class="drop" data-act="water" data-val="${esc(p.id)}"
+        aria-label="Mark watered today" title="Mark watered today">💧</button>
     </div>
-    <ul class="life">${hist.map(([date,e])=>`<li>
-      <span class="when">${dayLabel(date)}</span>
-      <span class="what">${e.stage?`🪴 ${esc(e.stage)} `:''}${e.notes.map(t=>'✨ '+esc(t)).join(' ')}${
-        e.photos?` 📷 ${e.photos}`:''}</span></li>`).join('')||'<li><span class="what">Ei historiaa</span></li>'}</ul>
+    <div class="prow bare">${monthScaleHTML()}${seasonBarHTML(p)}</div>
 
-    <div class="sub"><span>Päiväkirja</span><span class="n">${notes.length}</span></div>
-    ${notes.length?notes.map(n=>editing&&editing.kind==='note'&&editing.id===n.id
-      ? editBoxHTML('note',n.id,p.id,n.text)
-      : `<div class="note">
-          <div class="data">${dayLabel(n.date)}${n.ai?' ✨':''}</div>
-          <p class="prose">${esc(n.text)}</p>
-          ${n.quote?`<p class="prose quote">“${esc(n.quote)}”</p>`:''}
-          <div class="entry-acts">
-            <button class="lnk" data-act="note-edit" data-val="${esc(n.id)}" data-plant="${esc(p.id)}">Muokkaa</button>
-            <button class="lnk" data-act="note-del" data-val="${esc(p.id)}" data-note="${esc(n.id)}">Poista</button>
-          </div></div>`).join('')
-      :'<div class="none">Ei merkintöjä</div>'}
+    <p class="guide">${care&&care.guidance?esc(care.guidance)
+      :'No guidance yet. Add a note, or wait for tonight\'s update.'}</p>
+    ${p.observations?`<p class="prose dimmed">${esc(p.observations)}</p>`:''}
 
-    ${mine.length?`<div class="sub"><span>Kuvat</span><span class="n">${mine.length} kuvaa</span></div>
-      <div class="shots">${mine.map(x=>`<button data-act="view" data-val="${esc(x.id)}">
-        <img src="${photoURL(x.id)}" alt="" loading="lazy"></button>`).join('')}</div>`:''}
+    ${historyHTML([p])}
 
-    <div class="sub"><span>Hoito</span><span class="n">${esc(pr.src||'')}</span></div>
+    <div class="sub"><span>Care</span><span class="n">${esc(pr.src||'')}</span></div>
     ${(pr.body||[]).map(b=>`<p class="prose">${esc(b)}</p>`).join('')}
     ${REAL[key]?`<figure class="ref"><img src="${REAL[key][0]}" alt="${esc(REAL[key][1])}" loading="lazy"
       onerror="this.parentElement.style.display='none'"><figcaption>${esc(REAL[key][1])}</figcaption></figure>`:''}
@@ -1597,15 +1575,23 @@ function wireFooter(){
 /* ================= the note ================= */
 /* One composer, at the top of the page. A note carries the plant the nav has
    selected, so the distiller is told the subject instead of guessing it. */
-const staged={top:[]};
+const staged={top:[],watered:false};
 let draft='';
 let lastEntryId=null;
-function clearDraft(){staged.top.forEach(s=>URL.revokeObjectURL(s.url));staged.top=[];draft='';}
+function clearDraft(){staged.top.forEach(s=>URL.revokeObjectURL(s.url));staged.top=[];staged.watered=false;draft='';}
 async function saveEntry(){
   const text=draft.trim();
   if(!text&&!staged.top.length)return;
   const date=todayISO(),plantId=V.plant||null;
   const btn=document.querySelector('[data-act="save"]');if(btn)btn.disabled=true;
+  /* The watering is written BEFORE the entry. Posting the entry kicks off a
+     re-plan that reads status:garden and writes it back, so a watering saved
+     after the post is read stale and overwritten. */
+  if(staged.watered&&plantId){
+    await apiWrite('PUT','/api/status/'+encodeURIComponent(plantId),
+      JSON.stringify({lastWatered:date}),'application/json');
+    await loadStatus();
+  }
   const photoIds=[];
   for(const s of staged.top){
     const rec=await uploadOne(s.blob,date,s.plantId||plantId||'');
@@ -1645,6 +1631,7 @@ const ACTIONS={
     if(!r||!r.ok){toast('Could not save. Try again.');return;}
     await loadStatus();renderAll();
   },
+  'watered-chk':(_,el)=>{staged.watered=el.checked;},
   'entry-del':id=>deleteEntry(id),
   'entry-edit':id=>{editing={kind:'entry',id};renderAll();focusEdit();},
   'note-del':(pid,el)=>deleteNote(pid,el.dataset.note),
@@ -1661,7 +1648,10 @@ document.addEventListener('click',e=>{
   const el=e.target.closest('[data-act]');if(!el)return;
   if(busy&&el.dataset.act!=='escape')return;      /* the lock answers, nothing else */
   const fn=ACTIONS[el.dataset.act];if(!fn)return;
-  e.preventDefault();fn(el.dataset.val,el,e);
+  /* A checkbox needs its own default: preventDefault would revert the tick
+     after the handler runs. Everything else is a button or a link. */
+  if(el.type!=='checkbox')e.preventDefault();
+  fn(el.dataset.val,el,e);
 });
 document.addEventListener('input',e=>{
   if(!e.target.dataset.ta)return;
