@@ -1,6 +1,6 @@
 import { test } from 'node:test';
 import assert from 'node:assert/strict';
-import { groupByArea, daysSince, waterLabel, historyStream, phaseOfStage, seasonSpans } from '../public/garden-view.js';
+import { groupByArea, daysSince, waterLabel, historyStream, phaseOfStage, seasonSpans, photosInView } from '../public/garden-view.js';
 
 const p = (id, area) => ({ id, name: id, area });
 
@@ -167,4 +167,20 @@ test('a recorded stage the species bar does not have is ignored', () => {
 
 test('a plant with no species bar comes back empty', () => {
   assert.deepEqual(seasonSpans([], [{ date: '2026-08-10', stage: 'flowering' }]), []);
+});
+
+test('the all-plants view shows untagged photos', () => {
+  const photos = [{ id: 'a', plant: 'tomato-1' }, { id: 'loose' }, { id: 'x', plant: 'gone' }];
+  assert.deepEqual(photosInView(photos, ['tomato-1'], true).map((p) => p.id), ['a', 'loose']);
+});
+
+test('a plant page shows only that plant, never an untagged photo', () => {
+  const photos = [{ id: 'a', plant: 'tomato-1' }, { id: 'loose' }, { id: 'b', plant: 'monstera' }];
+  assert.deepEqual(photosInView(photos, ['monstera'], false).map((p) => p.id), ['b']);
+});
+
+test('a photo tagged to a plant that is gone is dropped from both views', () => {
+  const photos = [{ id: 'x', plant: 'deleted-plant' }];
+  assert.deepEqual(photosInView(photos, ['tomato-1'], true), []);
+  assert.deepEqual(photosInView(photos, ['tomato-1'], false), []);
 });

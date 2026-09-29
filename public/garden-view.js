@@ -88,3 +88,11 @@ export function seasonSpans(defaults, history) {
   for (const s of spans) { if (s[2] < s[1]) s[2] = s[1]; }
   return spans;
 }
+
+/* Which photos belong in a history view. An untagged photo has no plant to sit
+   under, so it belongs to the whole garden and nowhere else: showing it on one
+   plant's page would claim it is a photo of that plant. */
+export function photosInView(photos, plantIds, allPlants) {
+  const ids = new Set(plantIds || []);
+  return (photos || []).filter((p) => (p.plant ? ids.has(p.plant) : !!allPlants));
+}

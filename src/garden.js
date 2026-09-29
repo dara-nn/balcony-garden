@@ -23,10 +23,16 @@ export async function writeCare(env, doc) {
 }
 
 /* The bar wants to know when a plant actually changed, not when the seed file
-   was last edited. Every write that moves the stage leaves a dated mark here. */
+   was last edited. Every write that MOVES the stage leaves a dated mark here.
+
+   Introducing a plant is not a move: the first stage it is given is simply what
+   it already was when it was added, and dating that as a transition is the very
+   artefact this history replaces. Such a plant keeps the species defaults until
+   it actually changes. */
 export function recordStage(prev, stage, date) {
   const history = (prev && prev.history) || [];
-  if (!stage || (prev && prev.stage === stage)) return history;
+  const had = prev && prev.stage;
+  if (!stage || !had || had === stage) return history;
   return [...history, { date, stage }];
 }
 

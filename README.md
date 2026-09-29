@@ -1,65 +1,54 @@
-# Daran parvekepuutarha (Dara's Balcony Garden)
+# Dara's Balcony Garden
 
-A garden care calendar with an AI plant journal.
+A care guide for my balcony plants, written by an AI from my own notes.
 
 **Live:** https://balcony-garden.dara-uxdesign.workers.dev
 
-A care calendar for the plants on my balcony. An AI planner reads four inputs: the notes I write about each plant, the photos I take of them, the Tampere weather forecast, and each plant's current status (stage, last watered). From those it produces the next 14 days of tasks per plant, covering watering, pollination, feeding and pruning, and the calendar shows that plan. The photos are also kept as a growth diary.
-
-The UI is a mix of Finnish and English on purpose. I'm learning Finnish at a very basic level, so some labels are in Finnish to help me memorize better.
+A personal tool, customized for my needs. I write notes and take photos of the plants on my balcony. An AI reads four things: those notes, the photos, the Tampere weather forecast, and each plant's current status (stage, last watered). From them it writes short care guidance for every plant: how often to water it right now, what to feed it, what to watch for. No dates, no to-do list. The notes and photos are also kept as a growth record.
 
 ## Features
 
-- **Month calendar** with per-day watering, pollination, feeding and prune tasks.
-- **AI plant notes and daily planner:** write a free-text note on any plant (a pest, a wilting leaf, "repotted today"), and a Gemini-powered planner folds it — together with same-day photos and the forecast — into an updated health read and the next 14 days of tasks. See [Architecture](#architecture) below.
-- **Weather-aware scheduling** using the free [Open-Meteo](https://open-meteo.com/) forecast for Tampere. Hot days shorten watering intervals, and hot or cold days colour the affected cells and raise an alert (for example, close the glazing on a cold night).
-- **Season chart (Kausi)** showing each plant's growing, flowering, fruiting and harvest span, with plant icons.
-- **Plant guides:** tap a plant for variety-specific care, flat SVG botanical art and a reference photo, plus its live status (stage, health, notes) and a "last updated" timestamp for the AI plan.
-- **Photo log (Kuvat):** a growth-photo gallery grouped by plant and date, plus a whole-garden cover photo. Photos are stored server-side, so they're the same across my devices, and the planner reads same-day photos too.
-- **Synced task list:** done checkmarks stay in sync across my phone and laptop (see below).
-- **Light and dark theme** toggle.
+- **One list of plants.** Every plant shows its stage, how it is doing in the AI's words, when I last watered it, its season bar and its current care guidance.
+- **AI care guidance.** I write a free-text note (a pest, a wilting leaf, "repotted today"), and a Gemini-powered adviser folds it, together with same-day photos and the forecast, into an updated health read and fresh guidance. See [Architecture](#architecture) below.
+- **Indoor and balcony.** Plants are grouped by where they live. The forecast and the cold-night alert only apply to the balcony group, so an indoor plant never gets told to close the glazing.
+- **Season bar.** Each plant's growing, flowering, fruiting and harvest spans at a glance. The species table supplies the expectation, and where a real stage change has been recorded, that date replaces the default and the bar redraws around it.
+- **Watering, recorded not managed.** A small droplet button, or a "watered today" tick in the note box. It only ever answers "when did I last water this", never nags.
+- **One history.** Notes and photos in one stream, newest first, for the whole garden or for one plant. A note the AI could not place lands under "Unsorted" so I can assign it myself.
+- **Plant pages** with the variety care guide, flat SVG botanical art and a reference photo.
+- **Light and dark theme.**
 
 ## Architecture
 
-Four inputs feed a server-owned status, which an AI planner turns into a plan, which the calendar renders — with a deterministic fallback engine underneath for anything the AI hasn't covered:
+Four inputs feed a server-owned status, which the AI turns into guidance, which the page renders:
 
 ```
 notes ────┐
 manual edits ─┤
-photos ───────┼──▶ status:garden ──▶ [Gemini re-plan] ──▶ plan:garden ──▶ calendar
-weather ──────┘         ▲                                      │
-                         └──────────── (fallback: buildTasks) ◀─┘
-                                        progress:garden (done marks, client-only)
+photos ───────┼──▶ status:garden ──▶ [Gemini re-plan] ──▶ care:garden ──▶ the page
+weather ──────┘
 ```
 
-Three KV docs, one job each, deliberately *not* named alike so "state" and "status" can't get confused in code or conversation:
+Two KV docs, one job each:
 
-- **`status:garden`** — per-plant condition: `stage`, `lastWatered`, `intervalOverride`, `notes[]`, `health {overall, issues[]}`, `observations`. Written by the Worker whenever a note is posted (`POST /api/notes`), a manual field is edited (`PUT /api/status/:id`), or the AI planner merges its read of plant health back in. This is the one source of truth for "what is true about this plant right now" — see [`src/garden.js`](src/garden.js).
-- **`plan:garden`** — the AI's per-plant, per-day task list for the next 14 days (`{generatedAt, through, plants: {id: {date: [tasks]}}}`). Written *only* by the planner's re-plan step, never by hand. See [`src/planner.js`](src/planner.js).
-- **`progress:garden`** — the synced done-log and cached client state (`{updatedAt, garden2, doneLog}`). Written only by the client, via `GET/PUT /api/progress` — the server never touches it. This key used to be called `state:garden`; the old name is still read once as a migration fallback in [`src/index.js`](src/index.js).
+- **`status:garden`** is per-plant condition: `stage`, `lastWatered`, `notes[]`, `health {label, tone, issues[]}`, `observations`, and `history[]` (every recorded stage change, dated). Written by the Worker whenever a note is posted (`POST /api/notes`), a field is edited (`PUT /api/status/:id`), or the AI merges its read of plant health back in. This is the one source of truth for what is true about a plant right now. See [`src/garden.js`](src/garden.js).
+- **`care:garden`** is the AI's current guidance per plant (`{generatedAt, plants: {id: {guidance}}}`). Written only by the re-plan step, never by hand. This key used to be `plan:garden`, a dated task list; the old name is still read once as a migration fallback. See [`src/planner.js`](src/planner.js).
 
-**The re-plan itself** ([`replan()`](src/planner.js) in `src/planner.js`) runs server-side: it reads `status:garden`, fetches the 14-day Open-Meteo forecast, gathers each plant's same-day photos from the `PHOTOS` KV namespace, and sends it all as one Gemini `generateContent` REST call. The result is merged back into `status:garden` (updated health/observations/stage) and written fresh to `plan:garden`. It runs on two triggers: the daily cron (`scheduled()` in `src/index.js`, `0 3 * * *` from [`wrangler.jsonc`](wrangler.jsonc)) and right after any note or status write (`ctx.waitUntil(replan(...))`, so a fresh note reshapes the plan within seconds without blocking the write's response).
+There is no third store any more. The done-log and the client state blob (`progress:garden`) went with the task list, and `lastWatered` now lives server-side only.
 
-**The calendar's task engine** ([`buildTasks()`](public/index.html) in `public/index.html`) overlays the AI plan day-by-day for whatever `plan:garden` actually covers (up to 14 days out, `through`), and falls back to the original deterministic per-plant interval math for everything else: days beyond the 14-day plan horizon, plants with no plan yet, or — if a re-plan call fails outright (network error, bad response, missing key) — the *entire* board, since the stores are simply left untouched on failure. The deterministic engine was the whole app before this feature; it never got removed, it just moved from "the plan" to "the plan's safety net."
+**The re-plan** ([`replan()`](src/planner.js) in `src/planner.js`) runs server-side: it reads `status:garden`, fetches the 14-day Open-Meteo forecast, gathers each plant's same-day photos from the `PHOTOS` KV namespace, and sends it all as one Gemini `generateContent` REST call. The result is merged back into `status:garden` (health, observations, stage) and written fresh to `care:garden`. It runs on two triggers: the daily cron (`scheduled()` in `src/index.js`, `0 3 * * *` from [`wrangler.jsonc`](wrangler.jsonc)) and right after any note or status write (`ctx.waitUntil(replan(...))`, so a fresh note reshapes the guidance within seconds without blocking the write's response).
 
-## Task sync
-
-Done checkmarks sync across my devices through a `GET/PUT /api/progress` endpoint on the Worker (renamed from `/api/state`; the old KV key `state:garden` is read once as a fallback if the new one is empty). It stores one KV doc (`progress:garden`) holding `{ updatedAt, garden2, doneLog }`.
-
-- The client renders from local storage first, then adopts the server doc when it's newer. This runs on load and again when the tab regains focus.
-- Every change pushes a debounced snapshot to the server.
-- Reads are public. Writes need the same passphrase (the `UPLOAD_PASS` bearer token) as photos and notes.
-- Conflicts resolve by whole-blob last-write-wins on `updatedAt`.
+**When the AI has not run yet, or the call failed**, the plant says so plainly and the stores are left untouched. There is no invented fallback advice. There used to be a deterministic interval engine underneath; it is gone, because there are no dated tasks left for it to fill in.
 
 ## Tech stack
 
-- **Front end:** one static page. [`public/index.html`](public/index.html) is the entire UI (HTML, CSS and one vanilla-JS `<script>`). No framework, no build step. It reads `status:garden` and `plan:garden`, overlays the AI plan on the calendar, and renders the notes/status editor and photo log.
-- **Data:** [`public/garden-data.js`](public/garden-data.js) defines the plant inventory as `window.GARDEN_SEED`, used to seed a plant's first `status:garden` entry.
-- **Worker:** [`src/index.js`](src/index.js) serves the static site (the `ASSETS` binding) plus the APIs below, all backed by one KV namespace (`PHOTOS`, which despite the name now holds photos, status, plan and progress — see `src/garden.js`).
-- **Planner:** [`src/planner.js`](src/planner.js) — the Gemini re-plan logic, isolated from the routing in `src/index.js`. One `generateContent` REST call to `gemini-flash-latest` on the free tier, authorised by the `GEMINI_API_KEY` Worker secret. On that tier Google may use the submitted note text and photos to improve their models: fine for a hobby balcony, worth knowing before pointing it at anything sensitive. Without the secret, re-plan fails quietly and the calendar runs on the deterministic engine.
-- **Store helpers:** [`src/garden.js`](src/garden.js) — the three KV keys and the read/write/merge helpers.
-- **Config:** [`wrangler.jsonc`](wrangler.jsonc) sets `main = src/index.js`, the `public/` assets dir, the `PHOTOS` KV namespace, and the daily cron trigger (`triggers.crons`).
-- **Weather:** Open-Meteo forecast API — called from the browser for the calendar's display, and again server-side inside `replan()` for the AI's planning context. No key required either way.
+- **Front end:** one static page. [`public/index.html`](public/index.html) is the entire UI (HTML, CSS and one vanilla-JS `<script>`). No framework, no build step.
+- **View logic:** [`public/garden-view.js`](public/garden-view.js) holds the pure parts (area grouping, watering labels, the history stream, season spans) as an ES module the page and the tests both load.
+- **Care rules:** [`public/care-rules.js`](public/care-rules.js) holds the weather alerts and the health normaliser, shared the same way.
+- **Data:** [`public/garden-data.js`](public/garden-data.js) defines the plant inventory as `window.GARDEN_SEED`.
+- **Worker:** [`src/index.js`](src/index.js) serves the static site (the `ASSETS` binding) plus the APIs below, all backed by one KV namespace (`PHOTOS`, which despite the name holds photos, status and care).
+- **Planner:** [`src/planner.js`](src/planner.js) is the Gemini logic, isolated from the routing. One `generateContent` REST call to `gemini-flash-latest` on the free tier, authorised by the `GEMINI_API_KEY` Worker secret. On that tier Google may use the submitted note text and photos to improve their models: fine for a hobby balcony, worth knowing before pointing it at anything sensitive.
+- **Store helpers:** [`src/garden.js`](src/garden.js) holds the KV keys and the read/write/merge helpers.
+- **Weather:** Open-Meteo forecast API, called from the browser for display and again server-side inside `replan()` for the AI's context. No key needed either way.
 
 ## API
 
@@ -67,25 +56,32 @@ All reads are public. All writes need `Authorization: Bearer <UPLOAD_PASS>`.
 
 | Endpoint | Method | What it does |
 |---|---|---|
-| `/api/status` | `GET` | Full `status:garden` doc — every plant's stage, last-watered, health, notes. |
-| `/api/status/:id` | `PUT` | Upsert fields on one plant (e.g. `{stage}` or `{lastWatered}`). Auth required. Triggers a note-style re-plan in the background. |
-| `/api/notes` | `POST` | Add/edit/delete a note on a plant: `{plantId, op: 'add'\|'edit'\|'delete', id?, date?, text?}`. Auth required. Triggers a background re-plan. |
-| `/api/plan` | `GET` | Current `plan:garden` doc (`{generatedAt, through, plants}`), or `{}` if none exists yet. |
-| `/api/progress` | `GET`/`PUT` | The synced done-log / client-state doc (`progress:garden`). `PUT` needs auth. |
-| `/api/photos` | `GET`/`POST` | List all photo metadata, or upload one (`POST`, auth, query params `date`/`plant`). |
+| `/api/status` | `GET` | Full `status:garden` doc: every plant's stage, last watered, health, notes, stage history. |
+| `/api/status/:id` | `PUT` | Upsert fields on one plant (`{stage}`, `{lastWatered}`). Auth. Triggers a background re-plan. |
+| `/api/care` | `GET` | Current `care:garden` doc (`{generatedAt, plants}`), or `{}` if none yet. |
+| `/api/notes` | `POST` | Add, edit or delete a note on a plant. Auth. Triggers a background re-plan. |
+| `/api/entries` | `GET`/`POST` | The raw free-text entries, exactly as typed. `POST` needs auth and runs the distiller. |
+| `/api/entries/:id` | `PATCH`/`DELETE` | Reword an entry (re-runs the distiller) or remove it. Auth. |
+| `/api/photos` | `GET`/`POST` | List photo metadata, or upload one (auth, query params `date`/`plant`). |
 | `/api/photos/:id` | `GET`/`PATCH`/`DELETE` | Stream one image; re-tag its plant (auth); delete it (auth). |
 | `/api/cover` | `GET`/`PUT` | Read or set the whole-garden cover photo id (`PUT` auth; empty id = default). |
 
-**Cron:** a `scheduled` handler runs daily at 03:00 UTC (`triggers.crons` in `wrangler.jsonc`) and calls the same `replan()` used by note/status writes, so the plan stays current even on days nothing changes by hand.
+**Cron:** a `scheduled` handler runs daily at 03:00 UTC (`triggers.crons` in `wrangler.jsonc`) and calls the same `replan()` as the write triggers, so the guidance stays current even on days I change nothing by hand.
 
 ## Editing the plant list
 
 Plants live in [`public/garden-data.js`](public/garden-data.js) as `window.GARDEN_SEED`. To change the garden:
 
-- Edit a plant (stage, note, etc.) and **bump the `version` number**. The app merges the new data into each browser on next load, and seeds a `status:garden` entry for any plant the server doesn't have yet.
-- Add `water:'YYYY-MM-DD'` to a plant to record a watering on that date (applied on the next version bump).
-- Set `resetTasksOn:'YYYY-MM-DD'` to clear the backlog: every plant counts as watered that day, nothing overdue.
+- Edit a plant (stage, note, area) and **bump the `version` number**. The app merges the new data on next load and seeds a `status:garden` entry for any plant the server does not have yet.
+- `area` is `"balcony"` (glazed, feels the forecast) or `"indoor"` (heated room, does not). Moving a plant indoors for winter is an edit here plus a version bump.
+- Add `water:'YYYY-MM-DD'` to a plant to record a watering on that date.
+
+Seeding a plant records its stage as a starting point, not as a change, so a new plant keeps the species defaults on its season bar until it actually moves stage.
 
 ## Permissions
 
-Reads are public, no passphrase needed: status, plan, progress, photos, cover. Writes need the passphrase (`UPLOAD_PASS`): adding a note, editing a plant's stage or watering date, adding/re-tagging/deleting photos, changing the cover, and pushing task-progress updates. The app asks for it once per device and sends it as a bearer token on write requests. The `GEMINI_API_KEY` secret is separate — it authorises the Worker to call Gemini and is never exposed to the client.
+Reads are public, no passphrase needed: status, care, entries, photos, cover. Writes need the passphrase (`UPLOAD_PASS`): adding a note, marking a plant watered, editing its stage, adding, re-tagging or deleting photos, and changing the cover. The app asks once per device and sends it as a bearer token. The `GEMINI_API_KEY` secret is separate: it authorises the Worker to call Gemini and is never exposed to the client.
+
+## Tests
+
+`npm test` runs `node --test`. The pure modules are covered: the store helpers and stage history, the planner's merge and parsing, the care rules, the view logic (area grouping, watering labels, the history stream, season spans), and the 3D scene's layout and art. Rendering and layout are checked by hand with `npx wrangler dev`.

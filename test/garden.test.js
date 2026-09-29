@@ -29,7 +29,7 @@ test('upsertPlant creates a plant with defaults', () => {
   const out = upsertPlant(doc, 'tomato-1', { name: 'Tigerella', species: 'tomato', stage: 'flowering' }, 100);
   assert.equal(out.plants['tomato-1'].stage, 'flowering');
   assert.deepEqual(out.plants['tomato-1'].notes, []);
-  assert.deepEqual(out.plants['tomato-1'].history, [{ date: '1970-01-01', stage: 'flowering' }]);
+  assert.deepEqual(out.plants['tomato-1'].history, []);
   assert.equal(out.plants['tomato-1'].updatedAt, 100);
   assert.equal(out.updatedAt, 100);
 });
@@ -94,13 +94,16 @@ test('applyNoteOp throws for unknown plant', () => {
   assert.throws(() => applyNoteOp(base(), { plantId: 'zzz', op: 'add', text: 'x' }, 1), /unknown plant/);
 });
 
-test('recordStage appends the first stage it is given', () => {
-  assert.deepEqual(recordStage(undefined, 'flowering', '2026-09-29'),
-    [{ date: '2026-09-29', stage: 'flowering' }]);
+test('the stage a plant is introduced at is a baseline, not a transition', () => {
+  // Seeding a plant records what it already is. Dating that as a change is the
+  // artefact the season bar exists to avoid.
+  assert.deepEqual(recordStage(undefined, 'flowering', '2026-09-29'), []);
+  assert.deepEqual(recordStage({ history: [] }, 'flowering', '2026-09-29'), []);
+  assert.deepEqual(recordStage({ stage: undefined, history: [] }, 'flowering', '2026-09-29'), []);
 });
 
 test('recordStage appends when the stage changes', () => {
-  const prev = { history: [{ date: '2026-08-01', stage: 'growing' }] };
+  const prev = { stage: 'growing', history: [{ date: '2026-08-01', stage: 'growing' }] };
   assert.deepEqual(recordStage(prev, 'flowering', '2026-09-29'), [
     { date: '2026-08-01', stage: 'growing' },
     { date: '2026-09-29', stage: 'flowering' },
@@ -161,4 +164,18 @@ test('writeCare stores under the care key', async () => {
   const kv = fakeKV();
   await writeCare({ PHOTOS: kv }, { generatedAt: 3, plants: {} });
   assert.equal(JSON.parse(await kv.get(KEYS.care)).generatedAt, 3);
+});
+
+test('seeding a brand new plant records no transition', () => {
+  const doc = { updatedAt: 0, plants: {} };
+  const out = upsertPlant(doc, 'chilli-3', { name: 'Chilli 3', stage: 'seedling', lastWatered: '2026-09-29' },
+    Date.parse('2026-09-29T10:00:00Z'));
+  assert.deepEqual(out.plants['chilli-3'].history, []);
+  assert.equal(out.plants['chilli-3'].stage, 'seedling');
+});
+
+test('the first real move after seeding is recorded', () => {
+  let doc = upsertPlant({ updatedAt: 0, plants: {} }, 'chilli-3', { stage: 'seedling' }, Date.parse('2026-09-01T00:00:00Z'));
+  doc = upsertPlant(doc, 'chilli-3', { stage: 'flowering' }, Date.parse('2026-09-29T00:00:00Z'));
+  assert.deepEqual(doc.plants['chilli-3'].history, [{ date: '2026-09-29', stage: 'flowering' }]);
 });

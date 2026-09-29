@@ -430,24 +430,24 @@
   <div><button id="ph-tag">Retag</button> <button id="ph-del">Delete</button> <button id="ph-close">Close</button></div>
 </div>
 
-<div id="picker" class="modal" role="dialog" aria-modal="true" aria-label="Mikä kasvi?">
-  <div class="pk-card"><div class="pk-head"><span id="pk-title">Mikä kasvi?</span>
-    <button id="pk-cancel" aria-label="Sulje">×</button></div>
+<div id="picker" class="modal" role="dialog" aria-modal="true" aria-label="Which plant?">
+  <div class="pk-card"><div class="pk-head"><span id="pk-title">Which plant?</span>
+    <button id="pk-cancel" aria-label="Close">×</button></div>
     <div class="pk-grid" id="pk-grid"></div></div>
 </div>
 
 <div id="coverpick" class="modal" role="dialog" aria-modal="true" aria-label="Cover photo">
   <div class="pk-card"><div class="pk-head"><span>Cover photo</span>
-    <button id="cp-cancel" aria-label="Sulje">×</button></div>
+    <button id="cp-cancel" aria-label="Close">×</button></div>
     <div class="cp-grid" id="cp-grid"></div></div>
 </div>
 
 <div id="unlock" class="modal center" role="dialog" aria-modal="true" aria-labelledby="unlock-h">
   <div class="pk-card unlock-card">
-    <h3 id="unlock-h">Salasana</h3>
-    <p>Kuka tahansa voi lukea tätä puutarhaa, mutta vain sinä voit muuttaa sitä.
-       Salasana tallentuu vain tähän laitteeseen, joten se kysytään kerran.</p>
-    <input type="password" id="unlock-input" autocomplete="current-password" aria-label="Salasana">
+    <h3 id="unlock-h">Password</h3>
+    <p>Anyone can read this garden, but only you can change it. The password is
+stored on this device only, so it is asked once.</p>
+    <input type="password" id="unlock-input" autocomplete="current-password" aria-label="Password">
     <div class="row2"><button id="unlock-cancel">Cancel</button><button id="unlock-go" class="go">Unlock</button></div>
   </div>
 </div>
@@ -458,7 +458,7 @@
 <script src="garden-data.js"></script>
 <script type="module">
 import { weatherAlerts, normalizeHealth } from './care-rules.js';
-import { groupByArea, waterLabel, historyStream, seasonSpans } from './garden-view.js';
+import { groupByArea, waterLabel, historyStream, seasonSpans, photosInView } from './garden-view.js';
 
 /* ================= basics ================= */
 const $=s=>document.querySelector(s);
@@ -890,7 +890,7 @@ function openCover(){
   const imgs=PHOTOS.slice().sort((a,b)=>(b.created||0)-(a.created||0));
   $('#cp-grid').innerHTML=
     `<button class="cp-new" id="cp-new">📷<span>Add</span></button>`+
-    `<button class="cp-def${coverId?'':' sel'}" data-cover=""><span class="cp-green"></span><span>Vihreä</span></button>`+
+    `<button class="cp-def${coverId?'':' sel'}" data-cover=""><span class="cp-green"></span><span>Green</span></button>`+
     imgs.map(x=>`<button class="cp-photo${x.id===coverId?' sel':''}" data-cover="${esc(x.id)}" aria-label="${esc(shortDate(x.date))}"><img src="${photoURL(x.id)}" alt="" loading="lazy" decoding="async"></button>`).join('');
   $('#coverpick').classList.add('open');
   $('#cp-new').onclick=()=>{fileMode='cover';$('#ph-input').click();};
@@ -1126,17 +1126,31 @@ function plantRowHTML(p){
   </article>`;
 }
 
-/* Notes and photos, one record, newest first. */
-function historyHTML(list){
-  const ids=new Set(list.map(p=>p.id));
+/* Notes and photos, one record, newest first.
+   An entry the distiller could not place belongs to no plant, so it is carried
+   on the all-plants stream under "Unsorted" rather than disappearing. */
+function historyHTML(list,allPlants){
+  const ids=list.map(p=>p.id);
   const notes=list.flatMap(p=>shown(p.notes).map(n=>({...n,plantId:p.id})));
-  const photos=shown(PHOTOS).filter(x=>!x.plant||ids.has(x.plant));
-  const stream=historyStream(notes,photos);
-  const nameOf=id=>(list.find(p=>p.id===id)||{}).name||'Untagged';
+  const loose=allPlants?shown(entriesDoc.entries)
+    .filter(e=>!(e.assigned||[]).length)
+    .map(e=>({id:e.id,date:e.date,text:e.text,plantId:null,entry:true,pending:e.status==='pending'})):[];
+  const stream=historyStream([...notes,...loose],photosInView(shown(PHOTOS),ids,allPlants));
+  const nameOf=id=>id?((list.find(p=>p.id===id)||{}).name||'Unsorted'):'Unsorted';
+  const noteHTML=n=>editing&&editing.kind===(n.entry?'entry':'note')&&editing.id===n.id
+    ? editBoxHTML(n.entry?'entry':'note',n.id,n.plantId,n.text)
+    : `<p class="prose">${esc(n.text)}${n.ai?' ✨':''}${n.pending?' <em class="dimmed">reading...</em>':''}</p>
+       <div class="entry-acts">
+         <button class="lnk" data-act="${n.entry?'entry-edit':'note-edit'}" data-val="${esc(n.id)}"
+           data-plant="${esc(n.plantId||'')}">Edit</button>
+         <button class="lnk" data-act="${n.entry?'entry-del':'note-del'}"
+           data-val="${esc(n.entry?n.id:n.plantId)}" data-note="${esc(n.id)}">Delete</button>
+         ${n.entry?`<button class="lnk" data-act="assign-pick" data-val="${esc(n.id)}">Assign to a plant</button>`:''}
+       </div>`;
   return `<div class="sub"><span>History</span><span class="n">${stream.length}</span></div>
     ${stream.length?stream.map(e=>`<div class="hrow">
       <div class="data">${dayLabel(e.date)} · ${esc(nameOf(e.plantId))}</div>
-      ${e.notes.map(n=>`<p class="prose">${esc(n.text)}${n.ai?' ✨':''}</p>`).join('')}
+      ${e.notes.map(noteHTML).join('')}
       ${e.photoIds.length?`<div class="shots">${e.photoIds.map(id=>
         `<button data-act="view" data-val="${esc(id)}"><img src="${photoURL(id)}" alt="" loading="lazy"></button>`
       ).join('')}</div>`:''}
@@ -1176,7 +1190,7 @@ function entryHTML(e){
       <span class="none">No plant recognised.</span>
       ${(e.suggestions||[]).map(pid=>{const p=plantById(pid);return p?
         `<button class="tick" data-act="assign" data-val="${esc(e.id)}" data-plant="${esc(pid)}">${esc(p.name)}</button>`:'';}).join('')}
-      <button class="tick" data-act="assign-pick" data-val="${esc(e.id)}">Valitse kasvi…</button></div>`:''}
+      <button class="tick" data-act="assign-pick" data-val="${esc(e.id)}">Choose a plant...</button></div>`:''}
     ${shots.length?`<div class="shots">${shots.map(x=>`<button data-act="view" data-val="${esc(x.id)}">
       <img src="${photoURL(x.id)}" alt="" loading="lazy"></button>`).join('')}</div>`:''}
     <div class="entry-acts">
@@ -1197,7 +1211,7 @@ function allPlantsHTML(){
       ${g.area==='balcony'?wxHTML(T):''}
       ${monthScaleHTML()}
       ${g.plants.map(plantRowHTML).join('')}`).join('')}
-    ${historyHTML(all)}
+    ${historyHTML(all,true)}
   </section>`;
 }
 
@@ -1221,7 +1235,7 @@ function plantHTML(p){
       :'No guidance yet. Add a note, or wait for tonight\'s update.'}</p>
     ${p.observations?`<p class="prose dimmed">${esc(p.observations)}</p>`:''}
 
-    ${historyHTML([p])}
+    ${historyHTML([p],false)}
 
     <div class="sub"><span>Care</span><span class="n">${esc(pr.src||'')}</span></div>
     ${(pr.body||[]).map(b=>`<p class="prose">${esc(b)}</p>`).join('')}
@@ -1232,7 +1246,7 @@ function plantHTML(p){
 function editBoxHTML(kind,id,plantId,text){
   return `<div class="note"><textarea id="etext">${esc(text)}</textarea>
     <div class="entry-acts">
-      <button class="lnk" data-act="edit-cancel">Peruuta</button>
+      <button class="lnk" data-act="edit-cancel">Cancel</button>
       <button class="tick" data-act="edit-save" data-val="${esc(id)}" data-plant="${esc(plantId||'')}"
         data-kind="${kind}">Save</button>
     </div></div>`;
@@ -1251,12 +1265,12 @@ function renderLock(){
     <div class="steps"><i><b style="width:${busy==='read'?Math.min(95,secs*9):100}%"></b></i>
       <i><b style="width:${busy==='plan'?Math.min(95,(secs-10)*5):0}%"></b></i></div>
     <div class="stage">${busy==='read'?'1/2 · Reading your note':'2/2 · Writing the guidance'}</div>
-    <div class="eta">${secs} s · muu käyttöliittymä odottaa</div>
+    <div class="eta">${secs} s · the rest of the page is waiting</div>
     ${who.length?`<div class="found">${who.map(p=>{
       const note=(p.notes||[]).find(n=>(e.assigned||[]).some(a=>a.noteId===n.id));
       return `<div class="read"><span class="art">${avatarFor(p.id)}</span>
         <span><b>${esc(p.name)}</b><span>${esc(note?note.text:'')}</span></span></div>`;}).join('')}</div>`:''}
-    ${secs>45?'<button class="out" data-act="escape">Päästä minut takaisin</button>':''}
+    ${secs>45?'<button class="out" data-act="escape">Let me back in</button>':''}
   </div>`;
 }
 
@@ -1298,7 +1312,7 @@ function wireFooter(){
     syncThemeBtn();
   };
   const l=$('#lockbtn');
-  if(l)l.onclick=()=>{store.set('uploadPass',null);syncLock();toast('Lukittu. Voit lukea, mutta et muokata.');};
+  if(l)l.onclick=()=>{store.set('uploadPass',null);syncLock();toast('Locked. You can read, but not change anything.');};
 }
 
 
@@ -1318,8 +1332,9 @@ async function saveEntry(){
      re-plan that reads status:garden and writes it back, so a watering saved
      after the post is read stale and overwritten. */
   if(staged.watered&&plantId){
-    await apiWrite('PUT','/api/status/'+encodeURIComponent(plantId),
+    const rw=await apiWrite('PUT','/api/status/'+encodeURIComponent(plantId),
       JSON.stringify({lastWatered:date}),'application/json');
+    if(!rw||!rw.ok){toast('Could not save. Try again.');if(btn)btn.disabled=false;return;}
     await loadStatus();
   }
   const photoIds=[];
@@ -1341,8 +1356,8 @@ async function saveEntry(){
 /* ================= actions ================= */
 let fileMode=null;
 const ACTIONS={
-  plant:pid=>{V.plant=pid;renderAll();window.scrollTo({top:0,behavior:'smooth'});},
-  all:()=>{V.plant=null;renderAll();},
+  plant:pid=>{V.plant=pid;staged.watered=false;renderAll();window.scrollTo({top:0,behavior:'smooth'});},
+  all:()=>{V.plant=null;staged.watered=false;renderAll();},
   month:v=>{view.m+=+v;
     if(view.m<0){view.m=11;view.y--;} if(view.m>11){view.m=0;view.y++;}
     renderAll();},
