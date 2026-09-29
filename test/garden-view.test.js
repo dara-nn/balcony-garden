@@ -1,6 +1,6 @@
 import { test } from 'node:test';
 import assert from 'node:assert/strict';
-import { groupByArea, daysSince, waterLabel, historyStream } from '../public/garden-view.js';
+import { groupByArea, daysSince, waterLabel, historyStream, phaseOfStage, seasonSpans } from '../public/garden-view.js';
 
 const p = (id, area) => ({ id, name: id, area });
 
@@ -99,4 +99,72 @@ test('an untagged photo is its own entry and does not join a plant note', () => 
 test('an entry with no date is dropped rather than sorted to the top', () => {
   const out = historyStream([{ id: 'n1', text: 'x', plantId: 'a' }], []);
   assert.deepEqual(out, []);
+});
+
+const DEF = [
+  ['grow', '2026-07-01', '2026-08-01'],
+  ['flower', '2026-08-01', '2026-09-01'],
+  ['harvest', '2026-09-01', '2026-10-01'],
+];
+
+test('every stage the care table uses maps to a phase', () => {
+  assert.equal(phaseOfStage('seedling'), 'grow');
+  assert.equal(phaseOfStage('sprouting'), 'grow');
+  assert.equal(phaseOfStage('settling'), 'grow');
+  assert.equal(phaseOfStage('establishing'), 'grow');
+  assert.equal(phaseOfStage('growing'), 'grow');
+  assert.equal(phaseOfStage('bulbing'), 'grow');
+  assert.equal(phaseOfStage('flowering'), 'flower');
+  assert.equal(phaseOfStage('fruiting'), 'fruit');
+  assert.equal(phaseOfStage('harvesting'), 'harvest');
+  assert.equal(phaseOfStage('dormant'), null);
+  assert.equal(phaseOfStage(undefined), null);
+});
+
+test('no history leaves the species defaults alone', () => {
+  assert.deepEqual(seasonSpans(DEF, []), DEF);
+  assert.deepEqual(seasonSpans(DEF, undefined), DEF);
+});
+
+test('a real transition moves the boundary', () => {
+  const out = seasonSpans(DEF, [{ date: '2026-08-20', stage: 'flowering' }]);
+  assert.deepEqual(out, [
+    ['grow', '2026-07-01', '2026-08-20'],
+    ['flower', '2026-08-20', '2026-09-01'],
+    ['harvest', '2026-09-01', '2026-10-01'],
+  ]);
+});
+
+test('a transition later than the span that follows it does not invert the bar', () => {
+  const out = seasonSpans(DEF, [{ date: '2026-09-20', stage: 'flowering' }]);
+  for (const [, from, to] of out) assert.ok(from <= to, `${from} is after ${to}`);
+  assert.deepEqual(out[1], ['flower', '2026-09-20', '2026-09-20']);
+});
+
+test('two transitions on the same day do not produce a negative span', () => {
+  const out = seasonSpans(DEF, [
+    { date: '2026-08-15', stage: 'flowering' },
+    { date: '2026-08-15', stage: 'harvesting' },
+  ]);
+  for (const [, from, to] of out) assert.ok(from <= to, `${from} is after ${to}`);
+});
+
+test('history out of order is read in date order', () => {
+  const a = seasonSpans(DEF, [
+    { date: '2026-09-10', stage: 'harvesting' },
+    { date: '2026-08-20', stage: 'flowering' },
+  ]);
+  const b = seasonSpans(DEF, [
+    { date: '2026-08-20', stage: 'flowering' },
+    { date: '2026-09-10', stage: 'harvesting' },
+  ]);
+  assert.deepEqual(a, b);
+});
+
+test('a recorded stage the species bar does not have is ignored', () => {
+  assert.deepEqual(seasonSpans(DEF, [{ date: '2026-08-10', stage: 'fruiting' }]), DEF);
+});
+
+test('a plant with no species bar comes back empty', () => {
+  assert.deepEqual(seasonSpans([], [{ date: '2026-08-10', stage: 'flowering' }]), []);
 });

@@ -45,3 +45,46 @@ export function historyStream(notes, photos) {
   for (const p of photos || []) { if (p && p.date) at(p.date, p.plant).photoIds.push(p.id); }
   return [...byKey.values()].sort((a, b) => b.date.localeCompare(a.date));
 }
+
+/* The care table names ten stages. The season bar draws four phases. */
+const PHASE_OF_STAGE = {
+  seedling: 'grow', sprouting: 'grow', settling: 'grow',
+  establishing: 'grow', growing: 'grow', bulbing: 'grow',
+  flowering: 'flower', fruiting: 'fruit', harvesting: 'harvest',
+};
+export function phaseOfStage(stage) {
+  return PHASE_OF_STAGE[stage] || null;
+}
+
+/* The species table is the expectation. Where the plant is recorded as having
+   actually changed, that date wins and the bar redraws around it, so the left
+   of the bar is what happened and the right is still the guess. */
+export function seasonSpans(defaults, history) {
+  const spans = (defaults || []).map((s) => s.slice());
+  if (!spans.length) return spans;
+
+  const realStart = new Map();
+  for (const h of [...(history || [])].sort((a, b) => (a.date || '').localeCompare(b.date || ''))) {
+    const phase = phaseOfStage(h && h.stage);
+    if (phase && h.date) realStart.set(phase, h.date);   // a later record wins
+  }
+  if (!realStart.size) return spans;
+
+  for (let i = 0; i < spans.length; i++) {
+    const at = realStart.get(spans[i][0]);
+    if (!at) continue;
+    spans[i][1] = at;
+    if (i > 0) spans[i - 1][2] = at;
+  }
+  // A late transition can push a start past its own end, or past an earlier
+  // span's start. Sweep once forward and once back so nothing is inverted.
+  for (let i = 1; i < spans.length; i++) {
+    if (spans[i][1] < spans[i - 1][1]) spans[i][1] = spans[i - 1][1];
+  }
+  for (const s of spans) { if (s[2] < s[1]) s[2] = s[1]; }
+  for (let i = 0; i < spans.length - 1; i++) {
+    if (spans[i][2] > spans[i + 1][1]) spans[i][2] = spans[i + 1][1];
+  }
+  for (const s of spans) { if (s[2] < s[1]) s[2] = s[1]; }
+  return spans;
+}
