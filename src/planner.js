@@ -1,4 +1,4 @@
-import { readStatus, writeStatus, writePlan } from './garden.js';
+import { readStatus, writeStatus, writePlan, recordStage } from './garden.js';
 import { readSeed } from './seed.js';
 
 const STAGES_HINT = 'Use only the plant\'s allowed stages.';
@@ -139,6 +139,7 @@ export function mergePlan(statusDoc, aiPlants, today, now) {
       health: r.health ?? prev.health,
       observations: r.observations ?? prev.observations,
       stage: r.stage ?? prev.stage,
+      history: recordStage(prev, r.stage, today),
       updatedAt: now };
     const days = {};
     for (const day of r.days || []) {

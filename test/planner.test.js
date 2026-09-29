@@ -69,3 +69,19 @@ test('bytesToBase64 encodes a large buffer without throwing', () => {
   assert.equal(typeof out, 'string');
   assert.ok(out.length > 0);
 });
+
+test('the planner records a stage change it decides on', () => {
+  const status = { updatedAt: 0, plants: { a: { id: 'a', stage: 'growing', notes: [], history: [] } } };
+  const ai = [{ id: 'a', stage: 'flowering', health: { label: 'in full swing', tone: 'good', issues: [] },
+    observations: '', days: [] }];
+  const out = mergePlan(status, ai, '2026-09-29', Date.parse('2026-09-29T10:00:00Z'));
+  assert.deepEqual(out.status.plants.a.history, [{ date: '2026-09-29', stage: 'flowering' }]);
+});
+
+test('the planner repeating the same stage records nothing', () => {
+  const status = { updatedAt: 0, plants: { a: { id: 'a', stage: 'flowering', notes: [], history: [] } } };
+  const ai = [{ id: 'a', stage: 'flowering', health: { label: 'steady', tone: 'good', issues: [] },
+    observations: '', days: [] }];
+  const out = mergePlan(status, ai, '2026-09-29', Date.parse('2026-09-29T10:00:00Z'));
+  assert.deepEqual(out.status.plants.a.history, []);
+});
