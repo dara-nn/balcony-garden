@@ -20,14 +20,9 @@ export function parseForecast(json) {
   return { days };
 }
 
-function addDaysISO(iso, n) {
-  const d = new Date(iso + 'T00:00:00Z'); d.setUTCDate(d.getUTCDate() + n);
-  return d.toISOString().slice(0, 10);
-}
-
 // Gemini structured output cannot emit dynamic object keys (a map keyed by plant
-// id comes back empty), so the plan is an ARRAY of plant objects each carrying its
-// own `id`. mergePlan normalises it back to the id-keyed map the client expects.
+// id comes back empty), so the reply is an ARRAY of plant objects each carrying
+// its own `id`. mergePlan normalises it back to the id-keyed map the page wants.
 const ISSUE_SCHEMA = {
   type: 'object',
   properties: {
@@ -37,16 +32,7 @@ const ISSUE_SCHEMA = {
   },
   required: ['type', 'label', 'severity'],
 };
-const TASK_SCHEMA = {
-  type: 'object',
-  properties: {
-    cat: { type: 'string', enum: ['water', 'pollen', 'care', 'alert'] },
-    what: { type: 'string' },
-    why: { type: 'string' },
-  },
-  required: ['cat', 'what', 'why'],
-};
-const PLAN_SCHEMA = {
+const CARE_SCHEMA = {
   type: 'object',
   properties: {
     plants: {
@@ -66,27 +52,14 @@ const PLAN_SCHEMA = {
           },
           observations: { type: 'string' },
           stage: { type: 'string' },
-          days: {
-            type: 'array',
-            items: {
-              type: 'object',
-              properties: {
-                date: { type: 'string' },
-                tasks: { type: 'array', items: TASK_SCHEMA },
-              },
-              required: ['date', 'tasks'],
-            },
-          },
+          guidance: { type: 'string' },
         },
-        required: ['id', 'health', 'observations', 'days'],
+        required: ['id', 'health', 'observations', 'guidance'],
       },
     },
   },
   required: ['plants'],
 };
-
-// Task icon is derived from the category, never taken from model output.
-const CAT_ICON = { water: '💧', pollen: '✋', care: '🌿', alert: '⚠️' };
 
 export function buildGeminiBody(statusDoc, forecast, today, photoPartsByPlant) {
   const context = { today, plants: statusDoc.plants, forecast: forecast.days };
@@ -97,26 +70,26 @@ export function buildGeminiBody(statusDoc, forecast, today, photoPartsByPlant) {
   return {
     system_instruction: {
       parts: [{ text:
-        'You are a garden care planner for a household in Tampere, Finland. ' +
+        'You are a garden care adviser for a household in Tampere, Finland. ' +
         'Given each plant\'s status, recent notes, same-day photos, and the 14-day forecast, ' +
-        'produce a task list for the next 14 days. EVERY plant in the context MUST appear as an ' +
-        'entry in plants[] (with its exact id), even if healthy — assess its health and give it ' +
-        'at least the appropriate watering days. Task categories: water, pollen, care, alert. ' +
-        'Each open health issue must get a matching task (pest->treat, nutrient->feed, water->adjust). ' +
-        'health.label is your own one-or-two-word verdict on that plant right now — say what you ' +
+        'write current care guidance for every plant. EVERY plant in the context MUST appear as ' +
+        'an entry in plants[] (with its exact id), even if healthy. ' +
+        'guidance is two to four short sentences of plain advice for right now: how often to ' +
+        'water it at the moment, what to feed it, what to watch for. Never give a date, a day ' +
+        'of the week or a deadline, and never write it as a checklist. The guidance is shown ' +
+        'under the plant it belongs to, so never repeat the plant name in it. ' +
+        'health.label is your own one-or-two-word verdict on that plant right now, say what you ' +
         'actually see ("thirsty", "in full swing", "bouncing back", "leggy", "nearly done"), not a ' +
         'word from a fixed list, and never repeat the stage. health.tone is only the colour it ' +
         'should carry: good, watch, or bad. ' +
         'Each plant has an "area". area="balcony" means a glazed balcony: the forecast drives its ' +
         'watering, it bakes on hot days and chills on cold nights. area="indoor" means a heated room: ' +
-        'the forecast does NOT apply to it — never give an indoor plant a heat, frost or venting task, ' +
-        'and keep its watering on a steady rhythm. ' +
-        'Tasks are shown grouped under the plant they belong to, so never repeat the plant name in ' +
-        '"what" — write "Water", not "Water Tigerella". ' +
-        STAGES_HINT + ' Return JSON matching the schema. Keep "why" short.' }],
+        'the forecast does NOT apply to it, never mention heat, frost or venting for an indoor ' +
+        'plant, and keep its watering on a steady rhythm. ' +
+        STAGES_HINT + ' Return JSON matching the schema.' }],
     },
     contents: [{ role: 'user', parts }],
-    generationConfig: { responseMimeType: 'application/json', responseSchema: PLAN_SCHEMA },
+    generationConfig: { responseMimeType: 'application/json', responseSchema: CARE_SCHEMA },
   };
 }
 
@@ -128,35 +101,24 @@ export function parsePlanResponse(geminiJson) {
   return JSON.parse(text).plants || [];
 }
 
-// aiPlants is an ARRAY of {id, health, observations, stage?, days:[{date, tasks:[{cat,what,why}]}]}.
+// aiPlants is an ARRAY of {id, health, observations, stage?, guidance}.
 export function mergePlan(statusDoc, aiPlants, today, now) {
   const plants = { ...statusDoc.plants };
-  const planPlants = {};
+  const carePlants = {};
   for (const r of aiPlants || []) {
     const id = r && r.id; if (!id) continue;
-    const prev = plants[id]; if (!prev) continue;
+    const prev = plants[id]; if (!prev) continue;   // a plant the inventory has dropped
     plants[id] = { ...prev,
       health: r.health ?? prev.health,
       observations: r.observations ?? prev.observations,
       stage: r.stage ?? prev.stage,
       history: recordStage(prev, r.stage, today),
       updatedAt: now };
-    const days = {};
-    for (const day of r.days || []) {
-      if (!day || !day.date) continue;
-      days[day.date] = (day.tasks || []).map((t, i) => ({
-        cat: t.cat,
-        ico: CAT_ICON[t.cat] || '🌿',   // derived from category, never from model output
-        what: t.what,
-        why: t.why,
-        key: `ai|${id}|${day.date}|${i}`,
-      }));
-    }
-    planPlants[id] = days;
+    if (r.guidance) carePlants[id] = { guidance: r.guidance };
   }
   return {
     status: { ...statusDoc, updatedAt: now, plants },
-    care: { generatedAt: now, through: addDaysISO(today, 13), plants: planPlants },
+    care: { generatedAt: now, plants: carePlants },
   };
 }
 

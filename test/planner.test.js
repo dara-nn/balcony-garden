@@ -33,28 +33,7 @@ test('parsePlanResponse returns [] when plants is absent', () => {
   assert.deepEqual(parsePlanResponse(gemini), []);
 });
 
-test('mergePlan (array input) writes condition + derives icon from cat with stable keys', () => {
-  const status = { updatedAt: 0, plants: { a: { id: 'a', notes: [], history: [] } } };
-  const ai = [{ id: 'a',
-    health: { overall: 'struggling', issues: [{ type: 'pest', label: 'aphids', severity: 'mild' }] },
-    observations: 'aphids seen', stage: 'fruiting',
-    days: [{ date: '2026-07-26', tasks: [{ cat: 'water', what: 'Water deeply', why: 'hot' }] }] }];
-  const { status: s2, care: plan } = mergePlan(status, ai, '2026-07-26', 100);
-  assert.equal(s2.plants.a.stage, 'fruiting');
-  assert.equal(s2.plants.a.health.overall, 'struggling');
-  const task = plan.plants.a['2026-07-26'][0];
-  assert.equal(task.key, 'ai|a|2026-07-26|0');
-  assert.equal(task.ico, '💧');            // derived from cat, not from model
-  assert.equal(task.what, 'Water deeply');
-  assert.equal(plan.through, '2026-08-08');
-});
 
-test('mergePlan skips ai entries with unknown or missing id', () => {
-  const status = { updatedAt: 0, plants: { a: { id: 'a', notes: [], history: [] } } };
-  const ai = [{ id: 'zzz', health: { overall: 'steady', issues: [] }, days: [] }, { days: [] }];
-  const { care: plan } = mergePlan(status, ai, '2026-07-26', 1);
-  assert.deepEqual(Object.keys(plan.plants), []);
-});
 
 test('bytesToBase64 round-trips known small bytes', () => {
   const bytes = new Uint8Array([104, 105]); // "hi"
@@ -84,4 +63,39 @@ test('the planner repeating the same stage records nothing', () => {
     observations: '', days: [] }];
   const out = mergePlan(status, ai, '2026-09-29', Date.parse('2026-09-29T10:00:00Z'));
   assert.deepEqual(out.status.plants.a.history, []);
+});
+
+test('mergePlan turns guidance into the care doc', () => {
+  const status = { updatedAt: 0, plants: { a: { id: 'a', stage: 'growing', notes: [], history: [] } } };
+  const ai = [{ id: 'a', guidance: 'Water every two days. Feed weekly.',
+    health: { label: 'thirsty', tone: 'watch', issues: [] }, observations: 'dry soil' }];
+  const out = mergePlan(status, ai, '2026-09-29', 1000);
+  assert.deepEqual(out.care, { generatedAt: 1000, plants: { a: { guidance: 'Water every two days. Feed weekly.' } } });
+  assert.equal(out.care.through, undefined);
+});
+
+test('mergePlan drops a plant the inventory no longer has', () => {
+  const status = { updatedAt: 0, plants: { a: { id: 'a', notes: [], history: [] } } };
+  const ai = [
+    { id: 'a', guidance: 'Keep it steady.', health: { label: 'fine', tone: 'good', issues: [] }, observations: '' },
+    { id: 'ghost', guidance: 'Water the plant that is not there.', health: { label: 'x', tone: 'good', issues: [] }, observations: '' },
+  ];
+  const out = mergePlan(status, ai, '2026-09-29', 1000);
+  assert.deepEqual(Object.keys(out.care.plants), ['a']);
+  assert.deepEqual(Object.keys(out.status.plants), ['a']);
+});
+
+test('mergePlan skips a plant with no guidance rather than storing an empty string', () => {
+  const status = { updatedAt: 0, plants: { a: { id: 'a', notes: [], history: [] } } };
+  const ai = [{ id: 'a', health: { label: 'fine', tone: 'good', issues: [] }, observations: '' }];
+  const out = mergePlan(status, ai, '2026-09-29', 1000);
+  assert.deepEqual(out.care.plants, {});
+});
+
+test('parsePlanResponse reads guidance out of a thinking response', () => {
+  const body = { candidates: [{ content: { parts: [
+    { thought: true },
+    { text: JSON.stringify({ plants: [{ id: 'a', guidance: 'Water it.' }] }) },
+  ] } }] };
+  assert.deepEqual(parsePlanResponse(body), [{ id: 'a', guidance: 'Water it.' }]);
 });
