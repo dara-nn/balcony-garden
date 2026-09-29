@@ -34,13 +34,13 @@ test('a tomato outgrows a chilli seedling, which is the point of sizing by stage
 });
 
 test('a missing stage falls back to the nearest EARLIER one, never a later one', () => {
-  // chives is drawn for growing and harvesting only
-  assert.equal(billboardFor('chives', 'fruiting'), BILLBOARDS.chives.growing,
+  // mint is drawn for growing and harvesting only
+  assert.equal(billboardFor('mint', 'fruiting'), BILLBOARDS.mint.growing,
     'fruiting must not borrow the harvesting drawing, which is further along');
   // nothing earlier than seedling exists, so it takes the species default
-  assert.equal(billboardFor('chives', 'seedling'), BILLBOARDS.chives.growing);
-  // garlic has sprouting/growing/bulbing/ready: flowering sits between growing and bulbing
-  assert.equal(billboardFor('garlic', 'flowering'), BILLBOARDS.garlic.growing);
+  assert.equal(billboardFor('mint', 'seedling'), BILLBOARDS.mint.growing);
+  // raspberry skips bulbing, which sits between its flowering and fruiting drawings
+  assert.equal(billboardFor('raspberry', 'bulbing'), BILLBOARDS.raspberry.flowering);
 });
 
 test('an unknown species still draws something clickable', () => {

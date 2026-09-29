@@ -47,12 +47,17 @@ export const hooks = {
 
 /* ================= care knowledge ================= */
 export const CARE = {
-  basilmint: { care: {
-    growing: { water: 2, why: 'Bed dries fast behind glass',
-      weekly: [['care', 'Pinch basil tips', 'Above a leaf pair — bushy, no flowers. Trim mint back.'],
-        ['care', 'Feed basil & mint', 'Liquid feed, every 2nd week is enough.']] },
+  basil: { care: {
+    growing: { water: 2, why: 'Pot dries fast behind glass',
+      weekly: [['care', 'Pinch the tips', 'Above a leaf pair, bushy, no flowers.'],
+        ['care', 'Feed', 'Liquid feed, every 2nd week is enough.']] },
     harvesting: { water: 2, why: 'Keep harvest coming',
-      weekly: [['care', 'Harvest basil & mint', 'Basil from the top, mint outer stems. Pinch any flower buds.']] } } },
+      weekly: [['care', 'Harvest from the top', 'Pinch any flower buds while you are there.']] } } },
+  mint: { care: {
+    growing: { water: 2, why: 'Thirsty, likes the soil damp',
+      weekly: [['care', 'Trim it back', 'Keeps it leafy and stops it sprawling.']] },
+    harvesting: { water: 2, why: 'Keep moist while you keep cutting',
+      weekly: [['care', 'Harvest outer stems', 'Cut at the base, the middle keeps going.']] } } },
   chilli: { care: {
     seedling: { water: 3, why: 'Light water only — damping-off kills sprouts',
       weekly: [['care', 'Rotate pots', 'Stops leggy lean toward the glass. Pot up at 4–6 true leaves.']] },
@@ -74,15 +79,6 @@ export const CARE = {
     fruiting: { water: 1, why: 'Never bone-dry — fruit splits',
       weekly: [['care', 'Feed high-K', 'Weekly.'],
         ['care', 'Tidy lower leaves', 'Below lowest truss — airflow against mildew.']] } } },
-  chives: { care: {
-    growing: { water: 3, why: 'Easy — top 2 cm dry, then water', weekly: [] },
-    harvesting: { water: 3, why: 'Cut & come again',
-      weekly: [['care', 'Harvest', 'Cut whole leaves 2 cm above soil — regrows fast.']] } } },
-  springonion: { care: {
-    growing: { water: 2, why: 'Shallow roots, dry fast in glazed heat',
-      weekly: [['care', 'Re-sow', 'A pinch every ~3 weeks keeps supply steady.']] },
-    harvesting: { water: 2, why: 'Keep moist to the end',
-      weekly: [['care', 'Pull the thickest', 'Or cut 3 cm above base to regrow.']] } } },
   parsley: { care: {
     growing: { water: 3, why: 'Even moisture; bolts in heat — shade on 30°C days', weekly: [] },
     harvesting: { water: 3, why: 'Outer stems only',
@@ -106,22 +102,20 @@ export const CARE = {
       weekly: [['care', 'Pick the berries', 'Every 2–3 days — ripe ones spoil fast. High-K feed weekly.']] },
     dormant: { water: 7, why: 'Barely water over winter — hardy, stays out on the balcony',
       weekly: [['care', 'Cut the fruited canes', "After fruiting, cut spent (2nd-year) canes to the ground; keep this year's new canes."]] } } },
-  garlic: { care: {
-    sprouting: { water: 5, why: 'Sparse — wet rots the clove', weekly: [] },
-    bulbing: { water: 5, why: 'Too wet rots the bulb; keep it in the coolest corner',
-      weekly: [['care', 'Check the leaves', 'Half the leaves yellow → stop watering, nearly ready.']] },
-    ready: { water: 99, why: 'Done drinking',
-      weekly: [['care', 'Lift the bulb?', 'Half+ leaves brown → lift, dry 2 weeks somewhere airy.']] } } },
 };
 export const careOf = (p) => (CARE[p.species]?.care[p.stage]) || { water: 3, why: '', weekly: [], daily: [] };
 const baseInterval = (p) => p.intervalOverride || careOf(p).water;
 
 /* ================= profiles, season ================= */
 export const PROFILE = {
-  basilmint: { t: 'Basil “Italiano Classico” & Mint', src: 'Biltema seeds · mint as plant', ids: ['basil-mint'],
-    body: ['Classic Genovese basil. Pinch above a leaf pair weekly — bushy, no flowers. Hates cold: sulks under 12°C nights.',
-      'Mint is invasive — divider in the shared bed, or trim its roots each month. Harvest mint outer stems, basil from the top.',
-      'Feed the bed liquid fertilizer every 2 weeks.'] },
+  basil: { t: 'Basil “Italiano Classico”', src: 'Biltema seeds', ids: ['basil-1', 'basil-2'],
+    body: ['Classic Genovese basil, two pots of it. Pinch above a leaf pair weekly, bushy, no flowers. Hates cold: sulks under 12°C nights.',
+      'Water in the morning and keep the soil just moist. Wet feet overnight rot the stems.',
+      'Harvest from the top, never the bottom leaves. Liquid fertilizer every 2 weeks.'] },
+  mint: { t: 'Mint', src: 'Bought as a plant', ids: ['mint'],
+    body: ['Came as a plant rather than seed, so it skipped the slow start. Perennial and hardy, it comes back on its own in spring.',
+      'Keep it in its own pot. Share a bed with it and it runs and takes the lot.',
+      'Thirstier than the other herbs, keep the soil damp. Harvest outer stems at the base and trim it back when it sprawls.'] },
   chilli: { t: 'Chilli “Lombardo”', src: 'Biltema 14-2867', ids: ['chilli-1', 'chilli-2'],
     body: ['Mild Italian frying chilli — long fruit, green ripening to red. Early and productive.',
       "Seedlings: water lightly only when top 1 cm is dry (damping-off kills sprouts). Max light, rotate pots so they don't lean. Pot up at 4–6 true leaves.",
@@ -137,16 +131,8 @@ export const PROFILE = {
       'Shake trusses daily at midday. Stake well — big fruit gets heavy.',
       "Ripe when SOFT, not by colour — it stays dark brown-red, darkest on top. Squeeze gently, don't wait for red.",
       'Early variety with a long harvest — expect fruit from mid-August.'] },
-  chives: { t: 'Chives', src: 'Biltema 14-2818', ids: ['chives'],
-    body: ['Perennial and frost-hardy — leave the bed on the balcony over winter, it returns early spring. Your one plant that outlives the season.',
-      'Cut whole leaves 2 cm above soil — regrows in days. Harvesting often keeps it productive.',
-      'Water when top 2 cm dry. Light feed monthly is plenty.'] },
-  springonion: { t: 'Spring onion', src: 'Biltema 14-2807', ids: ['spring-onion'],
-    body: ['Early, fast variety with long thick white stems.',
-      'Keep evenly moist — shallow roots dry fast in glazed heat.',
-      'Harvest whole at pencil thickness, thickest first. Re-sow a pinch every 3 weeks for steady supply into autumn.'] },
-  parsley: { t: 'Curly parsley', src: 'Biltema 14-2820', ids: ['parsley'],
-    body: ['Curly, dark green type. The marathon runner — germination up to 4 weeks is normal.',
+  parsley: { t: 'Curly parsley', src: 'Biltema 14-2820', ids: ['parsley-1', 'parsley-2'],
+    body: ['Curly, dark green type, two pots of it. The marathon runner, germination up to 4 weeks is normal.',
       'Even moisture, deep soil. Bolts in heat: shade it on 30°C+ days.',
       'Harvest outer stems at the base only — the centre keeps producing to late autumn. Moves to a windowsill for winter.'] },
   monstera: { t: 'Monstera deliciosa', src: 'IKEA · indoors', ids: ['monstera'],
@@ -154,14 +140,14 @@ export const PROFILE = {
       'Water only when the top 3–4 cm of soil is dry, roughly weekly. Overwatering is the one thing that kills it.',
       'Wipe the big leaves now and then — dust blocks light. Once settled, feed monthly in season and give the aerial roots a pole to climb.'] },
   hedera: { t: 'Ivy · Hedera helix', src: 'IKEA · balcony', ids: ['hedera'],
-    body: ['The tough one — happy in the shady corner where nothing else grows, and frost-hardy to about −10°C. Stays out all winter with the chives.',
+    body: ['The tough one, happy in the shady corner where nothing else grows, and frost-hardy to about −10°C. Stays out all winter.',
       'While it establishes: steady but light watering, top 2–3 cm dry between waterings. Never soggy.',
       'Check leaf undersides — spider mites love warm dry glazed air. Trim wandering vines anytime; it regrows from any node.'] },
   maurin: { t: 'Raspberry “Maurin Makea”', src: 'Finnish summer raspberry', ids: ['rasp-maurin'],
     body: ['A Finnish summer (floricane) raspberry prized for very sweet berries. Ahead of the other two — it has set green fruit already (Jul 2026), ripening red over the coming weeks.',
       'Now fruiting: keep the water even so berries swell without splitting — top 2–3 cm dry between waterings, never bone-dry or soggy. High-K feed weekly. Pick every 2–3 days once they colour up; dead-ripe berries pull free with a light tug.',
       "Tie the fruiting canes to a support so glass heat and wind don't snap them. Watch leaf undersides for spider mites in dry glazed air.",
-      "Frost-hardy — leave it out on the balcony over winter with the chives and ivy. After the canes finish fruiting, cut those spent canes to the ground and keep this year's fresh canes for next summer."] },
+      "Frost-hardy, leave it out on the balcony over winter with the ivy. After the canes finish fruiting, cut those spent canes to the ground and keep this year's fresh canes for next summer."] },
   'takala-1': { t: 'Raspberry “Takalan Herkku” 1', src: 'New pot · Finnish summer raspberry', ids: ['rasp-takala-1'],
     body: ['A hardy Finnish summer (floricane) raspberry with large, sweet berries — a reliable home-garden favourite. Just potted: new canes grow this year, main crop next summer.',
       'Even moisture, top 2–3 cm dry between waterings — never waterlogged. New pot dries fast behind glass; steady water while establishing. Half-strength feed weekly.',
@@ -172,10 +158,6 @@ export const PROFILE = {
       'Even moisture, top 2–3 cm dry between waterings — never waterlogged. New pot dries fast behind glass; steady water while establishing. Half-strength feed weekly.',
       'Give it its own cane/support and room from pot 1 for airflow; check leaf undersides for spider mites.',
       "Very hardy — overwinters on the balcony. Cut spent (fruited) canes to the ground after they crop; keep this year's canes for next summer's berries."] },
-  garlic: { t: 'Garlic pot', src: 'from cloves', ids: ['garlic'],
-    body: ['Water sparingly — wet soil rots the bulb. Coolest corner of the balcony; glazed heat rushes it.',
-      'When half the leaves yellow: stop watering. When half are brown: lift the bulb.',
-      'Dry lifted bulbs 2 weeks somewhere airy before storing.'] },
 };
 export const KEY_BY_ID = {};
 Object.entries(PROFILE).forEach(([key, pr]) => (pr.ids || []).forEach((id) => { KEY_BY_ID[id] = key; }));
@@ -186,12 +168,10 @@ export const SEASON = [
   { key: 'maurin', lbl: 'Maurin Makea', ph: [['fruit', '2026-07-21', '2026-08-12'], ['harvest', '2026-08-12', '2026-09-10']] },
   { key: 'takala-1', lbl: 'Takalan Herkku 1', ph: [['grow', '2026-07-21', '2026-10-05']] },
   { key: 'takala-2', lbl: 'Takalan Herkku 2', ph: [['grow', '2026-07-21', '2026-10-05']] },
-  { key: 'parsley', lbl: 'Parsley', ph: [['grow', '2026-06-29', '2026-08-25'], ['harvest', '2026-08-25', '2026-10-05']] },
+  { key: 'parsley', lbl: 'Parsley ×2', ph: [['grow', '2026-06-29', '2026-08-25'], ['harvest', '2026-08-25', '2026-10-05']] },
   { key: 'chilli', lbl: 'Lombardo ×2', ph: [['grow', '2026-07-10', '2026-08-05'], ['flower', '2026-08-05', '2026-08-20'], ['fruit', '2026-08-20', '2026-09-05'], ['harvest', '2026-09-05', '2026-09-30']] },
-  { key: 'basilmint', lbl: 'Basil & mint', ph: [['grow', '2026-06-29', '2026-08-05'], ['harvest', '2026-08-05', '2026-09-30']] },
-  { key: 'chives', lbl: 'Chives', ph: [['grow', '2026-06-29', '2026-08-15'], ['harvest', '2026-08-15', '2026-10-05']] },
-  { key: 'springonion', lbl: 'Spring onion', ph: [['grow', '2026-06-29', '2026-08-20'], ['harvest', '2026-08-20', '2026-10-05']] },
-  { key: 'garlic', lbl: 'Garlic', ph: [['grow', '2026-06-29', '2026-08-10'], ['harvest', '2026-08-10', '2026-09-15']] },
+  { key: 'basil', lbl: 'Basil ×2', ph: [['grow', '2026-06-29', '2026-08-05'], ['harvest', '2026-08-05', '2026-09-30']] },
+  { key: 'mint', lbl: 'Mint', ph: [['grow', '2026-06-29', '2026-08-05'], ['harvest', '2026-08-05', '2026-10-05']] },
   { key: 'monstera', lbl: 'Monstera', ph: [['grow', '2026-06-29', '2026-10-05']] },
   { key: 'hedera', lbl: 'Ivy', ph: [['grow', '2026-06-29', '2026-10-05']] },
 ];
@@ -199,14 +179,12 @@ export const S_START = new Date('2026-06-29'), S_END = new Date('2026-10-05');
 export const spos = (d) => Math.max(0, Math.min(100, (new Date(d) - S_START) / (S_END - S_START) * 100));
 
 export const REAL = {
-  basilmint: ['https://upload.wikimedia.org/wikipedia/commons/9/97/Ocimum_basilicum_8zz.jpg', 'Genovese basil · Wikimedia'],
+  basil: ['https://upload.wikimedia.org/wikipedia/commons/9/97/Ocimum_basilicum_8zz.jpg', 'Genovese basil · Wikimedia'],
+  mint: ['https://upload.wikimedia.org/wikipedia/commons/thumb/1/16/Mentha_spicata_var._viridis_kz01.jpg/1280px-Mentha_spicata_var._viridis_kz01.jpg', 'Spearmint · Wikimedia'],
   chilli: ['https://upload.wikimedia.org/wikipedia/commons/4/46/Fefferoni.jpg', 'Italian frying peppers · Wikimedia'],
   tigerella: ['https://upload.wikimedia.org/wikipedia/commons/6/6c/Balkoncontent_Tomatensorte_Tigerella.jpg', 'Tigerella on the vine · Wikimedia'],
   noire: ['https://upload.wikimedia.org/wikipedia/commons/thumb/2/2c/Black_krim_tomato.jpg/1280px-Black_krim_tomato.jpg', 'Noire de Crimée (Black Krim) · Wikimedia'],
-  chives: ['https://upload.wikimedia.org/wikipedia/commons/thumb/4/49/Allium_schoenoprasum_-_Bombus_lapidarius_-_Tootsi.jpg/1280px-Allium_schoenoprasum_-_Bombus_lapidarius_-_Tootsi.jpg', 'Chives in flower · Wikimedia'],
-  springonion: ['https://upload.wikimedia.org/wikipedia/commons/f/fc/2010-06-19-supermarkt-by-RalfR-32.jpg', 'Spring onions · Wikimedia'],
   parsley: ['https://upload.wikimedia.org/wikipedia/commons/b/bf/Parsley100.jpg', 'Curly parsley · Wikimedia'],
-  garlic: ['https://upload.wikimedia.org/wikipedia/commons/4/49/Opened_garlic_bulb_with_garlic_clove.jpg', 'Garlic bulb · Wikimedia'],
   monstera: ['https://www.ikea.com/fi/en/images/products/monstera-deliciosa-potted-plant-swiss-cheese-plant__1177967_pe895590_s5.jpg?f=xl', 'Monstera deliciosa · IKEA'],
   hedera: ['https://www.ikea.com/fi/en/images/products/hedera-helix-potted-plant-ivy__0902464_pe594502_s5.jpg?f=xl', 'Hedera helix · IKEA'],
   maurin: ['https://upload.wikimedia.org/wikipedia/commons/thumb/1/12/Raspberry_%2852479964737%29.jpg/1280px-Raspberry_%2852479964737%29.jpg', 'Ripe raspberries · Wikimedia'],

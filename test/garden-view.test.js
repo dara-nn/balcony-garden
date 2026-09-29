@@ -273,10 +273,11 @@ test('predictions never invert a span', () => {
 });
 
 test('a prediction later than the span it names pushes that span out, it does not collapse it', () => {
-  // Real case: garlic's table has harvest 10 Aug to 15 Sep, the planner expects
-  // harvesting to start 5 Oct. The bar must show harvest ahead, not lose it.
-  const garlic = [['grow', '2026-06-29', '2026-08-10'], ['harvest', '2026-08-10', '2026-09-15']];
-  const out = seasonSpans(garlic, [], [{ stage: 'harvesting', date: '2026-10-05' }], '2026-12-29');
+  // Real case from an older inventory: the table had harvest 10 Aug to 15 Sep,
+  // the planner expected harvesting to start 5 Oct. The bar must show harvest
+  // ahead, not lose it.
+  const table = [['grow', '2026-06-29', '2026-08-10'], ['harvest', '2026-08-10', '2026-09-15']];
+  const out = seasonSpans(table, [], [{ stage: 'harvesting', date: '2026-10-05' }], '2026-12-29');
   assert.deepEqual(out, [
     ['grow', '2026-06-29', '2026-10-05'],
     ['harvest', '2026-10-05', '2026-12-29'],

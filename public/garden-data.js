@@ -8,7 +8,7 @@
    - add "water": "YYYY-MM-DD" to a plant to record "watered on that day"
 */
 window.GARDEN_SEED = JSON.parse(`{
-  "version": 9,
+  "version": 10,
   "plants": [
     { "id": "tomato-1", "name": "Tigerella tomato", "species": "tomato", "stage": "flowering", "area": "balcony",
       "note": "Striped, indeterminate, stake + pinch side shoots. Ripe when stripes turn orange-red. Tolerates cool summers." },
@@ -20,16 +20,18 @@ window.GARDEN_SEED = JSON.parse(`{
       "note": "New pot · hardy Finnish summer raspberry. First-year canes, main crop next summer." },
     { "id": "rasp-takala-2", "name": "Takalan Herkku raspberry 2", "species": "raspberry", "stage": "settling", "area": "balcony",
       "note": "New pot · hardy Finnish summer raspberry. First-year canes, main crop next summer." },
-    { "id": "parsley", "name": "Parsley bed", "species": "parsley", "stage": "growing", "area": "balcony" },
+    { "id": "parsley-1", "name": "Parsley 1", "species": "parsley", "stage": "growing", "area": "balcony" },
+    { "id": "parsley-2", "name": "Parsley 2", "species": "parsley", "stage": "growing", "area": "balcony" },
     { "id": "chilli-1", "name": "Lombardo chilli 1", "species": "chilli", "stage": "seedling", "area": "balcony",
       "note": "Mild Italian frying chilli (Biltema)" },
     { "id": "chilli-2", "name": "Lombardo chilli 2", "species": "chilli", "stage": "seedling", "area": "balcony",
       "note": "Mild Italian frying chilli (Biltema)" },
-    { "id": "basil-mint", "name": "Basil & Mint bed", "species": "basilmint", "stage": "growing", "area": "balcony",
-      "note": "Basil: Italiano Classico (Biltema). Shared bed, keep mint from taking over" },
-    { "id": "chives", "name": "Chive bed", "species": "chives", "stage": "growing", "area": "balcony" },
-    { "id": "spring-onion", "name": "Spring onion bed", "species": "springonion", "stage": "growing", "area": "balcony" },
-    { "id": "garlic", "name": "Garlic pot", "species": "garlic", "stage": "bulbing", "area": "balcony" },
+    { "id": "basil-1", "name": "Basil 1", "species": "basil", "stage": "growing", "area": "balcony",
+      "note": "Italiano Classico (Biltema)" },
+    { "id": "basil-2", "name": "Basil 2", "species": "basil", "stage": "growing", "area": "balcony",
+      "note": "Italiano Classico (Biltema)" },
+    { "id": "mint", "name": "Mint", "species": "mint", "stage": "growing", "area": "balcony",
+      "note": "Bought as a plant, not from seed. Own pot, or it takes over" },
     { "id": "monstera", "name": "Monstera", "species": "monstera", "stage": "settling", "area": "indoor",
       "note": "IKEA · bright indirect spot, away from radiators" },
     { "id": "hedera", "name": "Ivy (Hedera helix)", "species": "hedera", "stage": "settling", "area": "balcony",

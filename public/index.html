@@ -89,11 +89,11 @@
     border-radius:var(--r-sm)}
   .pname .art svg{width:100%;height:100%;display:block}
   .pname em{font-style:normal;color:var(--dim);font-size:.85em}
-  .water{font-size:.85em;color:var(--dim)}
-  .wline{display:flex;align-items:center;gap:var(--s3);margin:var(--s3) 0 0}
-  .waterbtn{display:inline-flex;align-items:center;gap:6px;border:1px solid var(--rule);
-    background:var(--paper);border-radius:var(--r-pill);padding:5px 14px;cursor:pointer;
-    font:inherit;font-size:13.5px;color:var(--ink)}
+  .water{color:var(--dim)}
+  .wline>span{display:flex;align-items:center;gap:var(--s3);flex-wrap:wrap}
+  .waterbtn{display:inline-flex;align-items:center;gap:5px;border:1px solid var(--rule);
+    background:var(--paper);border-radius:var(--r-pill);padding:2px 10px;cursor:pointer;
+    font:inherit;font-size:12px;color:var(--ink)}
   .waterbtn:hover,.waterbtn:focus-visible{border-color:var(--water);color:var(--water)}
   .photobtn{display:inline-flex;align-items:center;gap:6px;border:1px solid var(--rule);
     background:var(--paper);border-radius:var(--r-pill);padding:6px 15px;cursor:pointer;
@@ -101,8 +101,9 @@
   .photobtn:hover,.photobtn:focus-visible{border-color:var(--leaf);color:var(--pine)}
   /* Two paragraphs that read differently: what it is doing, then what to do.
      A label each, on one shared column so the prose lines up. */
-  .status,.guide{display:grid;grid-template-columns:58px 1fr;gap:var(--s2);
+  .status,.guide,.wline{display:grid;grid-template-columns:58px 1fr;gap:var(--s2);
     margin:3px 0 0;font-size:.92em;line-height:1.45}
+  .wline{margin-top:var(--s3)}
   .lbl{font-size:10.5px;letter-spacing:.09em;text-transform:uppercase;font-weight:600;
     color:var(--dim);padding-top:.32em}
   .status{color:var(--dim)}
@@ -118,6 +119,15 @@
   .sw.future{background:var(--dim);opacity:.4}
   .chart{min-width:0}
   .prow.solo .phead{grid-template-columns:1fr}
+  /* Two plants to a row. A plant needs a name, a bar and two short paragraphs,
+     so a whole page width each wastes half of it and doubles the scroll. The
+     page is 1120px less its gutters, which is room for exactly two columns and
+     never three, so every bar keeps the same width. In the narrower cell the
+     name sits above the chart instead of beside it. */
+  .plist{display:grid;column-gap:var(--s6);
+    grid-template-columns:repeat(auto-fill,minmax(min(430px,100%),1fr))}
+  .plist .phead{grid-template-columns:1fr;gap:6px}
+  .plist .prow{padding:var(--s4) 0}
   /* A tooltip that answers straight away, rather than the browser's slow one. */
   #tip{position:fixed;z-index:60;pointer-events:none;opacity:0;transition:opacity .08s;
     background:var(--ink);color:var(--paper);font-size:12px;line-height:1.3;
@@ -141,7 +151,7 @@
   @media (max-width:760px){
     .sect{--namecol:1fr}
     .phead{grid-template-columns:1fr;gap:6px}
-    .status,.guide{grid-template-columns:48px 1fr;gap:6px}
+    .status,.guide,.wline{grid-template-columns:48px 1fr;gap:6px}
   }
 
   /* ---- the journal ----
@@ -202,6 +212,9 @@
     font-size:13.5px;border-top:1px solid var(--rule);padding-top:var(--s3)}
   .facts dt{color:var(--dim)}
   .facts dd{margin:0}
+  .facts dd a{color:var(--ink);text-decoration:underline;text-underline-offset:2px;
+    text-decoration-color:var(--rule)}
+  .facts dd a:hover{text-decoration-color:var(--leaf)}
   .wpics{display:flex;flex-direction:column;gap:var(--s3)}
   .wpics figure{margin:0}
   .wpics img{width:100%;aspect-ratio:4/3;object-fit:cover;border-radius:var(--r-md);
@@ -589,12 +602,17 @@ const shortDate=s=>{const d=new Date(s);return d.getDate()+'.'+(d.getMonth()+1)+
 
 /* ================= care knowledge ================= */
 const CARE={
- basilmint:{care:{
-   growing:{water:2,why:'Bed dries fast behind glass',
-     weekly:[['care','Pinch basil tips','Above a leaf pair, bushy, no flowers. Trim mint back.'],
-             ['care','Feed basil & mint','Liquid feed, every 2nd week is enough.']]},
+ basil:{care:{
+   growing:{water:2,why:'Pot dries fast behind glass',
+     weekly:[['care','Pinch the tips','Above a leaf pair, bushy, no flowers.'],
+             ['care','Feed','Liquid feed, every 2nd week is enough.']]},
    harvesting:{water:2,why:'Keep harvest coming',
-     weekly:[['care','Harvest basil & mint','Basil from the top, mint outer stems. Pinch any flower buds.']]}}},
+     weekly:[['care','Harvest from the top','Pinch any flower buds while you are there.']]}}},
+ mint:{care:{
+   growing:{water:2,why:'Thirsty, likes the soil damp',
+     weekly:[['care','Trim it back','Keeps it leafy and stops it sprawling.']]},
+   harvesting:{water:2,why:'Keep moist while you keep cutting',
+     weekly:[['care','Harvest outer stems','Cut at the base, the middle keeps going.']]}}},
  chilli:{care:{
    seedling:{water:3,why:'Light water only, damping-off kills sprouts',
      weekly:[['care','Rotate pots','Stops leggy lean toward the glass. Pot up at 4-6 true leaves.']]},
@@ -616,15 +634,6 @@ const CARE={
    fruiting:{water:1,why:'Never bone-dry, fruit splits',
      weekly:[['care','Feed high-K','Weekly.'],
              ['care','Tidy lower leaves','Below lowest truss, airflow against mildew.']]}}},
- chives:{care:{
-   growing:{water:3,why:'Easy, top 2 cm dry, then water',weekly:[]},
-   harvesting:{water:3,why:'Cut & come again',
-     weekly:[['care','Harvest','Cut whole leaves 2 cm above soil, regrows fast.']]}}},
- springonion:{care:{
-   growing:{water:2,why:'Shallow roots, dry fast in glazed heat',
-     weekly:[['care','Re-sow','A pinch every ~3 weeks keeps supply steady.']]},
-   harvesting:{water:2,why:'Keep moist to the end',
-     weekly:[['care','Pull the thickest','Or cut 3 cm above base to regrow.']]}}},
  parsley:{care:{
    growing:{water:3,why:'Even moisture; bolts in heat, shade on 30°C days',weekly:[]},
    harvesting:{water:3,why:'Outer stems only',
@@ -647,13 +656,7 @@ const CARE={
      daily:[['pollen','Tap the flowers','Midday, few bees behind glass. Berries drop free when dead-ripe.']],
      weekly:[['care','Pick the berries','Every 2-3 days, ripe ones spoil fast. High-K feed weekly.']]},
    dormant:{water:7,why:'Barely water over winter, hardy, stays out on the balcony',
-     weekly:[['care','Cut the fruited canes','After fruiting, cut spent (2nd-year) canes to the ground; keep this year\'s new canes.']]}}},
- garlic:{care:{
-   sprouting:{water:5,why:'Sparse, wet rots the clove',weekly:[]},
-   bulbing:{water:5,why:'Too wet rots the bulb; keep it in the coolest corner',
-     weekly:[['care','Check the leaves','Half the leaves yellow → stop watering, nearly ready.']]},
-   ready:{water:99,why:'Done drinking',
-     weekly:[['care','Lift the bulb?','Half+ leaves brown → lift, dry 2 weeks somewhere airy.']]}}}
+     weekly:[['care','Cut the fruited canes','After fruiting, cut spent (2nd-year) canes to the ground; keep this year\'s new canes.']]}}}
 };
 
 /* ================= server docs ================= */
@@ -784,12 +787,10 @@ const SEASON=[
  {key:'maurin',lbl:'Maurin Makea',ph:[['grow','2026-06-29','2026-07-21'],['fruit','2026-07-21','2026-08-12'],['harvest','2026-08-12','2026-09-10']]},
  {key:'takala-1',lbl:'Takalan Herkku 1',ph:[['grow','2026-07-21','2026-10-05']]},
  {key:'takala-2',lbl:'Takalan Herkku 2',ph:[['grow','2026-07-21','2026-10-05']]},
- {key:'parsley',lbl:'Parsley',ph:[['grow','2026-06-29','2026-08-25'],['harvest','2026-08-25','2026-10-05']]},
+ {key:'parsley',lbl:'Parsley ×2',ph:[['grow','2026-06-29','2026-08-25'],['harvest','2026-08-25','2026-10-05']]},
  {key:'chilli',lbl:'Lombardo ×2',ph:[['grow','2026-07-10','2026-08-05'],['flower','2026-08-05','2026-08-20'],['fruit','2026-08-20','2026-09-05'],['harvest','2026-09-05','2026-09-30']]},
- {key:'basilmint',lbl:'Basil & mint',ph:[['grow','2026-06-29','2026-08-05'],['harvest','2026-08-05','2026-09-30']]},
- {key:'chives',lbl:'Chives',ph:[['grow','2026-06-29','2026-08-15'],['harvest','2026-08-15','2026-10-05']]},
- {key:'springonion',lbl:'Spring onion',ph:[['grow','2026-06-29','2026-08-20'],['harvest','2026-08-20','2026-10-05']]},
- {key:'garlic',lbl:'Garlic',ph:[['grow','2026-06-29','2026-08-10'],['harvest','2026-08-10','2026-09-15']]},
+ {key:'basil',lbl:'Basil ×2',ph:[['grow','2026-06-29','2026-08-05'],['harvest','2026-08-05','2026-09-30']]},
+ {key:'mint',lbl:'Mint',ph:[['grow','2026-06-29','2026-08-05'],['harvest','2026-08-05','2026-10-05']]},
  {key:'monstera',lbl:'Monstera',ph:[['grow','2026-06-29','2026-10-05']]},
  {key:'hedera',lbl:'Ivy',ph:[['grow','2026-06-29','2026-10-05']]},
 ];
@@ -800,153 +801,150 @@ const FACTS={
  tigerella:{family:'Tomato, Solanum lycopersicum',type:'Cordon (indeterminate)',
   sow:'March to early April indoors',sun:'Full sun, 6h+',pot:'20 L or more, one plant',
   water:'Deep and even, daily in heat',harvest:'From ~75 days after planting out',
-  hardy:'None, dies at first frost',crop:'Red fruit with yellow stripes, 60 to 90 g'},
+  hardy:'None, dies at first frost',crop:'Red fruit with yellow stripes, 60 to 90 g',
+  buy:'Nelson Garden seeds',buyUrl:'https://www.nelsongarden.fi/tuotteet/tomaatti-tigerella-p313'},
  noire:{family:'Tomato, Solanum lycopersicum',type:'Cordon (indeterminate)',
   sow:'March indoors',sun:'Full sun, 6h+',pot:'25 L or more, one plant',
   water:'Deep and even, splits if erratic',harvest:'From ~80 days after planting out',
-  hardy:'None',crop:'Dark brown-red beefsteak, 200 to 400 g'},
+  hardy:'None',crop:'Dark brown-red beefsteak, 200 to 400 g',
+  buy:'Nelson Garden seeds',buyUrl:'https://www.nelsongarden.fi/tuotteet/pihvitomaatti-noire-de-crimee-p-91700'},
  chilli:{family:'Chilli, Capsicum annuum',type:'Bush, 50 to 70 cm',
   sow:'February to March indoors, needs warmth',sun:'Full sun, the hotter the better',
   pot:'7 to 10 L',water:'Little and often, hates wet feet',
   harvest:'Green from ~70 days, red ~2 weeks later',hardy:'None, indoors below 10°C',
-  crop:'Long mild frying pepper, green turning red'},
+  crop:'Long mild frying pepper, green turning red',
+  buy:'Biltema 14-2867',buyUrl:'https://www.biltema.fi/vapaa-aika/puutarha/istuttaminen/siemenet/chilipippuri-lombardo-2000066777'},
  maurin:{family:'Raspberry, Rubus idaeus',type:'Summer-fruiting cane',
   sow:'Planted as a cane, autumn or spring',sun:'Sun to light shade',pot:'20 L or more',
   water:'Steady while fruiting',harvest:'July to August on last year\'s canes',
-  hardy:'Very, overwinters outdoors in Finland',crop:'Sweet red berries'},
+  hardy:'Very, overwinters outdoors in Finland',crop:'Sweet red berries',
+  sold:'Prisma, 10,95 euro',buyUrl:'https://www.prisma.fi/tuotteet/100057931/vadelma-maurin-makea-astiataimi-2l-ruukussa-100057931'},
+ 'takala-1':{family:'Raspberry, Rubus idaeus',type:'Summer-fruiting cane',
+  sow:'Planted as a cane, autumn or spring',sun:'Sun to light shade',pot:'20 L or more',
+  water:'Steady while fruiting',harvest:"July to August on last year's canes",
+  hardy:'Very, overwinters outdoors in Finland',crop:'Large sweet red berries',
+  sold:'Prisma, 10,95 euro',buyUrl:'https://www.prisma.fi/tuotteet/100065393/vadelma-takalan-herkku-2-l-astiataimi-rubus-idaeus-takalan-herkku-100065393'},
+ 'takala-2':{family:'Raspberry, Rubus idaeus',type:'Summer-fruiting cane',
+  sow:'Planted as a cane, autumn or spring',sun:'Sun to light shade',pot:'20 L or more',
+  water:'Steady while fruiting',harvest:"July to August on last year's canes",
+  hardy:'Very, overwinters outdoors in Finland',crop:'Large sweet red berries',
+  sold:'Prisma, 10,95 euro',buyUrl:'https://www.prisma.fi/tuotteet/100065393/vadelma-takalan-herkku-2-l-astiataimi-rubus-idaeus-takalan-herkku-100065393'},
  parsley:{family:'Parsley, Petroselinum crispum',type:'Biennial, grown as annual',
   sow:'April, slow, up to 4 weeks to germinate',sun:'Sun to part shade',pot:'5 L, or a bed',
   water:'Evenly moist, bolts if dry',harvest:'Cut outer leaves from ~10 weeks',
-  hardy:'Survives light frost',crop:'Curly leaf'},
- chives:{family:'Chives, Allium schoenoprasum',type:'Perennial clump',
-  sow:'Spring, or divide an existing clump',sun:'Sun to part shade',pot:'3 L+',
-  water:'Moderate',harvest:'Cut to 5 cm any time, regrows',
-  hardy:'Fully, returns each spring',crop:'Hollow leaves, edible purple flowers'},
- springonion:{family:'Spring onion, Allium fistulosum',type:'Annual, sown in succession',
-  sow:'April to July, every few weeks',sun:'Full sun',pot:'Shallow, 15 cm deep',
-  water:'Little and often, shallow roots',harvest:'From ~8 weeks, pull as needed',
-  hardy:'Light frost',crop:'Slim white stems'},
- garlic:{family:'Garlic, Allium sativum',type:'Overwintering bulb',
-  sow:'October, cloves pointed end up',sun:'Full sun',pot:'Deep, 20 cm+',
-  water:'Sparse, stop once leaves yellow',harvest:'July to August, when the tops die back',
-  hardy:'Fully, the cold is what makes it bulb',crop:'Bulb of 8 to 12 cloves'},
- basilmint:{family:'Basil, Ocimum basilicum. Mint, Mentha',type:'Basil annual, mint perennial',
-  sow:'Basil from May indoors, mint from a plant',sun:'Basil full sun, mint happy in shade',
-  pot:'Basil 3 L, mint alone or it takes over',water:'Basil moderate, mint thirsty',
-  harvest:'Pinch basil tops weekly, mint outer stems',
-  hardy:'Basil none, mint fully',crop:'Leaves'},
+  hardy:'Survives light frost',crop:'Curly leaf',
+  buy:'Biltema 14-2820',buyUrl:'https://www.biltema.fi/vapaa-aika/puutarha/istuttaminen/siemenet/persilja-2000055316'},
+ basil:{family:'Basil, Ocimum basilicum',type:'Tender annual',
+  sow:'From May indoors, needs warmth',sun:'Full sun',pot:'3 L each',
+  water:'Moderate, never soggy',harvest:'Pinch the tops from ~8 weeks',
+  hardy:'None, sulks under 12°C',crop:'Leaves',
+  buy:'Biltema 14-2863',buyUrl:'https://www.biltema.fi/vapaa-aika/puutarha/istuttaminen/siemenet/basilika-italiano-classico-2000066833'},
+ mint:{family:'Mint, Mentha',type:'Perennial, spreads by runners',
+  sow:'From a plant or a cutting',sun:'Sun to part shade',
+  pot:'Its own pot, or it takes the bed',water:'Thirsty, keep the soil damp',
+  harvest:'Outer stems any time',
+  hardy:'Fully, returns each spring',crop:'Leaves',
+  sold:'Prisma, 6,50 euro',buyUrl:'https://www.prisma.fi/tuotteet/100206798/viherminttu-spearmint-mentha-spicata-100206798'},
  monstera:{family:'Monstera deliciosa',type:'Climbing houseplant',
   sow:'From a cutting with a node',sun:'Bright indirect, never direct',pot:'Up one size every 2 years',
   water:'When the top half dries, less in winter',harvest:'Grown for foliage',
-  hardy:'None, indoors above 15°C',crop:'Split leaves once mature'},
+  hardy:'None, indoors above 15°C',crop:'Split leaves once mature',
+  buy:'IKEA, 12 cm pot',buyUrl:'https://www.ikea.com/fi/en/p/monstera-deliciosa-potted-plant-swiss-cheese-plant-50515493/'},
  hedera:{family:'Ivy, Hedera helix',type:'Evergreen climber or trailer',
   sow:'From a cutting, roots easily',sun:'Shade to part sun',pot:'Any, tolerant',
   water:'Moderate, drains freely',harvest:'Grown for foliage',
-  hardy:'Fully, to about -10°C',crop:'Evergreen leaves'},
+  hardy:'Fully, to about -10°C',crop:'Evergreen leaves',
+  buy:'IKEA, 13 cm pot',buyUrl:'https://www.ikea.com/fi/en/p/hedera-helix-potted-plant-ivy-66804047/'},
 };
 const FACT_LABEL={family:'Family',type:'Type',sow:'Sowing',sun:'Light',pot:'Pot',
-  water:'Water',harvest:'Harvest',hardy:'Frost',crop:'Crop'};
+  water:'Water',harvest:'Harvest',hardy:'Frost',crop:'Crop',
+  buy:'Bought',sold:'Sold as'};
+/* Every row is plain text except the one saying where it came from, which
+   carries the shop's link. `buyUrl` has no label, so it never gets a row. */
+function factValue(f,k){
+  const v=esc(f[k]);
+  return (k==='buy'||k==='sold')&&f.buyUrl
+    ? `<a href="${esc(f.buyUrl)}" target="_blank" rel="noopener">${v}</a>` : v;
+}
 
 /* A second photo for anything grown for a crop, so the page shows both the
    plant and the thing you are waiting for. Every URL here was checked. */
 const FRUIT={
- tigerella:['https://upload.wikimedia.org/wikipedia/commons/thumb/d/d5/Tigerella_%28tomato%29.jpg/1280px-Tigerella_%28tomato%29.jpg','On the plant'],
- noire:['https://upload.wikimedia.org/wikipedia/commons/thumb/b/b0/Black_krim_tomato_cut_open.jpg/1280px-Black_krim_tomato_cut_open.jpg','The fruit, cut'],
- chilli:['https://upload.wikimedia.org/wikipedia/commons/thumb/7/79/Chilli_plant_in_a_pot_20.jpg/1280px-Chilli_plant_in_a_pot_20.jpg','A plant in a pot'],
- maurin:['https://upload.wikimedia.org/wikipedia/commons/thumb/2/2b/Raspberries_%28Rubus_idaeus%29.jpg/1280px-Raspberries_%28Rubus_idaeus%29.jpg','The berries'],
- garlic:['https://upload.wikimedia.org/wikipedia/commons/thumb/6/61/Garlic_Bulbs_%28Unsplash%29.jpg/1280px-Garlic_Bulbs_%28Unsplash%29.jpg','Cured bulbs'],
+ tigerella:['https://upload.wikimedia.org/wikipedia/commons/thumb/6/6c/Balkoncontent_Tomatensorte_Tigerella.jpg/1280px-Balkoncontent_Tomatensorte_Tigerella.jpg','Striped ripe fruit'],
+ noire:['https://upload.wikimedia.org/wikipedia/commons/thumb/2/2c/Black_krim_tomato.jpg/1280px-Black_krim_tomato.jpg','A ripe dark beefsteak'],
+ chilli:['https://upload.wikimedia.org/wikipedia/commons/2/26/Cubanelle_Peppers.jpg','Long frying peppers'],
+ maurin:['https://upload.wikimedia.org/wikipedia/commons/thumb/7/7d/Malina.jpg/1280px-Malina.jpg','Ripe berries on the cane'],
+ 'takala-1':['https://upload.wikimedia.org/wikipedia/commons/thumb/7/7d/Malina.jpg/1280px-Malina.jpg','Ripe berries on the cane'],
+ 'takala-2':['https://upload.wikimedia.org/wikipedia/commons/thumb/7/7d/Malina.jpg/1280px-Malina.jpg','Ripe berries on the cane'],
 };
 
 const PROFILE={
- basilmint:{t:'Basil “Italiano Classico” & Mint',src:'Biltema seeds · mint as plant',ids:['basil-mint'],
-   body:['Classic Genovese basil. Pinch above a leaf pair weekly, bushy, no flowers. Hates cold: sulks under 12°C nights.',
-     'Mint is invasive, divider in the shared bed, or trim its roots each month. Harvest mint outer stems, basil from the top.',
-     'Feed the bed liquid fertilizer every 2 weeks.']},
+ basil:{t:'Basil “Italiano Classico”',src:'Biltema seeds',ids:['basil-1','basil-2'],
+   body:['Genovese basil, the classic pesto type, two pots of it. Pinch the stem above a leaf pair every week and it goes bushy instead of running to flower.',
+     'Harvest from the top, never strip the bottom leaves. Liquid feed every 2 weeks.']},
+ mint:{t:'Mint',src:'Bought as a plant',ids:['mint'],
+   body:['Came as a plant rather than from seed, so it skipped the slow start.',
+     'Keep it in its own pot. Share a bed with it and it runs underground and takes the lot. Harvest outer stems at the base, and cut it back hard when it sprawls.']},
  chilli:{t:'Chilli “Lombardo”',src:'Biltema 14-2867',ids:['chilli-1','chilli-2'],
-   body:['Mild Italian frying chilli, long fruit, green ripening to red. Early and productive.',
-     'Seedlings: water lightly only when top 1 cm is dry (damping-off kills sprouts). Max light, rotate pots so they don\'t lean. Pot up at 4-6 true leaves.',
-     'From flowering: tap flowers midday (no bees behind glass), feed high-K weekly.',
-     'Pick green for mild crunch or red for sweeter warmth, picking often = more fruit.']},
+   body:['Mild Italian frying chilli. Long thin fruit, green ripening to red, early and productive.',
+     'Seedlings damp off easily. Give them all the light there is, rotate the pots so they do not lean, and pot up at 4 to 6 true leaves.',
+     'No bees behind the glazing, so tap the flowers at midday to set fruit. Pick green for a mild crunch or red for sweeter warmth. Picking often means more fruit.']},
  tigerella:{t:'Tomato “Tigerella”',src:'Nelson Garden',ids:['tomato-1'],
-   body:['Striped heirloom cordon, needs stake, pinch side shoots weekly.',
-     'Shake flower trusses daily at midday to set fruit behind glass.',
-     'Water deep and even, uneven water = split fruit + blossom end rot. High-K feed weekly.',
-     'Ripe when the stripes turn orange-red. Handles cool Tampere summers well.']},
+   body:['Striped heirloom cordon. Stake it, and pinch the side shoots weekly.',
+     'Shake the flower trusses at midday to set fruit behind glass. Uneven watering splits the fruit and brings blossom end rot, so keep it steady. High-K feed weekly.',
+     'Ripe when the stripes turn orange-red. Handles a cool Tampere summer well.']},
  noire:{t:'Tomato “Noire de Crimée”',src:'Nelson Garden',ids:['tomato-2'],
-   body:['Black beefsteak cordon, tall, hungry. Feed generously: high-K weekly from first flowers.',
-     'Shake trusses daily at midday. Stake well, big fruit gets heavy.',
-     'Ripe when SOFT, not by colour, it stays dark brown-red, darkest on top. Squeeze gently, don\'t wait for red.',
-     'Early variety with a long harvest, expect fruit from mid-August.']},
- chives:{t:'Chives (Ruohosipuli)',src:'Biltema 14-2818',ids:['chives'],
-   body:['Perennial and frost-hardy, leave the bed on the balcony over winter, it returns early spring. Your one plant that outlives the season.',
-     'Cut whole leaves 2 cm above soil, regrows in days. Harvesting often keeps it productive.',
-     'Water when top 2 cm dry. Light feed monthly is plenty.']},
- springonion:{t:'Spring onion (Pillisipuli)',src:'Biltema 14-2807',ids:['spring-onion'],
-   body:['Early, fast variety with long thick white stems.',
-     'Keep evenly moist, shallow roots dry fast in glazed heat.',
-     'Harvest whole at pencil thickness, thickest first. Re-sow a pinch every 3 weeks for steady supply into autumn.']},
- parsley:{t:'Curly parsley (Persilja)',src:'Biltema 14-2820',ids:['parsley'],
-   body:['Curly, dark green type. The marathon runner, germination up to 4 weeks is normal.',
-     'Even moisture, deep soil. Bolts in heat: shade it on 30°C+ days.',
-     'Harvest outer stems at the base only, the centre keeps producing to late autumn. Moves to a windowsill for winter.']},
+   body:['Black beefsteak cordon, tall and hungry. High-K feed weekly from the first flowers.',
+     'Shake the trusses at midday, and stake it properly, the fruit gets heavy.',
+     'Ripe when SOFT, not by colour. It stays dark brown-red and darkest on the shoulders, so squeeze gently rather than waiting for red.']},
+ parsley:{t:'Curly parsley (Persilja)',src:'Biltema 14-2820',ids:['parsley-1','parsley-2'],
+   body:['Curly dark green type, two pots of it. The marathon runner: up to 4 weeks to germinate is normal.',
+     'Bolts in heat, so shade it on a 30°C day. Harvest outer stems at the base only and the centre keeps producing into late autumn. Comes indoors to a windowsill for winter.']},
  monstera:{t:'Monstera deliciosa',src:'IKEA · indoors',ids:['monstera'],
-   body:['Newly bought, let it settle a few weeks in a bright indirect spot, away from draughts and radiators. No feeding or repotting yet.',
-     'Water only when the top 3-4 cm of soil is dry, roughly weekly. Overwatering is the one thing that kills it.',
-     'Wipe the big leaves now and then, dust blocks light. Once settled, feed monthly in season and give the aerial roots a pole to climb.']},
+   body:['Newly bought, so let it settle a few weeks away from draughts and radiators. No feeding or repotting yet.',
+     'Overwatering is the one thing that kills it. Wipe the big leaves now and then, dust blocks the light. Once it settles, give the aerial roots a pole to climb and the new leaves start splitting.']},
  hedera:{t:'Ivy · Hedera helix',src:'IKEA · balcony',ids:['hedera'],
-   body:['The tough one, happy in the shady corner where nothing else grows, and frost-hardy to about −10°C. Stays out all winter with the chives.',
-     'While it establishes: steady but light watering, top 2-3 cm dry between waterings. Never soggy.',
-     'Check leaf undersides, spider mites love warm dry glazed air. Trim wandering vines anytime; it regrows from any node.']},
+   body:['The tough one. Happy in the shady corner where nothing else grows, and it stays out all winter.',
+     'Check the leaf undersides, spider mites love warm dry glazed air. Trim wandering vines any time, it regrows from any node.']},
  maurin:{t:'Raspberry “Maurin Makea”',src:'Finnish summer raspberry',ids:['rasp-maurin'],
-   body:['A Finnish summer (floricane) raspberry prized for very sweet berries. Ahead of the other two, it has set green fruit already (Jul 2026), ripening red over the coming weeks.',
-     'Now fruiting: keep the water even so berries swell without splitting, top 2-3 cm dry between waterings, never bone-dry or soggy. High-K feed weekly. Pick every 2-3 days once they colour up; dead-ripe berries pull free with a light tug.',
-     'Tie the fruiting canes to a support so glass heat and wind don\'t snap them. Watch leaf undersides for spider mites in dry glazed air.',
-     'Frost-hardy, leave it out on the balcony over winter with the chives and ivy. After the canes finish fruiting, cut those spent canes to the ground and keep this year\'s fresh canes for next summer.']},
+   body:['A Finnish summer (floricane) raspberry grown for very sweet berries. Ahead of the other two: it set green fruit back in July and is colouring up now.',
+     'Keep the water even while the berries swell or they split. Pick every 2 or 3 days once they colour, a dead-ripe berry pulls free with a light tug.',
+     'Tie the fruiting canes to a support so glass heat and wind do not snap them. Once a cane has fruited, cut it to the ground and keep this year\'s fresh canes for next summer.']},
  'takala-1':{t:'Raspberry “Takalan Herkku” 1',src:'New pot · Finnish summer raspberry',ids:['rasp-takala-1'],
-   body:['A hardy Finnish summer (floricane) raspberry with large, sweet berries, a reliable home-garden favourite. Just potted: new canes grow this year, main crop next summer.',
-     'Even moisture, top 2-3 cm dry between waterings, never waterlogged. New pot dries fast behind glass; steady water while establishing. Half-strength feed weekly.',
-     'Tie the new canes to a support against wind and glass heat; check leaf undersides for spider mites.',
-     'Very hardy, overwinters on the balcony. Cut spent (fruited) canes to the ground after they crop; keep this year\'s canes for next summer\'s berries.']},
+   body:['A hardy Finnish summer (floricane) raspberry with large sweet berries. Just potted, so this year is about growing canes and the main crop comes next summer.',
+     'A new pot dries fast behind the glazing, so keep it steady while it establishes. Half-strength feed weekly.',
+     'Tie the new canes to a support against wind and glass heat, and check the leaf undersides for spider mites. Cut each cane to the ground once it has fruited.']},
  'takala-2':{t:'Raspberry “Takalan Herkku” 2',src:'New pot · Finnish summer raspberry',ids:['rasp-takala-2'],
-   body:['The second Takalan Herkku pot, same hardy Finnish summer raspberry, large sweet berries. Just potted: new canes grow this year, main crop next summer.',
-     'Even moisture, top 2-3 cm dry between waterings, never waterlogged. New pot dries fast behind glass; steady water while establishing. Half-strength feed weekly.',
-     'Give it its own cane/support and room from pot 1 for airflow; check leaf undersides for spider mites.',
-     'Very hardy, overwinters on the balcony. Cut spent (fruited) canes to the ground after they crop; keep this year\'s canes for next summer\'s berries.']},
- garlic:{t:'Garlic pot',src:'from cloves',ids:['garlic'],
-   body:['Water sparingly, wet soil rots the bulb. Coolest corner of the balcony; glazed heat rushes it.',
-     'When half the leaves yellow: stop watering. When half are brown: lift the bulb.',
-     'Dry lifted bulbs 2 weeks somewhere airy before storing.']},
+   body:['The second Takalan Herkku pot, same variety. Just potted, so canes this year and the main crop next summer.',
+     'A new pot dries fast behind the glazing, so keep it steady while it establishes. Half-strength feed weekly.',
+     'Give it its own support and room from pot 1 for airflow. Check the leaf undersides for spider mites, and cut each cane to the ground once it has fruited.']},
 };
 Object.entries(PROFILE).forEach(([key,pr])=>(pr.ids||[]).forEach(id=>{KEY_BY_ID[id]=key;}));
 
 const ART={
- basilmint:`<svg viewBox="0 0 80 80" xmlns="http://www.w3.org/2000/svg"><rect width="80" height="80" fill="#93BFA3"/><path d="M30 62C14 50 16 28 30 16c6 10 8 34 0 46z" fill="#1E4D3B"/><path d="M50 64C38 54 40 34 52 22c8 8 10 32-2 42z" fill="#2E7D52"/><path d="M52 22c-2 14-2 28-2 42" stroke="#93BFA3" stroke-width="2" fill="none"/><path d="M30 16c0 16 0 30 0 46" stroke="#93BFA3" stroke-width="2" fill="none"/></svg>`,
+ basil:`<svg viewBox="0 0 80 80" xmlns="http://www.w3.org/2000/svg"><rect width="80" height="80" fill="#93BFA3"/><path d="M30 62C14 50 16 28 30 16c6 10 8 34 0 46z" fill="#1E4D3B"/><path d="M50 64C38 54 40 34 52 22c8 8 10 32-2 42z" fill="#2E7D52"/><path d="M52 22c-2 14-2 28-2 42" stroke="#93BFA3" stroke-width="2" fill="none"/><path d="M30 16c0 16 0 30 0 46" stroke="#93BFA3" stroke-width="2" fill="none"/></svg>`,
+ mint:`<svg viewBox="0 0 80 80" xmlns="http://www.w3.org/2000/svg"><rect width="80" height="80" fill="#EAF0E9"/><rect x="37" y="14" width="6" height="56" fill="#3F7D4E"/><ellipse cx="23" cy="30" rx="14" ry="9" transform="rotate(-16 23 30)" fill="#1E4D3B"/><ellipse cx="57" cy="30" rx="14" ry="9" transform="rotate(16 57 30)" fill="#2E7D52"/><ellipse cx="25" cy="52" rx="13" ry="8" transform="rotate(-12 25 52)" fill="#2E7D52"/><ellipse cx="55" cy="52" rx="13" ry="8" transform="rotate(12 55 52)" fill="#1E4D3B"/><ellipse cx="40" cy="14" rx="7" ry="9" fill="#6FA97F"/><path d="M14 32h16M50 32h16M15 53h15M50 53h15" stroke="#93BFA3" stroke-width="1.8" stroke-linecap="round"/></svg>`,
  chilli:`<svg viewBox="0 0 80 80" xmlns="http://www.w3.org/2000/svg"><rect width="80" height="80" fill="#F2D8AC"/><path d="M24 18c-2 22 4 40 18 46 6 3 10-2 6-6C36 48 32 34 32 18z" fill="#D9472B"/><path d="M52 26c4 16 0 30-8 36-5 4-10 0-7-4 8-8 10-20 9-32z" fill="#2E7D52"/><path d="M28 12c2 4 4 6 4 6h-8s2-2 4-6z" fill="#1E4D3B"/><path d="M50 20c1 4 2 6 2 6l-7-1s3-2 5-5z" fill="#1E4D3B"/></svg>`,
  tigerella:`<svg viewBox="0 0 80 80" xmlns="http://www.w3.org/2000/svg"><rect width="80" height="80" fill="#F6E3C5"/><circle cx="40" cy="46" r="25" fill="#D9472B"/><path d="M28 26q-7 20 0 40M40 22q-4 24 0 48M52 26q7 20 0 40" stroke="#E08A3C" stroke-width="5" stroke-linecap="round" fill="none"/><path d="M40 14l3 7h7l-5 5 2 7-7-4-7 4 2-7-5-5h7z" fill="#1E4D3B"/></svg>`,
  noire:`<svg viewBox="0 0 80 80" xmlns="http://www.w3.org/2000/svg"><rect width="80" height="80" fill="#D7C4B0"/><ellipse cx="40" cy="48" rx="27" ry="21" fill="#6E3B3F"/><path d="M13 48a27 21 0 0 1 54 0c-8-10-18-14-27-14s-19 4-27 14z" fill="#4A2A31"/><path d="M30 30q-3 18 2 36M50 30q3 18-2 36" stroke="#5C3136" stroke-width="3" fill="none"/><path d="M40 22l3 6h6l-4 5 1 6-6-3-6 3 1-6-4-5h6z" fill="#1E4D3B"/></svg>`,
- chives:`<svg viewBox="0 0 80 80" xmlns="http://www.w3.org/2000/svg"><rect width="80" height="80" fill="#EAF0E9"/><path d="M26 70V26M36 70V18M46 70V24M56 70V32" stroke="#2E7D52" stroke-width="5" stroke-linecap="round"/><circle cx="36" cy="14" r="7" fill="#D793A8"/><circle cx="56" cy="28" r="6" fill="#C77E96"/></svg>`,
- springonion:`<svg viewBox="0 0 80 80" xmlns="http://www.w3.org/2000/svg"><rect width="80" height="80" fill="#93BFA3"/><path d="M28 70V44M40 70V42M52 70V44" stroke="#F6F7F3" stroke-width="8" stroke-linecap="round"/><path d="M28 44 22 16M28 44l4-26M40 42l-3-28M40 42l5-28M52 44l-4-26M52 44l6-24" stroke="#1E4D3B" stroke-width="4" stroke-linecap="round"/></svg>`,
  parsley:`<svg viewBox="0 0 80 80" xmlns="http://www.w3.org/2000/svg"><rect width="80" height="80" fill="#F6E3C5"/><path d="M40 72V40M40 48l-14-8M40 48l14-8" stroke="#2E7D52" stroke-width="4" stroke-linecap="round"/><g fill="#1E4D3B"><circle cx="40" cy="26" r="9"/><circle cx="26" cy="32" r="8"/><circle cx="54" cy="32" r="8"/><circle cx="32" cy="20" r="7"/><circle cx="48" cy="20" r="7"/></g><g fill="#2E7D52"><circle cx="40" cy="18" r="6"/><circle cx="22" cy="26" r="5"/><circle cx="58" cy="26" r="5"/></g></svg>`,
- garlic:`<svg viewBox="0 0 80 80" xmlns="http://www.w3.org/2000/svg"><rect width="80" height="80" fill="#EAF0E9"/><path d="M40 24c-14 4-22 14-22 26 0 12 10 18 22 18s22-6 22-18c0-12-8-22-22-26z" fill="#F6F7F3" stroke="#1E4D3B" stroke-width="3"/><path d="M40 26v40M30 28q-4 20 2 38M50 28q4 20-2 38" stroke="#1E4D3B" stroke-width="2.5" fill="none"/><path d="M40 24c-2-8 2-14 6-16-1 6 0 10-2 16z" fill="#2E7D52"/></svg>`,
  monstera:`<svg viewBox="0 0 80 80" xmlns="http://www.w3.org/2000/svg"><rect width="80" height="80" fill="#F6E3C5"/><path d="M40 4v10" stroke="#1E4D3B" stroke-width="3" stroke-linecap="round"/><path d="M40 16C34 8 22 6 14 13 6 20 4 31 7 40c3 12 13 24 25 30q8 4 16 0c12-6 22-18 25-30 3-9 1-20-7-27-8-7-20-5-26 3Z" fill="#1E4D3B"/><path d="M6 40l29-8M12 54l24-9M22 66l15-9M74 40l-29-8M68 54l-24-9M58 66l-15-9" stroke="#F6E3C5" stroke-width="2.2" stroke-linecap="round"/><path d="M40 21v46" stroke="#F6E3C5" stroke-width="1.8"/></svg>`,
  hedera:`<svg viewBox="0 0 80 80" xmlns="http://www.w3.org/2000/svg"><rect width="80" height="80" fill="#EAF0E9"/><path d="M14 66q26-4 52-44" stroke="#2E7D52" stroke-width="3" fill="none"/><path d="M30 54l-8-2 2-8 8 2zM46 40l-8-1 1-8 8 1zM60 26l-7-1 1-7 7 1z" fill="#1E4D3B"/><path d="M24 46l6 6M39 33l6 5M54 20l5 5" stroke="#2E7D52" stroke-width="2"/></svg>`,
  maurin:`<svg viewBox="0 0 80 80" xmlns="http://www.w3.org/2000/svg"><rect width="80" height="80" fill="#EAF0E9"/><path d="M40 40c-8 0-14 4-14 14 0 9 7 14 14 14s14-5 14-14c0-10-6-14-14-14z" fill="#B23A5B"/><g fill="#C9557A"><circle cx="34" cy="52" r="4.4"/><circle cx="46" cy="52" r="4.4"/><circle cx="40" cy="49" r="4.4"/><circle cx="31" cy="60" r="4.4"/><circle cx="49" cy="60" r="4.4"/><circle cx="40" cy="58" r="4.4"/><circle cx="35" cy="66" r="4.2"/><circle cx="45" cy="66" r="4.2"/></g><path d="M40 40l0-8" stroke="#2E7D52" stroke-width="3"/><path d="M40 34c-8-2-14-8-14-8 6 0 12 2 14 6 2-4 8-6 14-6 0 0-6 6-14 8z" fill="#2E7D52"/></svg>`,
 };
 ART['takala-1']=ART['takala-2']=ART.maurin;
 const REAL={
- basilmint:['https://upload.wikimedia.org/wikipedia/commons/9/97/Ocimum_basilicum_8zz.jpg','Genovese basil · Wikimedia'],
- chilli:['https://upload.wikimedia.org/wikipedia/commons/4/46/Fefferoni.jpg','Italian frying peppers · Wikimedia'],
- tigerella:['https://upload.wikimedia.org/wikipedia/commons/6/6c/Balkoncontent_Tomatensorte_Tigerella.jpg','Tigerella on the vine · Wikimedia'],
- noire:['https://upload.wikimedia.org/wikipedia/commons/thumb/2/2c/Black_krim_tomato.jpg/1280px-Black_krim_tomato.jpg','Noire de Crimée (Black Krim) · Wikimedia'],
- chives:['https://upload.wikimedia.org/wikipedia/commons/thumb/4/49/Allium_schoenoprasum_-_Bombus_lapidarius_-_Tootsi.jpg/1280px-Allium_schoenoprasum_-_Bombus_lapidarius_-_Tootsi.jpg','Chives in flower · Wikimedia'],
- springonion:['https://upload.wikimedia.org/wikipedia/commons/f/fc/2010-06-19-supermarkt-by-RalfR-32.jpg','Spring onions · Wikimedia'],
- parsley:['https://upload.wikimedia.org/wikipedia/commons/b/bf/Parsley100.jpg','Curly parsley · Wikimedia'],
- garlic:['https://upload.wikimedia.org/wikipedia/commons/4/49/Opened_garlic_bulb_with_garlic_clove.jpg','Garlic bulb · Wikimedia'],
- monstera:['https://www.ikea.com/fi/en/images/products/monstera-deliciosa-potted-plant-swiss-cheese-plant__1177967_pe895590_s5.jpg?f=xl','Monstera deliciosa · IKEA'],
- hedera:['https://www.ikea.com/fi/en/images/products/hedera-helix-potted-plant-ivy__0902464_pe594502_s5.jpg?f=xl','Hedera helix · IKEA'],
- maurin:['https://upload.wikimedia.org/wikipedia/commons/thumb/1/12/Raspberry_%2852479964737%29.jpg/1280px-Raspberry_%2852479964737%29.jpg','Ripe raspberries · Wikimedia'],
- 'takala-1':['https://upload.wikimedia.org/wikipedia/commons/6/67/Raspberries_-_geograph.org.uk_-_506621.jpg','Raspberries on the cane · Wikimedia'],
- 'takala-2':['https://upload.wikimedia.org/wikipedia/commons/6/67/Raspberries_-_geograph.org.uk_-_506621.jpg','Raspberries on the cane · Wikimedia'],
+ tigerella:['https://upload.wikimedia.org/wikipedia/commons/thumb/d/dc/-2020-07-20_Bush_tomato_plant_%28Totem%29%2C_Trimingham%2C_Norfolk_%281%29.JPG/1280px--2020-07-20_Bush_tomato_plant_%28Totem%29%2C_Trimingham%2C_Norfolk_%281%29.JPG','A tomato plant on a cane'],
+ noire:['https://upload.wikimedia.org/wikipedia/commons/thumb/e/eb/-2020-08-04_Bush_tomato_plant_%28Totem%29%2C_Trimingham%2C_Norfolk_%281%29.JPG/1280px--2020-08-04_Bush_tomato_plant_%28Totem%29%2C_Trimingham%2C_Norfolk_%281%29.JPG','A tomato plant in fruit'],
+ chilli:['https://upload.wikimedia.org/wikipedia/commons/thumb/3/3f/Starr-101030-9376-Capsicum_annuum-habit_in_vegetable_garden-Olinda-Maui_%2824688522999%29.jpg/1280px-Starr-101030-9376-Capsicum_annuum-habit_in_vegetable_garden-Olinda-Maui_%2824688522999%29.jpg','A pepper plant in the ground'],
+ parsley:['https://upload.wikimedia.org/wikipedia/commons/thumb/6/6a/Parsley_Curled.jpg/1280px-Parsley_Curled.jpg','A curly parsley plant'],
+ basil:['https://upload.wikimedia.org/wikipedia/commons/thumb/8/83/Basil_plant_in_pot_1.jpg/1280px-Basil_plant_in_pot_1.jpg','Sweet basil in a pot'],
+ mint:['https://upload.wikimedia.org/wikipedia/commons/thumb/f/fe/-2018-05-13_Garden_mint_plants%2C_Northrepps%2C_Cromer.JPG/1280px--2018-05-13_Garden_mint_plants%2C_Northrepps%2C_Cromer.JPG','Garden mint in soil'],
+ monstera:['https://www.ikea.com/fi/en/images/products/monstera-deliciosa-potted-plant-swiss-cheese-plant__1177967_pe895590_s5.jpg?f=xl','The plant I bought'],
+ hedera:['https://www.ikea.com/fi/en/images/products/hedera-helix-potted-plant-ivy__0902464_pe594502_s5.jpg?f=xl','The plant I bought'],
+ maurin:['https://upload.wikimedia.org/wikipedia/commons/3/37/Wild_Rubus_idaeus.jpg','Raspberry canes in fruit'],
+ 'takala-1':['https://upload.wikimedia.org/wikipedia/commons/3/37/Wild_Rubus_idaeus.jpg','Raspberry canes in fruit'],
+ 'takala-2':['https://upload.wikimedia.org/wikipedia/commons/3/37/Wild_Rubus_idaeus.jpg','Raspberry canes in fruit'],
 };
 const S_START=new Date('2026-06-29'),S_END=new Date('2026-10-05');
 const spos=d=>Math.max(0,Math.min(100,(new Date(d)-S_START)/(S_END-S_START)*100));
@@ -1342,10 +1340,10 @@ function plantRowHTML(p){
       status?esc(status):'No reading yet.'}</span></p>
     <p class="guide"><b class="lbl">Care</b><span>${care&&care.guidance?esc(care.guidance)
       :'No guidance yet. Add a note, or wait for tonight\'s update.'}</span></p>
-    <div class="wline">
-      <button class="waterbtn" data-act="water" data-val="${esc(p.id)}">💧 Water now</button>
+    <div class="wline"><b class="lbl">Water</b><span>
       <span class="water">${esc(waterLabel(p.last,todayISO()))}</span>
-    </div>
+      <button class="waterbtn" data-act="water" data-val="${esc(p.id)}">💧 Water now</button>
+    </span></div>
   </article>`;
 }
 
@@ -1418,7 +1416,7 @@ function gardenJournalHTML(){
   }));
   const loose=shown(PHOTOS).filter(p=>!items.some(i=>(i.photoIds||[]).includes(p.id)));
   for(const p of loose)items.push({kind:'photo',id:p.id,date:p.date,html:'',photoIds:[p.id],phase:''});
-  return journalHTML(items,`${items.length} entries`);
+  return journalHTML(items,count(items.length,'entry','entries'));
 }
 
 /* A plant's journal: what the model filed under it, and its photos. */
@@ -1434,7 +1432,7 @@ function plantJournalHTML(p){
     if(hit)hit.photoIds=ids;
     else notes.push({kind:'photo',id:ids[0],plantId:p.id,date,html:'',photoIds:ids,phase:phaseAt(p.id,date)});
   }
-  return journalHTML(notes,`${notes.length} entries`);
+  return journalHTML(notes,count(notes.length,'entry','entries'));
 }
 
 /* ---- tasks and weather ---- */
@@ -1481,13 +1479,14 @@ function entryHTML(e){
 /* The page is the list, so the list needs no heading of its own.
    The forecast belongs to the balcony group, not to the page: an indoor
    plant must never be sitting under a cold-night warning. */
+const count=(n,one,many)=>`${n} ${n===1?one:(many||one+'s')}`;
 function allPlantsHTML(){
   const T=todayISO(),all=plants();
   return `${legendHTML()}
     ${groupByArea(all).map(g=>`<section class="sect">
-      <div class="hd"><h2>${esc(g.label)}</h2><span class="meta">${g.plants.length} plants</span></div>
+      <div class="hd"><h2>${esc(g.label)}</h2><span class="meta">${count(g.plants.length,'plant')}</span></div>
       ${g.area==='balcony'?wxHTML(T):''}
-      ${g.plants.map(plantRowHTML).join('')}
+      <div class="plist">${g.plants.map(plantRowHTML).join('')}</div>
     </section>`).join('')}
     <section class="sect">${gardenJournalHTML()}</section>`;
 }
@@ -1506,23 +1505,23 @@ function plantHTML(p){
           p.observations?esc(p.observations):'No reading yet.'}</span></p>
         <p class="guide"><b class="lbl">Care</b><span>${care&&care.guidance?esc(care.guidance)
           :'No guidance yet. Add a note, or wait for tonight\'s update.'}</span></p>
-        <div class="wline">
-          <button class="waterbtn" data-act="water" data-val="${esc(p.id)}">💧 Water now</button>
+        <div class="wline"><b class="lbl">Water</b><span>
           <span class="water">${esc(waterLabel(p.last,todayISO()))}</span>
-        </div>
+          <button class="waterbtn" data-act="water" data-val="${esc(p.id)}">💧 Water now</button>
+        </span></div>
       </div>
     </section>
 
     <section class="sect">${plantJournalHTML(p)}</section>
 
     <section class="sect">
-      <div class="hd"><h2>About this variety</h2><span class="meta">${esc(pr.src||'')}</span></div>
+      <div class="hd"><h2>About this variety</h2></div>
       <div class="wiki">
         <div class="wtext">
           ${(pr.body||[]).map(b=>`<p class="prose">${esc(b)}</p>`).join('')}
           ${FACTS[key]?`<dl class="facts">${Object.entries(FACT_LABEL)
             .filter(([k])=>FACTS[key][k])
-            .map(([k,l])=>`<dt>${esc(l)}</dt><dd>${esc(FACTS[key][k])}</dd>`).join('')}</dl>`:''}
+            .map(([k,l])=>`<dt>${esc(l)}</dt><dd>${factValue(FACTS[key],k)}</dd>`).join('')}</dl>`:''}
         </div>
         <div class="wpics">
           ${REAL[key]?`<figure><img src="${REAL[key][0]}" alt="${esc(REAL[key][1])}" loading="lazy"

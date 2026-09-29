@@ -49,7 +49,7 @@ test('an unplaced plant falls back to the overflow row rather than vanishing', (
 
 test('slotsFor numbers overflow plants independently of placed ones', () => {
   const slots = slotsFor([
-    { id: 'tomato-1' }, { id: 'ghost-1' }, { id: 'chives' }, { id: 'ghost-2' },
+    { id: 'tomato-1' }, { id: 'ghost-1' }, { id: 'parsley-1' }, { id: 'ghost-2' },
   ]);
   assert.equal(slots[0].overflow, false);
   assert.equal(slots[2].overflow, false);

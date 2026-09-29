@@ -27,8 +27,6 @@ const G = {
   white: '#F4F1E8',
   bamboo: '#C9A86A',
   string: '#CFC9BA',
-  bulb: '#EFE7D6',
-  onion: '#F2F4EE',
 };
 
 /* ---------- drawing helpers ---------- */
@@ -86,11 +84,11 @@ function raspLeaf(x, y, size, dir, dark, mid) {
     + s(-42, 0.82, dark) + s(4, 1, mid) + s(46, 0.82, dark);
 }
 
-/* A blade of grass: chives, spring onion, garlic, young onions. */
+/* A blade of grass, for anything that grows in a grassy tuft. */
 const blade = (x, y, h, lean, w, fill) =>
   `<path d="M${x} ${y}q${lean * 0.3} ${-h * 0.55} ${lean} ${-h}" stroke="${fill}" stroke-width="${w}" stroke-linecap="round" fill="none"/>`;
 
-/* An opposed pair of herb leaves on a stem, used for basil and chilli. */
+/* An opposed pair of herb leaves on a stem, used for basil, mint and chilli. */
 const leafPair = (x, y, r, fill) =>
   leaf(x, y, r * 1.55, r * 0.68, -22, fill, G.light)
   + leaf(x, y, r * 1.55, r * 0.68, 202, fill, G.light);
@@ -217,24 +215,42 @@ function chilliArt({ pods = 0, flowers = 0, height = 120, podColor = '#D9472B' }
   return { w: 0.42, h: 0.53, svg: wrap(W, H, s) };
 }
 
-/* ---------- herbs and roots ---------- */
-function basilMintArt({ tall = false }) {
-  const W = 170, H = 140;
+/* ---------- herbs ---------- */
+/* Basil: one upright plant per pot, big leaves in opposed pairs up one stem. */
+function basilArt({ tall = false }) {
+  const W = 130, H = 130;
   const base = H - 6;
   let s = soilMound(W, H - 2);
-  // basil on the left, mint on the right, sharing the bed
-  [[52, 1], [118, 0.88]].forEach(([x, k], idx) => {
-    const h = (tall ? 96 : 76) * k;
-    s += stalk(x, base, x, base - h, 3.4, 1.4, G.stem);
-    const n = tall ? 4 : 3;
+  const h = tall ? 96 : 76;
+  s += stalk(65, base, 65, base - h, 3.4, 1.4, G.stem);
+  const n = tall ? 4 : 3;
+  for (let i = 0; i < n; i++) {
+    const y = base - 16 - i * (h / (n + 0.3));
+    const r = 17 - i * 1.4;
+    s += leafPair(65, y, r, i % 2 ? G.mid : G.deep);
+  }
+  s += leaf(65, base - h - 2, 15, 6.5, -90, G.light, null);
+  return { w: 0.34, h: 0.36, svg: wrap(W, H, s) };
+}
+
+/* Mint: lower and wider than basil, several leaning runners out of one pot with
+   smaller, paler leaf pairs. */
+function mintArt({ tall = false }) {
+  const W = 150, H = 120;
+  const base = H - 6;
+  let s = soilMound(W, H - 2);
+  [[48, 1], [75, 0.86], [102, 0.94]].forEach(([x, k], idx) => {
+    const h = (tall ? 78 : 62) * k;
+    const lean = (idx - 1) * 8;
+    s += stalk(x, base, x + lean, base - h, 2.8, 1.2, G.stem);
+    const n = 3;
     for (let i = 0; i < n; i++) {
-      const y = base - 16 - i * (h / (n + 0.3));
-      const r = (idx ? 13 : 16) - i * 1.4;
-      s += leafPair(x, y, r, i % 2 ? G.mid : G.deep);
+      const y = base - 12 - i * (h / (n + 0.3));
+      s += leafPair(x + lean * (i / n), y, 11 - i * 1.1, i % 2 ? G.light : G.mid);
     }
-    s += leaf(x, base - h - 2, 15, 6.5, -90, G.light, null);
+    s += leaf(x + lean, base - h - 2, 11, 5, -90, G.pale, null);
   });
-  return { w: 0.5, h: 0.41, svg: wrap(W, H, s) };
+  return { w: 0.42, h: 0.33, svg: wrap(W, H, s) };
 }
 
 function parsleyArt({ big = false }) {
@@ -252,56 +268,7 @@ function parsleyArt({ big = false }) {
   return { w: 0.4, h: 0.35, svg: wrap(W, H, s) };
 }
 
-function chivesArt({ flowering = false }) {
-  const W = 140, H = 130;
-  const base = H - 6;
-  let s = soilMound(W, H - 2);
-  const n = 11;
-  for (let i = 0; i < n; i++) {
-    const x = 42 + i * 5.6;
-    const lean = (i - n / 2) * 4.2;
-    const h = 74 - Math.abs(i - n / 2) * 4;
-    s += blade(x, base, h, lean, 4, i % 2 ? G.mid : G.deep);
-  }
-  if (flowering) {
-    [[58, 60], [86, 74]].forEach(([x, h]) => {
-      s += blade(x, base, h + 14, 4, 3.4, G.mid);
-      s += `<circle cx="${x + 5}" cy="${base - h - 16}" r="9" fill="#D793A8"/>`;
-    });
-  }
-  return { w: 0.34, h: 0.32, svg: wrap(W, H, s) };
-}
 
-function springOnionArt({ big = false }) {
-  const W = 140, H = 130;
-  const base = H - 6;
-  let s = soilMound(W, H - 2);
-  const n = 5;
-  for (let i = 0; i < n; i++) {
-    const x = 50 + i * 12;
-    const white = big ? 30 : 22;
-    s += `<path d="M${x} ${base}v${-white}" stroke="${G.onion}" stroke-width="9" stroke-linecap="round"/>`;
-    const lean = (i - (n - 1) / 2) * 9;
-    s += blade(x, base - white, big ? 62 : 46, lean, 6, i % 2 ? G.deep : G.mid);
-    s += blade(x, base - white, big ? 50 : 38, lean * -0.6, 5.4, G.mid);
-  }
-  return { w: 0.36, h: 0.33, svg: wrap(W, H, s) };
-}
-
-function garlicArt({ yellowing = false, bulb = false }) {
-  const W = 130, H = 140;
-  const base = H - 6;
-  let s = soilMound(W, H - 2);
-  if (bulb) s += `<ellipse cx="65" cy="${base - 6}" rx="20" ry="15" fill="${G.bulb}" stroke="${G.deep}" stroke-width="2"/>`;
-  const n = 5;
-  for (let i = 0; i < n; i++) {
-    const lean = (i - (n - 1) / 2) * 17;
-    const h = 84 - Math.abs(i - (n - 1) / 2) * 11;
-    const col = yellowing && i % 2 ? '#B9AE55' : i % 2 ? G.mid : G.deep;
-    s += blade(65, base - (bulb ? 12 : 0), h, lean, 7, col);
-  }
-  return { w: 0.32, h: 0.35, svg: wrap(W, H, s) };
-}
 
 function hederaArt() {
   const W = 200, H = 150;
@@ -393,29 +360,19 @@ export const BILLBOARDS = {
     fruiting: chilliArt({ height: 126, pods: 3, podColor: '#5E9B45' }),
     harvesting: chilliArt({ height: 126, pods: 3 }),
   },
-  basilmint: {
-    seedling: basilMintArt({}),
-    growing: basilMintArt({}),
-    harvesting: basilMintArt({ tall: true }),
+  basil: {
+    seedling: basilArt({}),
+    growing: basilArt({}),
+    harvesting: basilArt({ tall: true }),
+  },
+  mint: {
+    growing: mintArt({}),
+    harvesting: mintArt({ tall: true }),
   },
   parsley: {
     seedling: parsleyArt({}),
     growing: parsleyArt({}),
     harvesting: parsleyArt({ big: true }),
-  },
-  chives: {
-    growing: chivesArt({}),
-    harvesting: chivesArt({ flowering: true }),
-  },
-  springonion: {
-    growing: springOnionArt({}),
-    harvesting: springOnionArt({ big: true }),
-  },
-  garlic: {
-    sprouting: garlicArt({}),
-    growing: garlicArt({}),
-    bulbing: garlicArt({ bulb: true }),
-    ready: garlicArt({ bulb: true, yellowing: true }),
   },
   monstera: {
     settling: monsteraArt(),

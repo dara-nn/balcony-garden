@@ -56,11 +56,11 @@ export const PLACEMENT = {
   'tomato-2':      { kind: 'floor', x: -1.20, y: 0, z: POT_ROW_Z },
   'tomato-1':      { kind: 'floor', x: -1.80, y: 0, z: POT_ROW_Z },
 
-  'parsley':       { kind: 'shelf', x: SHELF.x, y: SHELF.tiers[0], z: SHELF.z - 0.36 },
-  'chives':        { kind: 'shelf', x: SHELF.x, y: SHELF.tiers[0], z: SHELF.z },
-  'spring-onion':  { kind: 'shelf', x: SHELF.x, y: SHELF.tiers[0], z: SHELF.z + 0.36 },
-  'basil-mint':    { kind: 'shelf', x: SHELF.x, y: SHELF.tiers[1], z: SHELF.z - 0.24 },
-  'garlic':        { kind: 'shelf', x: SHELF.x, y: SHELF.tiers[1], z: SHELF.z + 0.26 },
+  'parsley-1':     { kind: 'shelf', x: SHELF.x, y: SHELF.tiers[0], z: SHELF.z - 0.36 },
+  'parsley-2':     { kind: 'shelf', x: SHELF.x, y: SHELF.tiers[0], z: SHELF.z },
+  'basil-1':       { kind: 'shelf', x: SHELF.x, y: SHELF.tiers[1], z: SHELF.z - 0.36 },
+  'basil-2':       { kind: 'shelf', x: SHELF.x, y: SHELF.tiers[1], z: SHELF.z },
+  'mint':          { kind: 'shelf', x: SHELF.x, y: SHELF.tiers[1], z: SHELF.z + 0.36 },
   'chilli-1':      { kind: 'shelf', x: SHELF.x, y: SHELF.tiers[2], z: SHELF.z - 0.24 },
   'chilli-2':      { kind: 'shelf', x: SHELF.x, y: SHELF.tiers[2], z: SHELF.z + 0.14 },
 
