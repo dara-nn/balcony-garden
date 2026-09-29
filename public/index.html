@@ -77,6 +77,33 @@
   .sect > .hd h2{font-size:21px;letter-spacing:-.02em}
   .sect > .hd .meta{margin-left:auto;font-size:13px;color:var(--dim)}
   .sect > .hd .meta b{font-weight:600;color:var(--tomato)}
+  /* the plant list: one row per plant, health in words, season bar, guidance */
+  .prow{padding:10px 0;border-bottom:1px solid var(--rule)}
+  .phead{display:flex;align-items:center;gap:var(--s2);flex-wrap:wrap}
+  .pname{display:flex;align-items:center;gap:var(--s2);background:none;border:0;padding:0;
+    font:inherit;color:inherit;cursor:pointer;text-align:left}
+  .pname em{font-style:normal;color:var(--dim);font-size:.85em}
+  .hl{font-size:.85em;padding:1px 8px;border-radius:var(--r-pill)}
+  .hl.good{background:color-mix(in srgb,var(--leaf) 16%,transparent);color:var(--pine)}
+  .hl.watch{background:color-mix(in srgb,var(--water) 16%,transparent);color:var(--water)}
+  .hl.bad{background:color-mix(in srgb,var(--tomato) 16%,transparent);color:var(--tomato)}
+  .water{margin-left:auto;font-size:.85em;color:var(--dim)}
+  .drop{background:none;border:0;padding:2px 4px;cursor:pointer;opacity:.35;font-size:.95em}
+  .drop:hover,.drop:focus-visible{opacity:1}
+  .monthscale{position:relative;height:1em;margin:4px 0;font-size:.75em;color:var(--dim)}
+  .monthscale b{position:absolute;font-weight:400}
+  .prow .track{display:block;position:relative;height:6px;border-radius:3px;
+    background:var(--rule);margin:6px 0;overflow:hidden}
+  .prow .track .bar{position:absolute;top:0;height:100%;border-radius:3px}
+  .prow .track .bar.grow{background:var(--ph-grow)} .prow .track .bar.flower{background:var(--ph-flower)}
+  .prow .track .bar.fruit{background:var(--ph-fruit)} .prow .track .bar.harvest{background:var(--ph-harvest)}
+  .prow .track .tline{position:absolute;top:-2px;width:2px;height:10px;background:var(--ink)}
+  .guide{margin:6px 0 0;font-size:.92em;line-height:1.45}
+  .hrow{padding:var(--s2) 0;border-bottom:1px solid var(--rule)}
+  .striplabel{align-self:center;padding:0 var(--s2);font-size:12px;color:var(--dim)}
+  .wchk{display:flex;align-items:center;gap:6px;font-size:.85em;color:var(--dim)}
+  @media (max-width:520px){.water{margin-left:0;width:100%;order:9}}
+
   /* a sub-heading inside a section: smaller, its own rule, its own air */
   .sub{display:flex;align-items:baseline;gap:var(--s2);margin:var(--s5) 0 var(--s2);font-size:15px;
     font-weight:600;color:var(--ink);padding-bottom:6px;border-bottom:1px solid var(--rule)}
@@ -431,6 +458,7 @@
 <script src="garden-data.js"></script>
 <script type="module">
 import { effectiveInterval, weatherAlerts, normalizeHealth } from './care-rules.js';
+import { groupByArea, waterLabel, historyStream, seasonSpans } from './garden-view.js';
 
 /* ================= basics ================= */
 const $=s=>document.querySelector(s);
@@ -548,7 +576,7 @@ let doneLog=store.get('doneLog')||{};
 
 /* ================= server docs ================= */
 let statusDoc=store.get('statusDoc')||{updatedAt:0,plants:{}};
-let planDoc=store.get('planDoc')||null;
+let careDoc=store.get('careDoc')||null;
 let entriesDoc=store.get('entriesDoc')||{updatedAt:0,entries:[]};
 
 async function loadStatus(){
@@ -556,8 +584,8 @@ async function loadStatus(){
     if(r.ok){statusDoc=await r.json();store.set('statusDoc',statusDoc);}}catch(e){}
 }
 async function loadPlan(){
-  try{const r=await fetch('/api/plan',{cache:'no-store'});
-    if(r.ok){const d=await r.json();planDoc=(d&&d.plants)?d:null;store.set('planDoc',planDoc);}}catch(e){}
+  try{const r=await fetch('/api/care',{cache:'no-store'});
+    if(r.ok){const d=await r.json();careDoc=(d&&d.plants)?d:null;store.set('careDoc',careDoc);}}catch(e){}
 }
 async function loadEntries(){
   try{const r=await fetch('/api/entries',{cache:'no-store'});
@@ -580,7 +608,7 @@ let _poll=null,busy='';
    refreshing seconds before the new plan actually arrives. */
 function refreshSoon(){
   clearTimeout(_poll);
-  const planBefore=planDoc&&planDoc.generatedAt;
+  const planBefore=careDoc&&careDoc.generatedAt;
   let n=0;
   setBusy('read');
   const tick=async()=>{
@@ -591,7 +619,7 @@ function refreshSoon(){
     landed.forEach(e=>(e.assigned||[]).forEach(a=>flashPlant(a.plantId)));
 
     const pending=entriesDoc.entries.some(e=>e.status==='pending');
-    const planFresh=(planDoc&&planDoc.generatedAt)!==planBefore;
+    const planFresh=(careDoc&&careDoc.generatedAt)!==planBefore;
     const stuck=entriesDoc.entries.some(e=>wasPending.includes(e.id)&&e.status==='unsorted');
     if((!pending&&planFresh)||stuck||++n>=20){setBusy('');renderAll();return;}   // ~60s ceiling
     setBusy(pending?'read':'plan');
@@ -673,8 +701,8 @@ function buildTasks(horizonISO){
     g.tasks.push({...t,pid:plant.id});
   };
   list.forEach(p=>{
-    const planDays=(planDoc&&planDoc.plants&&planDoc.plants[p.id])||null;
-    const through=planDoc&&planDoc.through;
+    const planDays=(careDoc&&careDoc.plants&&careDoc.plants[p.id])||null;
+    const through=careDoc&&careDoc.through;
     const covered=d=>!!(planDays&&through&&d<=through&&planDays[d]);
     let last=p.last;
     for(let d=T;d<=horizonISO;d=addDays(d,1)){
@@ -1161,7 +1189,7 @@ function syncThemeBtn(){
 /* ================= the view =================
    Nav above everything, the note under it, then the chart and one content
    region: the whole balcony, or the plant the nav has selected. */
-let V={plant:null,day:null,mode:store.get('mode')||'today',dockMin:false,feedFilter:''};
+let V={plant:null,dockMin:false,feedFilter:''};
 let touched=new Set(),busyAt=0;
 /* The one entry or note open in the inline editor, as {kind,id,plantId}. */
 let editing=null;
@@ -1191,11 +1219,14 @@ function stateOf(p){
 }
 
 function navBar(){
-  return `<nav class="nav" aria-label="Kasvit"><div class="strip">
-    <button class="chip all" data-act="all" aria-pressed="${!V.plant}">Koko parveke</button>
-    ${plants().map(p=>`<button class="chip" data-act="plant" data-val="${esc(p.id)}"
-      aria-pressed="${V.plant===p.id}" title="${esc(p.name)}">
-      <span class="av">${avatarFor(p.id)}</span>${esc(shortName(p.name))}</button>`).join('')}
+  const groups=groupByArea(plants());
+  const tab=(id,label,art)=>`<button class="chip" data-act="plant" data-val="${esc(id)}"
+    aria-pressed="${V.plant===id}" title="${esc(label)}">
+    <span class="av">${art}</span>${esc(shortName(label))}</button>`;
+  return `<nav class="nav" aria-label="Plants"><div class="strip">
+    <button class="chip all" data-act="all" aria-pressed="${!V.plant}">All plants</button>
+    ${groups.map(g=>`${g.area==='indoor'?`<span class="striplabel">${esc(g.label)}</span>`:''}
+      ${g.plants.map(p=>tab(p.id,p.name,avatarFor(p.id))).join('')}`).join('')}
   </div></nav>`;
 }
 
@@ -1228,6 +1259,61 @@ function dockHTML(){
 }
 
 /* ---- the chart ---- */
+/* One month scale per area group, not one per plant. */
+function monthScaleHTML(){
+  const months=[['Jul','2026-07-01'],['Aug','2026-08-01'],['Sep','2026-09-01'],['Oct','2026-10-01']];
+  return `<div class="monthscale">${months.map(([l,d])=>
+    `<b style="left:${spos(d)}%">${l}</b>`).join('')}</div>`;
+}
+
+function seasonBarHTML(p){
+  const row=SEASON.find(r=>r.key===KEY_BY_ID[p.id]);
+  const spans=seasonSpans(row?row.ph:[],(statusDoc.plants[p.id]||{}).history||[]);
+  const t=spos(todayISO());
+  return `<span class="track">${spans.map(([c,f,to])=>
+    `<i class="bar ${c}" style="left:${spos(f)}%;width:${Math.max(spos(to)-spos(f),1.5)}%" title="${c}"></i>`).join('')}
+    ${t>=0&&t<=100?`<i class="tline" style="left:${t}%"></i>`:''}</span>`;
+}
+
+/* Health in words, not a symbol. A plant the server has never seen still draws
+   a complete row: no status, no guidance, no history. */
+function plantRowHTML(p){
+  const h=p.health,care=(careDoc&&careDoc.plants&&careDoc.plants[p.id])||null;
+  return `<article class="prow ${touched.has(p.id)?'touched':''}">
+    <div class="phead">
+      <button class="pname" data-act="plant" data-val="${esc(p.id)}">
+        <span class="art">${avatarFor(p.id)}</span>
+        <b>${esc(p.name)}</b><em>${esc(p.stage)}</em>
+      </button>
+      ${h?`<span class="hl ${h.tone}">${esc(h.label)}</span>`:''}
+      <span class="water">${esc(waterLabel(p.last,todayISO()))}</span>
+      <button class="drop" data-act="water" data-val="${esc(p.id)}"
+        aria-label="Mark ${esc(p.name)} watered today" title="Mark watered today">💧</button>
+    </div>
+    ${seasonBarHTML(p)}
+    <p class="guide">${care&&care.guidance?esc(care.guidance)
+      :'No guidance yet. Add a note, or wait for tonight\'s update.'}</p>
+  </article>`;
+}
+
+/* Notes and photos, one record, newest first. */
+function historyHTML(list){
+  const ids=new Set(list.map(p=>p.id));
+  const notes=list.flatMap(p=>shown(p.notes).map(n=>({...n,plantId:p.id})));
+  const photos=shown(PHOTOS).filter(x=>!x.plant||ids.has(x.plant));
+  const stream=historyStream(notes,photos);
+  const nameOf=id=>(list.find(p=>p.id===id)||{}).name||'Untagged';
+  return `<div class="sub"><span>History</span><span class="n">${stream.length}</span></div>
+    ${stream.length?stream.map(e=>`<div class="hrow">
+      <div class="data">${dayLabel(e.date)} · ${esc(nameOf(e.plantId))}</div>
+      ${e.notes.map(n=>`<p class="prose">${esc(n.text)}${n.ai?' ✨':''}</p>`).join('')}
+      ${e.photoIds.length?`<div class="shots">${e.photoIds.map(id=>
+        `<button data-act="view" data-val="${esc(id)}"><img src="${photoURL(id)}" alt="" loading="lazy"></button>`
+      ).join('')}</div>`:''}
+    </div>`).join('')
+    :'<div class="none">Nothing recorded yet.</div>'}`;
+}
+
 function chartRow(p){
   const s=stateOf(p),key=KEY_BY_ID[p.id],row=SEASON.find(r=>r.key===key);
   return `<div class="row ${touched.has(p.id)?'touched':''}">
@@ -1368,30 +1454,19 @@ function photoFeedHTML(){
       <img src="${photoURL(x.id)}" alt="" loading="lazy"></button>`).join('')}</div>`).join('');
 }
 
-function balconyHTML(){
-  const seg=(k,l)=>`<button data-act="mode" data-val="${k}" aria-selected="${V.mode===k}">${l}</button>`;
-  const T=todayISO();
-  if(V.day){
-    return `<section class="sect">
-      <div class="hd"><h2>${dayLabel(V.day)}</h2>
-        <span class="meta"><button class="lnk" data-act="mode" data-val="month">‹ ${KUUT[view.m]}</button></span></div>
-      ${wxHTML(V.day)}${dayListHTML(V.day)}
-      <div class="sub"><span>Päiväkirja</span></div>
-      ${shown(entriesDoc.entries).filter(e=>e.date===V.day).map(entryHTML).join('')||'<div class="none">Ei merkintöjä</div>'}
-    </section>`;
-  }
-  const body=V.mode==='today'?wxHTML(T)+dayListHTML(T)
-    :V.mode==='month'?monthHTML()
-    :V.mode==='photos'?photoFeedHTML()
-    :journalHTML();
-  const meta=V.mode==='today'?`${flatTasks(T).length} tehtävää`
-    :V.mode==='journal'?`${shown(entriesDoc.entries).length} merkintää`
-    :V.mode==='photos'?`${shown(PHOTOS).length} kuvaa`:'';
+/* The page is the list, so the list needs no heading of its own.
+   The forecast belongs to the balcony group, not to the page: an indoor
+   plant must never be sitting under a cold-night warning. */
+function allPlantsHTML(){
+  const T=todayISO(),all=plants();
   return `<section class="sect">
-    <div class="hd"><h2>Koko parveke</h2>
-      <div class="segs">${seg('today','Tänään')}${seg('month','Kuukausi')}${seg('journal','Päiväkirja')}${seg('photos','Kuvat')}</div>
-      <span class="meta">${meta}</span></div>
-    ${body}</section>`;
+    ${groupByArea(all).map(g=>`
+      <div class="sub"><span>${esc(g.label)}</span><span class="n">${g.plants.length}</span></div>
+      ${g.area==='balcony'?wxHTML(T):''}
+      ${monthScaleHTML()}
+      ${g.plants.map(plantRowHTML).join('')}`).join('')}
+    ${historyHTML(all)}
+  </section>`;
 }
 
 /* ---- one plant, in full ---- */
@@ -1479,28 +1554,25 @@ function renderLock(){
 
 /* ---- put the page together ---- */
 function renderAll(){
-  const T=todayISO();
-  const horizon=iso(new Date(view.y,view.m+1,7));
-  tasks=buildTasks(horizon>addDays(T,60)?addDays(T,60):horizon);
   const a=document.activeElement,keep=a&&a.dataset&&a.dataset.ta?a.selectionStart:null;
   $('#page').innerHTML=
     `<header class="mast">
-      <h1>Daran parvekepuutarha</h1>
-      <span class="where">Tampere · lasitettu parveke</span>
-      <span class="fresh">${planDoc&&planDoc.generatedAt?'Suunnitelma '+relTime(planDoc.generatedAt):'Suunnitelma —'}</span>
+      <h1>Dara's Balcony Garden</h1>
+      <span class="where">Tampere, glazed balcony</span>
+      <span class="fresh">${careDoc&&careDoc.generatedAt?'Guidance updated '+relTime(careDoc.generatedAt):'No guidance yet'}</span>
      </header>
      ${navBar()}
      ${dockHTML()}
-     ${V.plant?plantHTML(plantById(V.plant)||plants()[0]):chartHTML()+balconyHTML()}
+     ${V.plant?plantHTML(plantById(V.plant)||plants()[0]):allPlantsHTML()}
      <footer class="foot">
        <label class="theme-switch">
-         <span class="tl" data-for="light">Vaalea</span>
-         <input type="checkbox" id="theme-toggle" role="switch" aria-label="Vaalea tai tumma teema">
+         <span class="tl" data-for="light">Light</span>
+         <input type="checkbox" id="theme-toggle" role="switch" aria-label="Light or dark theme">
          <span class="track2" aria-hidden="true"><span class="knob"></span></span>
-         <span class="tl" data-for="dark">Tumma</span>
+         <span class="tl" data-for="dark">Dark</span>
        </label>
        <button id="lockbtn" hidden></button>
-       <button class="lnk" data-act="cover">Kansikuva</button>
+       <button class="lnk" data-act="cover">Cover photo</button>
      </footer>`;
   wireFooter();
   renderLock();
@@ -1567,6 +1639,12 @@ const ACTIONS={
   filter:v=>{V.feedFilter=v;renderAll();},
   view:id=>viewPhoto(id),
   done:(_,el)=>markDone(el.dataset.date,el.dataset.key),
+  water:async id=>{
+    const r=await apiWrite('PUT','/api/status/'+encodeURIComponent(id),
+      JSON.stringify({lastWatered:todayISO()}),'application/json');
+    if(!r||!r.ok){toast('Could not save. Try again.');return;}
+    await loadStatus();renderAll();
+  },
   'entry-del':id=>deleteEntry(id),
   'entry-edit':id=>{editing={kind:'entry',id};renderAll();focusEdit();},
   'note-del':(pid,el)=>deleteNote(pid,el.dataset.note),
