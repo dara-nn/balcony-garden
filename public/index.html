@@ -89,10 +89,6 @@
     border-radius:var(--r-sm)}
   .pname .art svg{width:100%;height:100%;display:block}
   .pname em{font-style:normal;color:var(--dim);font-size:.85em}
-  .hl{font-size:.85em;padding:1px 8px;border-radius:var(--r-pill)}
-  .hl.good{background:color-mix(in srgb,var(--leaf) 16%,transparent);color:var(--pine)}
-  .hl.watch{background:color-mix(in srgb,var(--water) 16%,transparent);color:var(--water)}
-  .hl.bad{background:color-mix(in srgb,var(--tomato) 16%,transparent);color:var(--tomato)}
   .water{font-size:.85em;color:var(--dim)}
   .wline{display:flex;align-items:center;gap:var(--s1);margin:2px 0 4px}
   /* Two paragraphs that read differently: what it is doing, then what to do.
@@ -102,8 +98,6 @@
   .lbl{font-size:10.5px;letter-spacing:.09em;text-transform:uppercase;font-weight:600;
     color:var(--dim);padding-top:.32em}
   .status{color:var(--dim)}
-  .status.watch>span,.status.watch>.lbl{color:var(--water)}
-  .status.bad>span,.status.bad>.lbl{color:var(--tomato)}
   .status>span{color:var(--ink)}
   .guide{color:var(--ink)}
   .legend{display:flex;align-items:center;gap:var(--s3);flex-wrap:wrap;
@@ -1141,8 +1135,6 @@ const wpos=d=>{
 };
 
 const PHASE_LABEL={grow:'Growing',flower:'Flowering',fruit:'Green fruit',harvest:'Harvest'};
-/* The status colour has to say what it means, so the label carries the tone. */
-const toneWord=h=>h&&h.tone==='bad'?'Problem':h&&h.tone==='watch'?'Watch':'Status';
 const niceDate=d=>{const x=new Date(d+'T00:00:00Z');
   return `${x.getUTCDate()} ${['Jan','Feb','Mar','Apr','May','Jun','Jul','Aug','Sep','Oct','Nov','Dec'][x.getUTCMonth()]}`;};
 
@@ -1182,7 +1174,7 @@ function seasonBarHTML(p){
 /* Four rows: what it is and where it is in the season, when it was watered,
    what it is doing now, and what to do about it. */
 function plantRowHTML(p){
-  const h=p.health,care=(careDoc&&careDoc.plants&&careDoc.plants[p.id])||null;
+  const care=(careDoc&&careDoc.plants&&careDoc.plants[p.id])||null;
   const status=p.observations||'';
   return `<article class="prow ${touched.has(p.id)?'touched':''}">
     <div class="phead">
@@ -1197,7 +1189,7 @@ function plantRowHTML(p){
       <button class="drop" data-act="water" data-val="${esc(p.id)}"
         aria-label="Mark ${esc(p.name)} watered today" title="Mark watered today">💧</button>
     </div>
-    <p class="status ${h?esc(h.tone):''}"><b class="lbl">${toneWord(h)}</b><span>${
+    <p class="status"><b class="lbl">Status</b><span>${
       status?esc(status):'No reading yet.'}</span></p>
     <p class="guide"><b class="lbl">Care</b><span>${care&&care.guidance?esc(care.guidance)
       :'No guidance yet. Add a note, or wait for tonight\'s update.'}</span></p>
@@ -1296,7 +1288,7 @@ function allPlantsHTML(){
 /* ---- one plant, in full ---- */
 function plantHTML(p){
   const key=KEY_BY_ID[p.id],pr=PROFILE[key]||{t:p.name,body:[],src:''};
-  const h=p.health,care=(careDoc&&careDoc.plants&&careDoc.plants[p.id])||null;
+  const care=(careDoc&&careDoc.plants&&careDoc.plants[p.id])||null;
   return `<section class="sect">
     <div class="hd"><h2>${esc(pr.t||p.name)}</h2>
       <span class="meta">${p.area==='indoor'?'Indoor':'Balcony'} · ${esc(p.stage)}</span></div>
@@ -1310,7 +1302,7 @@ function plantHTML(p){
         <button class="drop" data-act="water" data-val="${esc(p.id)}"
           aria-label="Mark watered today" title="Mark watered today">💧</button>
       </div>
-      <p class="status ${h?esc(h.tone):''}"><b class="lbl">${toneWord(h)}</b><span>${
+      <p class="status"><b class="lbl">Status</b><span>${
         p.observations?esc(p.observations):'No reading yet.'}</span></p>
       <p class="guide"><b class="lbl">Care</b><span>${care&&care.guidance?esc(care.guidance)
         :'No guidance yet. Add a note, or wait for tonight\'s update.'}</span></p>
