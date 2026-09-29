@@ -30,3 +30,18 @@ export function waterLabel(iso, todayISO) {
   if (n === 0) return 'watered today';
   return `watered ${n} day${n === 1 ? '' : 's'} ago`;
 }
+
+/* Notes and photos are one record, not two lists. A note and the photos taken
+   the same day on the same plant are one entry. A photo nobody tagged gets an
+   entry of its own rather than attaching itself to an unrelated note. */
+export function historyStream(notes, photos) {
+  const byKey = new Map();
+  const at = (date, plantId) => {
+    const key = `${date}|${plantId ?? ''}`;
+    if (!byKey.has(key)) byKey.set(key, { date, plantId: plantId ?? null, notes: [], photoIds: [] });
+    return byKey.get(key);
+  };
+  for (const n of notes || []) { if (n && n.date) at(n.date, n.plantId).notes.push(n); }
+  for (const p of photos || []) { if (p && p.date) at(p.date, p.plant).photoIds.push(p.id); }
+  return [...byKey.values()].sort((a, b) => b.date.localeCompare(a.date));
+}
