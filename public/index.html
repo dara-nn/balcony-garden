@@ -1,24 +1,24 @@
 <!doctype html>
-<html lang="fi">
+<html lang="en">
 <head>
 <meta charset="utf-8">
 <meta name="viewport" content="width=device-width, initial-scale=1">
-<title>Daran parvekepuutarha — Tampere</title>
+<title>Dara's Balcony Garden, Tampere</title>
 <link rel="icon" href="data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 64 64'%3E%3Crect width='64' height='64' rx='14' fill='%231E4D3B'/%3E%3Cpath d='M32 52V30' stroke='%23EAF0E9' stroke-width='5' stroke-linecap='round'/%3E%3Cpath d='M32 36c-11 0-17-6-17-15 10 0 17 6 17 15z' fill='%237FBFA0'/%3E%3Cpath d='M32 32c0-10 6-17 16-17 0 10-6 17-16 17z' fill='%23EAF0E9'/%3E%3C/svg%3E">
 <link rel="apple-touch-icon" href="data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 64 64'%3E%3Crect width='64' height='64' rx='14' fill='%231E4D3B'/%3E%3Cpath d='M32 52V30' stroke='%23EAF0E9' stroke-width='5' stroke-linecap='round'/%3E%3Cpath d='M32 36c-11 0-17-6-17-15 10 0 17 6 17 15z' fill='%237FBFA0'/%3E%3Cpath d='M32 32c0-10 6-17 16-17 0 10-6 17-16 17z' fill='%23EAF0E9'/%3E%3C/svg%3E">
 <meta name="theme-color" content="#1E4D3B">
 <script>try{var _t=JSON.parse(localStorage.getItem('theme')||'null');if(_t)document.documentElement.dataset.theme=_t;}catch(e){}</script>
 <style>
   /* ============================================================
-     Daran parvekepuutarha — the chart direction.
+     Daran parvekepuutarha, the chart direction.
 
      Soft, rounded, and organised by colour rather than by rules. Every plant
      owns the background colour of its own illustration, and that colour washes
      the whole row, chip and tile that belong to it, so the page is legible as a
      garden before it is read as an interface. Nothing shouts in capitals.
 
-     UI     Avenir Next  — the site's own voice
-     Prose  Charter      — what the model writes, in something you read
+     UI     Avenir Next , the site's own voice
+     Prose  Charter     , what the model writes, in something you read
      ============================================================ */
   :root{
     --paper:#EFF2EA; --field:#FFFFFF; --ink:#17211B; --dim:#6C7A70; --rule:#E1E7DA;
@@ -422,12 +422,12 @@
 <div id="root"><div class="page" id="page"></div></div>
 <div id="lock" role="dialog" aria-modal="true" aria-live="polite"></div>
 
-<div id="viewer" role="dialog" aria-modal="true" aria-label="Kuva">
-  <button id="viewer-prev" class="vnav" aria-label="Edellinen kuva">‹</button>
+<div id="viewer" role="dialog" aria-modal="true" aria-label="Photo">
+  <button id="viewer-prev" class="vnav" aria-label="Previous photo">‹</button>
   <img id="viewer-img" alt="">
-  <button id="viewer-next" class="vnav" aria-label="Seuraava kuva">›</button>
+  <button id="viewer-next" class="vnav" aria-label="Next photo">›</button>
   <div class="vcap" id="viewer-cap"></div>
-  <div><button id="ph-tag">Muuta</button> <button id="ph-del">Poista</button> <button id="ph-close">Sulje</button></div>
+  <div><button id="ph-tag">Retag</button> <button id="ph-del">Delete</button> <button id="ph-close">Close</button></div>
 </div>
 
 <div id="picker" class="modal" role="dialog" aria-modal="true" aria-label="Mikä kasvi?">
@@ -436,8 +436,8 @@
     <div class="pk-grid" id="pk-grid"></div></div>
 </div>
 
-<div id="coverpick" class="modal" role="dialog" aria-modal="true" aria-label="Kansikuva">
-  <div class="pk-card"><div class="pk-head"><span>Kansikuva</span>
+<div id="coverpick" class="modal" role="dialog" aria-modal="true" aria-label="Cover photo">
+  <div class="pk-card"><div class="pk-head"><span>Cover photo</span>
     <button id="cp-cancel" aria-label="Sulje">×</button></div>
     <div class="cp-grid" id="cp-grid"></div></div>
 </div>
@@ -448,7 +448,7 @@
     <p>Kuka tahansa voi lukea tätä puutarhaa, mutta vain sinä voit muuttaa sitä.
        Salasana tallentuu vain tähän laitteeseen, joten se kysytään kerran.</p>
     <input type="password" id="unlock-input" autocomplete="current-password" aria-label="Salasana">
-    <div class="row2"><button id="unlock-cancel">Peruuta</button><button id="unlock-go" class="go">Avaa</button></div>
+    <div class="row2"><button id="unlock-cancel">Cancel</button><button id="unlock-go" class="go">Unlock</button></div>
   </div>
 </div>
 
@@ -468,8 +468,8 @@ const iso=d=>`${d.getFullYear()}-${String(d.getMonth()+1).padStart(2,'0')}-${Str
 const todayISO=()=>iso(new Date());
 const addDays=(s,n)=>{const d=new Date(s);d.setDate(d.getDate()+n);return iso(d);};
 const dBetween=(a,b)=>Math.round((new Date(b)-new Date(a))/86400000);
-const KUUT=['Tammikuu','Helmikuu','Maaliskuu','Huhtikuu','Toukokuu','Kesäkuu','Heinäkuu','Elokuu','Syyskuu','Lokakuu','Marraskuu','Joulukuu'];
-const VKO=['Su','Ma','Ti','Ke','To','Pe','La'];
+const MONTHS=['January','February','March','April','May','June','July','August','September','October','November','December'];
+const WEEKDAYS=['Sun','Mon','Tue','Wed','Thu','Fri','Sat'];
 const esc=s=>(s||'').replace(/[&<>"']/g,c=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[c]));
 const shortDate=s=>{const d=new Date(s);return d.getDate()+'.'+(d.getMonth()+1)+'.';};
 
@@ -477,17 +477,17 @@ const shortDate=s=>{const d=new Date(s);return d.getDate()+'.'+(d.getMonth()+1)+
 const CARE={
  basilmint:{care:{
    growing:{water:2,why:'Bed dries fast behind glass',
-     weekly:[['care','Pinch basil tips','Above a leaf pair — bushy, no flowers. Trim mint back.'],
+     weekly:[['care','Pinch basil tips','Above a leaf pair, bushy, no flowers. Trim mint back.'],
              ['care','Feed basil & mint','Liquid feed, every 2nd week is enough.']]},
    harvesting:{water:2,why:'Keep harvest coming',
      weekly:[['care','Harvest basil & mint','Basil from the top, mint outer stems. Pinch any flower buds.']]}}},
  chilli:{care:{
-   seedling:{water:3,why:'Light water only — damping-off kills sprouts',
-     weekly:[['care','Rotate pots','Stops leggy lean toward the glass. Pot up at 4–6 true leaves.']]},
+   seedling:{water:3,why:'Light water only, damping-off kills sprouts',
+     weekly:[['care','Rotate pots','Stops leggy lean toward the glass. Pot up at 4-6 true leaves.']]},
    vegetative:{water:2,why:'Steady moisture while bulking up',
      weekly:[['care','Feed','Half-strength liquid feed weekly.']]},
    flowering:{water:2,why:'Even water so flowers hold',
-     daily:[['pollen','Tap the flowers','Midday — no bees behind glass.']],
+     daily:[['pollen','Tap the flowers','Midday, no bees behind glass.']],
      weekly:[['care','Feed high-K','Tomato feed works.']]},
    fruiting:{water:1,why:'Dry spells make fruit drop',
      weekly:[['care','Feed','High-K weekly while fruiting.']]}}},
@@ -496,46 +496,46 @@ const CARE={
    vegetative:{water:2,why:'Big leaves, big thirst',
      weekly:[['care','Side shoots + ties','Snap armpit shoots, tie main stem higher.']]},
    flowering:{water:1,why:'Uneven water now = blossom end rot later',
-     daily:[['pollen','Shake the flower trusses','Midday. No bees, no wind behind glass — no shake, no fruit. Vent hard: pollen sterile over ~32°C.']],
+     daily:[['pollen','Shake the flower trusses','Midday. No bees, no wind behind glass, no shake, no fruit. Vent hard: pollen sterile over ~32°C.']],
      weekly:[['care','Feed high-K','Weekly from first flowers.'],
              ['care','Side shoots + ties','Keep the 1 m stem supported.']]},
-   fruiting:{water:1,why:'Never bone-dry — fruit splits',
+   fruiting:{water:1,why:'Never bone-dry, fruit splits',
      weekly:[['care','Feed high-K','Weekly.'],
-             ['care','Tidy lower leaves','Below lowest truss — airflow against mildew.']]}}},
+             ['care','Tidy lower leaves','Below lowest truss, airflow against mildew.']]}}},
  chives:{care:{
-   growing:{water:3,why:'Easy — top 2 cm dry, then water',weekly:[]},
+   growing:{water:3,why:'Easy, top 2 cm dry, then water',weekly:[]},
    harvesting:{water:3,why:'Cut & come again',
-     weekly:[['care','Harvest','Cut whole leaves 2 cm above soil — regrows fast.']]}}},
+     weekly:[['care','Harvest','Cut whole leaves 2 cm above soil, regrows fast.']]}}},
  springonion:{care:{
    growing:{water:2,why:'Shallow roots, dry fast in glazed heat',
      weekly:[['care','Re-sow','A pinch every ~3 weeks keeps supply steady.']]},
    harvesting:{water:2,why:'Keep moist to the end',
      weekly:[['care','Pull the thickest','Or cut 3 cm above base to regrow.']]}}},
  parsley:{care:{
-   growing:{water:3,why:'Even moisture; bolts in heat — shade on 30°C days',weekly:[]},
+   growing:{water:3,why:'Even moisture; bolts in heat, shade on 30°C days',weekly:[]},
    harvesting:{water:3,why:'Outer stems only',
      weekly:[['care','Harvest outer stems','Cut at the base, centre keeps producing.']]}}},
  monstera:{care:{
-   settling:{water:7,why:'Newly bought — let top 3–4 cm dry first; no feed or repot yet',
+   settling:{water:7,why:'Newly bought, let top 3-4 cm dry first; no feed or repot yet',
      weekly:[['care','Check the spot','Bright indirect light, away from draughts/radiators. Wipe dust off leaves.']]},
-   established:{water:7,why:'Top 3–4 cm dry before watering',
+   established:{water:7,why:'Top 3-4 cm dry before watering',
      weekly:[['care','Feed','Balanced feed monthly in season; give the aerial roots something to climb.']]}}},
  hedera:{care:{
-   settling:{water:5,why:'Steady (not heavy) water while roots establish; top 2–3 cm dry first',
-     weekly:[['care','Check the leaves','Happy in the shady corner. Watch under leaves — spider mites love dry glazed air.']]},
+   settling:{water:5,why:'Steady (not heavy) water while roots establish; top 2-3 cm dry first',
+     weekly:[['care','Check the leaves','Happy in the shady corner. Watch under leaves, spider mites love dry glazed air.']]},
    established:{water:6,why:'Let surface dry between waterings',
-     weekly:[['care','Trim','Cut wandering vines to shape — regrows from any node. Hardy to −10°C.']]}}},
+     weekly:[['care','Trim','Cut wandering vines to shape, regrows from any node. Hardy to −10°C.']]}}},
  raspberry:{care:{
-   settling:{water:2,why:'New pot behind glass dries fast — keep evenly moist, top 2–3 cm dry, never waterlogged',
+   settling:{water:2,why:'New pot behind glass dries fast, keep evenly moist, top 2-3 cm dry, never waterlogged',
      weekly:[['care','Tie in the canes','Loosely tie new canes to a support so wind and glass heat do not snap them.'],
              ['care','Feed','Half-strength liquid feed weekly while establishing. Watch leaf undersides for spider mites.']]},
-   fruiting:{water:1,why:'Even water while berries swell — dry spells shrink fruit',
-     daily:[['pollen','Tap the flowers','Midday — few bees behind glass. Berries drop free when dead-ripe.']],
-     weekly:[['care','Pick the berries','Every 2–3 days — ripe ones spoil fast. High-K feed weekly.']]},
-   dormant:{water:7,why:'Barely water over winter — hardy, stays out on the balcony',
+   fruiting:{water:1,why:'Even water while berries swell, dry spells shrink fruit',
+     daily:[['pollen','Tap the flowers','Midday, few bees behind glass. Berries drop free when dead-ripe.']],
+     weekly:[['care','Pick the berries','Every 2-3 days, ripe ones spoil fast. High-K feed weekly.']]},
+   dormant:{water:7,why:'Barely water over winter, hardy, stays out on the balcony',
      weekly:[['care','Cut the fruited canes','After fruiting, cut spent (2nd-year) canes to the ground; keep this year\'s new canes.']]}}},
  garlic:{care:{
-   sprouting:{water:5,why:'Sparse — wet rots the clove',weekly:[]},
+   sprouting:{water:5,why:'Sparse, wet rots the clove',weekly:[]},
    bulbing:{water:5,why:'Too wet rots the bulb; keep it in the coolest corner',
      weekly:[['care','Check the leaves','Half the leaves yellow → stop watering, nearly ready.']]},
    ready:{water:99,why:'Done drinking',
@@ -567,7 +567,7 @@ function relTime(ms){if(!ms)return'';
   if(s<86400)return Math.round(s/3600)+' h ago';return Math.round(s/86400)+' d ago';}
 
 /* The distiller takes a few seconds; poll until the entry stops being pending.
-   Redraw the open sheet too — that is where the entry the user just wrote is shown. */
+   Redraw the open sheet too, that is where the entry the user just wrote is shown. */
 const typing=()=>{const a=document.activeElement;
   return !!a&&(a.tagName==='TEXTAREA'||a.tagName==='INPUT');};
 function flashPlant(pid){touched.add(pid);setTimeout(()=>{touched.delete(pid);renderAll();},2600);}
@@ -653,7 +653,7 @@ function plants(){
   });
 }
 const plantById=id=>plants().find(p=>p.id===id);
-const AREA_LABEL={balcony:'Parvekkeella',indoor:'Sisällä'};
+const AREA_LABEL={balcony:'Balcony',indoor:'Indoor'};
 
 /* ================= task engine ================= */
 /* tasks[date] = { alerts:[…], groups:[{plant, tasks:[…]}] } */
@@ -661,7 +661,7 @@ const AREA_LABEL={balcony:'Parvekkeella',indoor:'Sisällä'};
 /* ================= avatars ================= */
 const KEY_BY_ID={};
 const avatarFor=pid=>ART[KEY_BY_ID[pid]]||'<span aria-hidden="true">🪴</span>';
-const dayLabel=s=>`${VKO[new Date(s).getDay()]} ${shortDate(s)}`;
+const dayLabel=s=>`${WEEKDAYS[new Date(s).getDay()]} ${shortDate(s)}`;
 
 /* ================= season chart + profiles ================= */
 const SEASON=[
@@ -681,61 +681,61 @@ const SEASON=[
 ];
 const PROFILE={
  basilmint:{t:'Basil “Italiano Classico” & Mint',src:'Biltema seeds · mint as plant',ids:['basil-mint'],
-   body:['Classic Genovese basil. Pinch above a leaf pair weekly — bushy, no flowers. Hates cold: sulks under 12°C nights.',
-     'Mint is invasive — divider in the shared bed, or trim its roots each month. Harvest mint outer stems, basil from the top.',
+   body:['Classic Genovese basil. Pinch above a leaf pair weekly, bushy, no flowers. Hates cold: sulks under 12°C nights.',
+     'Mint is invasive, divider in the shared bed, or trim its roots each month. Harvest mint outer stems, basil from the top.',
      'Feed the bed liquid fertilizer every 2 weeks.']},
  chilli:{t:'Chilli “Lombardo”',src:'Biltema 14-2867',ids:['chilli-1','chilli-2'],
-   body:['Mild Italian frying chilli — long fruit, green ripening to red. Early and productive.',
-     'Seedlings: water lightly only when top 1 cm is dry (damping-off kills sprouts). Max light, rotate pots so they don\'t lean. Pot up at 4–6 true leaves.',
+   body:['Mild Italian frying chilli, long fruit, green ripening to red. Early and productive.',
+     'Seedlings: water lightly only when top 1 cm is dry (damping-off kills sprouts). Max light, rotate pots so they don\'t lean. Pot up at 4-6 true leaves.',
      'From flowering: tap flowers midday (no bees behind glass), feed high-K weekly.',
-     'Pick green for mild crunch or red for sweeter warmth — picking often = more fruit.']},
+     'Pick green for mild crunch or red for sweeter warmth, picking often = more fruit.']},
  tigerella:{t:'Tomato “Tigerella”',src:'Nelson Garden',ids:['tomato-1'],
-   body:['Striped heirloom cordon — needs stake, pinch side shoots weekly.',
+   body:['Striped heirloom cordon, needs stake, pinch side shoots weekly.',
      'Shake flower trusses daily at midday to set fruit behind glass.',
-     'Water deep and even — uneven water = split fruit + blossom end rot. High-K feed weekly.',
+     'Water deep and even, uneven water = split fruit + blossom end rot. High-K feed weekly.',
      'Ripe when the stripes turn orange-red. Handles cool Tampere summers well.']},
  noire:{t:'Tomato “Noire de Crimée”',src:'Nelson Garden',ids:['tomato-2'],
-   body:['Black beefsteak cordon — tall, hungry. Feed generously: high-K weekly from first flowers.',
-     'Shake trusses daily at midday. Stake well — big fruit gets heavy.',
-     'Ripe when SOFT, not by colour — it stays dark brown-red, darkest on top. Squeeze gently, don\'t wait for red.',
-     'Early variety with a long harvest — expect fruit from mid-August.']},
+   body:['Black beefsteak cordon, tall, hungry. Feed generously: high-K weekly from first flowers.',
+     'Shake trusses daily at midday. Stake well, big fruit gets heavy.',
+     'Ripe when SOFT, not by colour, it stays dark brown-red, darkest on top. Squeeze gently, don\'t wait for red.',
+     'Early variety with a long harvest, expect fruit from mid-August.']},
  chives:{t:'Chives (Ruohosipuli)',src:'Biltema 14-2818',ids:['chives'],
-   body:['Perennial and frost-hardy — leave the bed on the balcony over winter, it returns early spring. Your one plant that outlives the season.',
-     'Cut whole leaves 2 cm above soil — regrows in days. Harvesting often keeps it productive.',
+   body:['Perennial and frost-hardy, leave the bed on the balcony over winter, it returns early spring. Your one plant that outlives the season.',
+     'Cut whole leaves 2 cm above soil, regrows in days. Harvesting often keeps it productive.',
      'Water when top 2 cm dry. Light feed monthly is plenty.']},
  springonion:{t:'Spring onion (Pillisipuli)',src:'Biltema 14-2807',ids:['spring-onion'],
    body:['Early, fast variety with long thick white stems.',
-     'Keep evenly moist — shallow roots dry fast in glazed heat.',
+     'Keep evenly moist, shallow roots dry fast in glazed heat.',
      'Harvest whole at pencil thickness, thickest first. Re-sow a pinch every 3 weeks for steady supply into autumn.']},
  parsley:{t:'Curly parsley (Persilja)',src:'Biltema 14-2820',ids:['parsley'],
-   body:['Curly, dark green type. The marathon runner — germination up to 4 weeks is normal.',
+   body:['Curly, dark green type. The marathon runner, germination up to 4 weeks is normal.',
      'Even moisture, deep soil. Bolts in heat: shade it on 30°C+ days.',
-     'Harvest outer stems at the base only — the centre keeps producing to late autumn. Moves to a windowsill for winter.']},
+     'Harvest outer stems at the base only, the centre keeps producing to late autumn. Moves to a windowsill for winter.']},
  monstera:{t:'Monstera deliciosa',src:'IKEA · indoors',ids:['monstera'],
-   body:['Newly bought — let it settle a few weeks in a bright indirect spot, away from draughts and radiators. No feeding or repotting yet.',
-     'Water only when the top 3–4 cm of soil is dry, roughly weekly. Overwatering is the one thing that kills it.',
-     'Wipe the big leaves now and then — dust blocks light. Once settled, feed monthly in season and give the aerial roots a pole to climb.']},
+   body:['Newly bought, let it settle a few weeks in a bright indirect spot, away from draughts and radiators. No feeding or repotting yet.',
+     'Water only when the top 3-4 cm of soil is dry, roughly weekly. Overwatering is the one thing that kills it.',
+     'Wipe the big leaves now and then, dust blocks light. Once settled, feed monthly in season and give the aerial roots a pole to climb.']},
  hedera:{t:'Ivy · Hedera helix',src:'IKEA · balcony',ids:['hedera'],
-   body:['The tough one — happy in the shady corner where nothing else grows, and frost-hardy to about −10°C. Stays out all winter with the chives.',
-     'While it establishes: steady but light watering, top 2–3 cm dry between waterings. Never soggy.',
-     'Check leaf undersides — spider mites love warm dry glazed air. Trim wandering vines anytime; it regrows from any node.']},
+   body:['The tough one, happy in the shady corner where nothing else grows, and frost-hardy to about −10°C. Stays out all winter with the chives.',
+     'While it establishes: steady but light watering, top 2-3 cm dry between waterings. Never soggy.',
+     'Check leaf undersides, spider mites love warm dry glazed air. Trim wandering vines anytime; it regrows from any node.']},
  maurin:{t:'Raspberry “Maurin Makea”',src:'Finnish summer raspberry',ids:['rasp-maurin'],
-   body:['A Finnish summer (floricane) raspberry prized for very sweet berries. Ahead of the other two — it has set green fruit already (Jul 2026), ripening red over the coming weeks.',
-     'Now fruiting: keep the water even so berries swell without splitting — top 2–3 cm dry between waterings, never bone-dry or soggy. High-K feed weekly. Pick every 2–3 days once they colour up; dead-ripe berries pull free with a light tug.',
+   body:['A Finnish summer (floricane) raspberry prized for very sweet berries. Ahead of the other two, it has set green fruit already (Jul 2026), ripening red over the coming weeks.',
+     'Now fruiting: keep the water even so berries swell without splitting, top 2-3 cm dry between waterings, never bone-dry or soggy. High-K feed weekly. Pick every 2-3 days once they colour up; dead-ripe berries pull free with a light tug.',
      'Tie the fruiting canes to a support so glass heat and wind don\'t snap them. Watch leaf undersides for spider mites in dry glazed air.',
-     'Frost-hardy — leave it out on the balcony over winter with the chives and ivy. After the canes finish fruiting, cut those spent canes to the ground and keep this year\'s fresh canes for next summer.']},
+     'Frost-hardy, leave it out on the balcony over winter with the chives and ivy. After the canes finish fruiting, cut those spent canes to the ground and keep this year\'s fresh canes for next summer.']},
  'takala-1':{t:'Raspberry “Takalan Herkku” 1',src:'New pot · Finnish summer raspberry',ids:['rasp-takala-1'],
-   body:['A hardy Finnish summer (floricane) raspberry with large, sweet berries — a reliable home-garden favourite. Just potted: new canes grow this year, main crop next summer.',
-     'Even moisture, top 2–3 cm dry between waterings — never waterlogged. New pot dries fast behind glass; steady water while establishing. Half-strength feed weekly.',
+   body:['A hardy Finnish summer (floricane) raspberry with large, sweet berries, a reliable home-garden favourite. Just potted: new canes grow this year, main crop next summer.',
+     'Even moisture, top 2-3 cm dry between waterings, never waterlogged. New pot dries fast behind glass; steady water while establishing. Half-strength feed weekly.',
      'Tie the new canes to a support against wind and glass heat; check leaf undersides for spider mites.',
-     'Very hardy — overwinters on the balcony. Cut spent (fruited) canes to the ground after they crop; keep this year\'s canes for next summer\'s berries.']},
+     'Very hardy, overwinters on the balcony. Cut spent (fruited) canes to the ground after they crop; keep this year\'s canes for next summer\'s berries.']},
  'takala-2':{t:'Raspberry “Takalan Herkku” 2',src:'New pot · Finnish summer raspberry',ids:['rasp-takala-2'],
-   body:['The second Takalan Herkku pot — same hardy Finnish summer raspberry, large sweet berries. Just potted: new canes grow this year, main crop next summer.',
-     'Even moisture, top 2–3 cm dry between waterings — never waterlogged. New pot dries fast behind glass; steady water while establishing. Half-strength feed weekly.',
+   body:['The second Takalan Herkku pot, same hardy Finnish summer raspberry, large sweet berries. Just potted: new canes grow this year, main crop next summer.',
+     'Even moisture, top 2-3 cm dry between waterings, never waterlogged. New pot dries fast behind glass; steady water while establishing. Half-strength feed weekly.',
      'Give it its own cane/support and room from pot 1 for airflow; check leaf undersides for spider mites.',
-     'Very hardy — overwinters on the balcony. Cut spent (fruited) canes to the ground after they crop; keep this year\'s canes for next summer\'s berries.']},
+     'Very hardy, overwinters on the balcony. Cut spent (fruited) canes to the ground after they crop; keep this year\'s canes for next summer\'s berries.']},
  garlic:{t:'Garlic pot',src:'from cloves',ids:['garlic'],
-   body:['Water sparingly — wet soil rots the bulb. Coolest corner of the balcony; glazed heat rushes it.',
+   body:['Water sparingly, wet soil rots the bulb. Coolest corner of the balcony; glazed heat rushes it.',
      'When half the leaves yellow: stop watering. When half are brown: lift the bulb.',
      'Dry lifted bulbs 2 weeks somewhere airy before storing.']},
 };
@@ -813,7 +813,7 @@ function showViewerAt(i){
   const rec=PHOTOS.find(p=>p.id===viewerKey);
   $('#viewer-img').src=photoURL(viewerKey);
   const p=rec&&rec.plant?plantById(rec.plant):null;
-  $('#viewer-cap').textContent=rec?`${p?p.name:'Koko parveke'} · ${shortDate(rec.date)}`:'';
+  $('#viewer-cap').textContent=rec?`${p?p.name:'All plants'} · ${shortDate(rec.date)}`:'';
   $('#viewer-prev').disabled=i<=0;
   $('#viewer-next').disabled=i>=viewerList.length-1;
 }
@@ -863,7 +863,7 @@ function pickPlant(title){
   $('#pk-title').textContent=title||'Which plant?';
   $('#pk-grid').innerHTML=plants().map(p=>
     `<button data-pick="${esc(p.id)}"><span class="av">${avatarFor(p.id)}</span>${esc(p.name)}</button>`).join('')
-    +`<button class="gen" data-pick=""><span class="av">🪴</span>Koko parveke</button>`;
+    +`<button class="gen" data-pick=""><span class="av">🪴</span>All plants</button>`;
   $('#picker').classList.add('open');
   setTimeout(()=>$('#pk-grid button')?.focus(),40);
   return new Promise(res=>{_pickResolve=res;});
@@ -889,7 +889,7 @@ async function loadCover(){
 function openCover(){
   const imgs=PHOTOS.slice().sort((a,b)=>(b.created||0)-(a.created||0));
   $('#cp-grid').innerHTML=
-    `<button class="cp-new" id="cp-new">📷<span>Lisää</span></button>`+
+    `<button class="cp-new" id="cp-new">📷<span>Add</span></button>`+
     `<button class="cp-def${coverId?'':' sel'}" data-cover=""><span class="cp-green"></span><span>Vihreä</span></button>`+
     imgs.map(x=>`<button class="cp-photo${x.id===coverId?' sel':''}" data-cover="${esc(x.id)}" aria-label="${esc(shortDate(x.date))}"><img src="${photoURL(x.id)}" alt="" loading="lazy" decoding="async"></button>`).join('');
   $('#coverpick').classList.add('open');
@@ -1010,7 +1010,7 @@ async function api(path,opts={}){          // silent: used where a visitor must 
 function syncLock(){
   const b=$('#lockbtn');if(!b)return;
   const on=!!store.get('uploadPass');
-  b.hidden=!on;b.textContent='🔓 Lukitse';
+  b.hidden=!on;b.textContent='🔓 Lock';
 }
 
 
@@ -1037,14 +1037,14 @@ const TINT={};
 Object.entries(ART).forEach(([k,svg])=>{const m=svg.match(/<rect[^>]*fill="(#[0-9A-Fa-f]{6})"/);if(m)TINT[k]=m[1];});
 const tintOf=pid=>TINT[KEY_BY_ID[pid]]||'#9BC7AA';
 const shortName=n=>{const w=n.split(' ')[0].replace(/[(),]/g,''),d=n.match(/\d$/);return w+(d?' '+d[0]:'');};
-const PHASE_WORD={grow:'kasvaa',flower:'kukkii',fruit:'raakile',harvest:'sato'};
+const PHASE_WORD={grow:'growing',flower:'flowering',fruit:'green fruit',harvest:'harvest'};
 function phaseNow(pid){
   const key=KEY_BY_ID[pid],row=SEASON.find(r=>r.key===key);
   const hit=row&&row.ph.find(([,f,t])=>todayISO()>=f&&todayISO()<=t);
-  return hit?PHASE_WORD[hit[0]]:'—';
+  return hit?PHASE_WORD[hit[0]]:'none yet';
 }
 /* What a line says about a plant now: the model's read if there is one, else the
-   fact that matters — a pot that is late is the only thing worth interrupting for. */
+   fact that matters, a pot that is late is the only thing worth interrupting for. */
 
 function navBar(){
   const groups=groupByArea(plants());
@@ -1064,25 +1064,25 @@ function dockHTML(){
   const can=!!draft.trim()||staged.top.length>0;
   return `<div class="dock ${V.dockMin?'min':''} ${draft.trim()?'tall':''}">
     <div class="box">
-      <div class="top"><span>Uusi merkintä · ${shortDate(todayISO())}</span>
+      <div class="top"><span>New note · ${shortDate(todayISO())}</span>
         ${p?`<span class="tag">${avatarFor(p.id)} ${esc(shortName(p.name))}</span>`:''}
         <button class="fold" data-act="fold" aria-expanded="${!V.dockMin}"
-          aria-label="${V.dockMin?'Avaa kirjoituskenttä':'Pienennä kirjoituskenttä'}">${V.dockMin?'▲':'▼'}</button>
+          aria-label="${V.dockMin?'Open the note box':'Collapse the note box'}">${V.dockMin?'▲':'▼'}</button>
       </div>
       <div class="in">
-        <label class="vhid" for="ctext">Uusi merkintä</label>
+        <label class="vhid" for="ctext">New note</label>
         <textarea id="ctext" data-ta="1"
-          placeholder="${p?`Mitä ${esc(shortName(p.name))} tekee?`:'Mitä parvekkeella tapahtuu?'}">${esc(draft)}</textarea>
+          placeholder="${p?`How is ${esc(shortName(p.name))} doing?`:'What is happening on the balcony?'}">${esc(draft)}</textarea>
         ${staged.top.length?`<div class="cshots">${staged.top.map((s,i)=>`<div class="cshot">
           <img src="${s.url}" alt="">
-          <button class="rm" data-act="unstage" data-val="${i}" aria-label="Poista kuva">×</button>
+          <button class="rm" data-act="unstage" data-val="${i}" aria-label="Remove photo">×</button>
         </div>`).join('')}</div>`:''}
         <div class="acts">
-          <button data-act="attach" aria-label="Lisää kuva">📷</button>
+          <button data-act="attach" aria-label="Add a photo">📷</button>
           <span class="sp"></span>
           ${p?`<label class="wchk"><input type="checkbox" data-act="watered-chk"
             ${staged.watered?'checked':''}> watered today</label>`:''}
-          <button class="save ${can?'on':''}" data-act="save" ${can?'':'disabled'}>Tallenna</button>
+          <button class="save ${can?'on':''}" data-act="save" ${can?'':'disabled'}>Save</button>
         </div>
       </div>
     </div></div>`;
@@ -1152,9 +1152,9 @@ function wxHTML(date){
   return `<div class="wx">
     <div class="read">
       <span class="deg ${w.tmax>=27?'hot':''}">${wxIcon(w)} ${Math.round(w.tmax)}°</span>
-      <span>yö <span class="${w.tmin<=10?'cold':''}">${Math.round(w.tmin)}°</span></span>
-      <span>sade ${w.pop}%</span>
-      <span>${date===todayISO()?'tänään':dayLabel(date)}</span>
+      <span>night <span class="${w.tmin<=10?'cold':''}">${Math.round(w.tmin)}°</span></span>
+      <span>rain ${w.pop}%</span>
+      <span>${date===todayISO()?'today':dayLabel(date)}</span>
     </div>
     ${al.map(a=>`<div class="warn ${a.key.startsWith('cold')?'cold':''}">
       <b>${esc(a.ico)} ${esc(a.what)}</b><span>${esc(a.why)}</span></div>`).join('')}
@@ -1167,21 +1167,21 @@ function entryHTML(e){
   const shots=shown(PHOTOS.filter(x=>(e.photoIds||[]).includes(x.id)));
   return `<article class="entry ${e.status==='pending'?'live':''}">
     <p class="said">${esc(e.text)}</p>
-    ${e.status==='pending'?'<div class="none">AI lukee merkintää…</div>':''}
+    ${e.status==='pending'?'<div class="none">Reading your note...</div>':''}
     ${who.map(p=>{
       const note=(p.notes||[]).find(n=>(e.assigned||[]).some(a=>a.noteId===n.id));
       return `<div class="read"><span class="art">${avatarFor(p.id)}</span>
         <span><b>${esc(p.name)}</b><span>${esc(note?note.text:'')}</span></span></div>`;}).join('')}
     ${e.status==='unsorted'?`<div class="chips-row">
-      <span class="none">AI ei tunnistanut kasvia.</span>
+      <span class="none">No plant recognised.</span>
       ${(e.suggestions||[]).map(pid=>{const p=plantById(pid);return p?
         `<button class="tick" data-act="assign" data-val="${esc(e.id)}" data-plant="${esc(pid)}">${esc(p.name)}</button>`:'';}).join('')}
       <button class="tick" data-act="assign-pick" data-val="${esc(e.id)}">Valitse kasvi…</button></div>`:''}
     ${shots.length?`<div class="shots">${shots.map(x=>`<button data-act="view" data-val="${esc(x.id)}">
       <img src="${photoURL(x.id)}" alt="" loading="lazy"></button>`).join('')}</div>`:''}
     <div class="entry-acts">
-      <button class="lnk" data-act="entry-edit" data-val="${esc(e.id)}">Muokkaa</button>
-      <button class="lnk" data-act="entry-del" data-val="${esc(e.id)}">Poista</button>
+      <button class="lnk" data-act="entry-edit" data-val="${esc(e.id)}">Edit</button>
+      <button class="lnk" data-act="entry-del" data-val="${esc(e.id)}">Delete</button>
     </div>
   </article>`;
 }
@@ -1234,7 +1234,7 @@ function editBoxHTML(kind,id,plantId,text){
     <div class="entry-acts">
       <button class="lnk" data-act="edit-cancel">Peruuta</button>
       <button class="tick" data-act="edit-save" data-val="${esc(id)}" data-plant="${esc(plantId||'')}"
-        data-kind="${kind}">Tallenna</button>
+        data-kind="${kind}">Save</button>
     </div></div>`;
 }
 
@@ -1250,7 +1250,7 @@ function renderLock(){
     <p class="said">${esc(e.text)}</p>
     <div class="steps"><i><b style="width:${busy==='read'?Math.min(95,secs*9):100}%"></b></i>
       <i><b style="width:${busy==='plan'?Math.min(95,(secs-10)*5):0}%"></b></i></div>
-    <div class="stage">${busy==='read'?'1/2 · Luetaan merkintääsi':'2/2 · Rakennetaan suunnitelmaa'}</div>
+    <div class="stage">${busy==='read'?'1/2 · Reading your note':'2/2 · Writing the guidance'}</div>
     <div class="eta">${secs} s · muu käyttöliittymä odottaa</div>
     ${who.length?`<div class="found">${who.map(p=>{
       const note=(p.notes||[]).find(n=>(e.assigned||[]).some(a=>a.noteId===n.id));
@@ -1330,7 +1330,7 @@ async function saveEntry(){
   }
   const r=await apiWrite('POST','/api/entries',
     JSON.stringify({date,text,photoIds,...(plantId?{plantId}:{})}),'application/json');
-  if(!r||!r.ok){toast('Tallennus ei onnistunut. Yritä uudelleen.');if(btn)btn.disabled=false;return;}
+  if(!r||!r.ok){toast('Could not save. Try again.');if(btn)btn.disabled=false;return;}
   const entry=await r.json();
   entriesDoc={...entriesDoc,entries:[...entriesDoc.entries,entry]};
   store.set('entriesDoc',entriesDoc);
@@ -1366,7 +1366,7 @@ const ACTIONS={
   'edit-cancel':()=>{editing=null;renderAll();},
   'edit-save':(id,el)=>saveEdit(el.dataset.kind,id,el.dataset.plant),
   assign:(id,el)=>assignEntry(id,[el.dataset.plant],el),
-  'assign-pick':async id=>{const pid=await pickPlant('Mistä kasvista merkintä kertoo?');if(pid)assignEntry(id,[pid]);},
+  'assign-pick':async id=>{const pid=await pickPlant('Which plant is this note about?');if(pid)assignEntry(id,[pid]);},
   'entry-retry':id=>retryEntry(id),
   cover:()=>openCover(),
   escape:()=>{setBusy('');renderAll();},
