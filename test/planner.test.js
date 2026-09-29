@@ -39,7 +39,7 @@ test('mergePlan (array input) writes condition + derives icon from cat with stab
     health: { overall: 'struggling', issues: [{ type: 'pest', label: 'aphids', severity: 'mild' }] },
     observations: 'aphids seen', stage: 'fruiting',
     days: [{ date: '2026-07-26', tasks: [{ cat: 'water', what: 'Water deeply', why: 'hot' }] }] }];
-  const { status: s2, plan } = mergePlan(status, ai, '2026-07-26', 100);
+  const { status: s2, care: plan } = mergePlan(status, ai, '2026-07-26', 100);
   assert.equal(s2.plants.a.stage, 'fruiting');
   assert.equal(s2.plants.a.health.overall, 'struggling');
   const task = plan.plants.a['2026-07-26'][0];
@@ -52,7 +52,7 @@ test('mergePlan (array input) writes condition + derives icon from cat with stab
 test('mergePlan skips ai entries with unknown or missing id', () => {
   const status = { updatedAt: 0, plants: { a: { id: 'a', notes: [], history: [] } } };
   const ai = [{ id: 'zzz', health: { overall: 'steady', issues: [] }, days: [] }, { days: [] }];
-  const { plan } = mergePlan(status, ai, '2026-07-26', 1);
+  const { care: plan } = mergePlan(status, ai, '2026-07-26', 1);
   assert.deepEqual(Object.keys(plan.plants), []);
 });
 

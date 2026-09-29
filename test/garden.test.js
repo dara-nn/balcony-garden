@@ -1,6 +1,6 @@
 import { test } from 'node:test';
 import assert from 'node:assert/strict';
-import { readStatus, KEYS, upsertPlant, applyNoteOp, dropDerivedNotes, recordStage } from '../src/garden.js';
+import { readStatus, KEYS, upsertPlant, applyNoteOp, dropDerivedNotes, recordStage, readCare, writeCare } from '../src/garden.js';
 
 // minimal in-memory KV stub matching the Workers KV surface we use
 function fakeKV(initial = {}) {
@@ -129,4 +129,36 @@ test('upsertPlant does not record a write that leaves the stage alone', () => {
   const doc = { updatedAt: 0, plants: { a: { id: 'a', stage: 'growing', notes: [], history: [] } } };
   const out = upsertPlant(doc, 'a', { lastWatered: '2026-09-29' }, Date.parse('2026-09-29T10:00:00Z'));
   assert.deepEqual(out.plants.a.history, []);
+});
+
+test('readCare returns null when nothing is stored', async () => {
+  const env = { PHOTOS: fakeKV() };
+  assert.equal(await readCare(env), null);
+});
+
+test('readCare reads the care doc', async () => {
+  const doc = { generatedAt: 5, plants: { a: { guidance: 'Water every two days.' } } };
+  const env = { PHOTOS: fakeKV({ [KEYS.care]: JSON.stringify(doc) }) };
+  assert.deepEqual(await readCare(env), doc);
+});
+
+test('readCare falls back to the old plan key once', async () => {
+  const old = { generatedAt: 1, through: '2026-09-30', plants: { a: { '2026-09-29': [] } } };
+  const env = { PHOTOS: fakeKV({ 'plan:garden': JSON.stringify(old) }) };
+  assert.deepEqual(await readCare(env), old);
+});
+
+test('the care doc wins over the old plan key', async () => {
+  const doc = { generatedAt: 9, plants: {} };
+  const env = { PHOTOS: fakeKV({
+    [KEYS.care]: JSON.stringify(doc),
+    'plan:garden': JSON.stringify({ generatedAt: 1, plants: {} }),
+  }) };
+  assert.equal((await readCare(env)).generatedAt, 9);
+});
+
+test('writeCare stores under the care key', async () => {
+  const kv = fakeKV();
+  await writeCare({ PHOTOS: kv }, { generatedAt: 3, plants: {} });
+  assert.equal(JSON.parse(await kv.get(KEYS.care)).generatedAt, 3);
 });

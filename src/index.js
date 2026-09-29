@@ -1,7 +1,7 @@
 // Balcony garden — Worker: serves the static site + a small shared-photo API backed by KV.
 // Viewing photos is public; adding / editing / deleting requires the UPLOAD_PASS secret.
 
-import { readStatus, writeStatus, KEYS, upsertPlant, applyNoteOp, readPlan, dropDerivedNotes } from './garden.js';
+import { readStatus, writeStatus, KEYS, upsertPlant, applyNoteOp, readCare, dropDerivedNotes } from './garden.js';
 import { readEntries, writeEntries, addEntry, assignEntry, editEntry, deleteEntry } from './entries.js';
 import { readSeed } from './seed.js';
 import { replan } from './planner.js';
@@ -53,8 +53,8 @@ export default {
         headers: { 'content-type': 'application/json', 'cache-control': 'no-store' },
       });
     }
-    if (url.pathname === '/api/plan' && req.method === 'GET') {
-      const doc = await readPlan(env);
+    if (url.pathname === '/api/care' && req.method === 'GET') {
+      const doc = await readCare(env);
       return new Response(JSON.stringify(doc || {}), {
         headers: { 'content-type': 'application/json', 'cache-control': 'no-store' },
       });
@@ -256,7 +256,7 @@ async function assignByHand(env, entry, plantIds) {
 // One KV doc; reads public, writes need the passphrase. Whole-blob last-write-wins by updatedAt.
 async function handleState(req, env) {
   if (req.method === 'GET') {
-    let doc = await env.PHOTOS.get(KEYS.progress);
+    let doc = await env.PHOTOS.get('progress:garden');   // removed in full by the task-engine deletion
     if (!doc) {
       const legacy = await env.PHOTOS.get('state:garden'); // one-time migration read
       if (legacy) doc = legacy;
@@ -269,7 +269,7 @@ async function handleState(req, env) {
     if (!body) return new Response('Empty body', { status: 400 });
     let parsed;
     try { parsed = JSON.parse(body); } catch (e) { return new Response('Bad JSON', { status: 400 }); }
-    await env.PHOTOS.put(KEYS.progress, JSON.stringify(parsed));
+    await env.PHOTOS.put('progress:garden', JSON.stringify(parsed));
     return json(parsed);
   }
   return new Response('Method not allowed', { status: 405 });

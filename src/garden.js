@@ -1,8 +1,11 @@
 export const KEYS = {
   status: 'status:garden',
-  plan: 'plan:garden',
-  progress: 'progress:garden',
+  care: 'care:garden',
 };
+
+/* care:garden used to be plan:garden, a dated task list. The old key is read
+   once so an existing garden is not blank on the first load after the change. */
+const OLD_PLAN_KEY = 'plan:garden';
 
 export async function readStatus(env) {
   const raw = await env.PHOTOS.get(KEYS.status);
@@ -11,12 +14,12 @@ export async function readStatus(env) {
 export async function writeStatus(env, doc) {
   await env.PHOTOS.put(KEYS.status, JSON.stringify(doc));
 }
-export async function readPlan(env) {
-  const raw = await env.PHOTOS.get(KEYS.plan);
+export async function readCare(env) {
+  const raw = (await env.PHOTOS.get(KEYS.care)) || (await env.PHOTOS.get(OLD_PLAN_KEY));
   return raw ? JSON.parse(raw) : null;
 }
-export async function writePlan(env, doc) {
-  await env.PHOTOS.put(KEYS.plan, JSON.stringify(doc));
+export async function writeCare(env, doc) {
+  await env.PHOTOS.put(KEYS.care, JSON.stringify(doc));
 }
 
 /* The bar wants to know when a plant actually changed, not when the seed file

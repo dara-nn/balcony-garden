@@ -1,4 +1,4 @@
-import { readStatus, writeStatus, writePlan, recordStage } from './garden.js';
+import { readStatus, writeStatus, writeCare, recordStage } from './garden.js';
 import { readSeed } from './seed.js';
 
 const STAGES_HINT = 'Use only the plant\'s allowed stages.';
@@ -156,7 +156,7 @@ export function mergePlan(statusDoc, aiPlants, today, now) {
   }
   return {
     status: { ...statusDoc, updatedAt: now, plants },
-    plan: { generatedAt: now, through: addDaysISO(today, 13), plants: planPlants },
+    care: { generatedAt: now, through: addDaysISO(today, 13), plants: planPlants },
   };
 }
 
@@ -239,6 +239,6 @@ export async function replan(env, { trigger } = {}) {
     const now = Date.now();
     const merged = mergePlan(status, aiPlants, today, now);
     await writeStatus(env, merged.status);
-    await writePlan(env, merged.plan);
+    await writeCare(env, merged.care);
   } catch { return; } // safety net: replan runs in ctx.waitUntil — no throw may escape
 }
