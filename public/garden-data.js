@@ -8,7 +8,7 @@
    - add "water": "YYYY-MM-DD" to a plant to record "watered on that day"
 */
 window.GARDEN_SEED = JSON.parse(`{
-  "version": 10,
+  "version": 11,
   "plants": [
     { "id": "tomato-1", "name": "Tigerella tomato", "species": "tomato", "stage": "flowering", "area": "balcony",
       "note": "Striped, indeterminate, stake + pinch side shoots. Ripe when stripes turn orange-red. Tolerates cool summers." },
@@ -34,7 +34,7 @@ window.GARDEN_SEED = JSON.parse(`{
       "note": "Bought as a plant, not from seed. Own pot, or it takes over" },
     { "id": "monstera", "name": "Monstera", "species": "monstera", "stage": "settling", "area": "indoor",
       "note": "IKEA · bright indirect spot, away from radiators" },
-    { "id": "hedera", "name": "Ivy (Hedera helix)", "species": "hedera", "stage": "settling", "area": "balcony",
-      "note": "IKEA · balcony, shade-tolerant, frost-hardy" }
+    { "id": "hedera", "name": "Ivy (Hedera helix)", "species": "hedera", "stage": "settling", "area": "indoor",
+      "note": "IKEA · came in from the balcony, shade-tolerant" }
   ]
 }`);

@@ -64,8 +64,8 @@ export const PLACEMENT = {
   'chilli-1':      { kind: 'shelf', x: SHELF.x, y: SHELF.tiers[2], z: SHELF.z - 0.24 },
   'chilli-2':      { kind: 'shelf', x: SHELF.x, y: SHELF.tiers[2], z: SHELF.z + 0.14 },
 
-  /* hangs on the end wall directly above the shelf, with the bulb behind it */
-  'hedera':        { kind: 'wall',  x: -2.48, y: 1.62, z: SHELF.z },
+  /* The ivy used to hang on the end wall above the shelf. It came indoors for
+     the winter, so the balcony wall is empty now. */
 };
 
 /* Indoor plants are not on the balcony, so they are not in the balcony. Putting

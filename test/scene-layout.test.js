@@ -27,7 +27,8 @@ test('placement kinds all have a pot size', () => {
 
 test('indoor plants are kept out of the balcony scene entirely', () => {
   const indoor = seed.plants.filter((p) => !inScene(p)).map((p) => p.id);
-  assert.deepEqual(indoor, ['monstera'], 'the inventory should have exactly one indoor plant');
+  assert.deepEqual(indoor, seed.plants.filter((p) => p.area === 'indoor').map((p) => p.id));
+  assert.ok(indoor.length, 'the inventory should have at least one indoor plant to test with');
   for (const id of indoor)
     assert.equal(PLACEMENT[id], undefined, `${id} lives indoors and must not be placed on the balcony`);
 });

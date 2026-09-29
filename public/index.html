@@ -7,6 +7,14 @@
 <link rel="icon" href="data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 64 64'%3E%3Crect width='64' height='64' rx='14' fill='%231E4D3B'/%3E%3Cpath d='M32 52V30' stroke='%23EAF0E9' stroke-width='5' stroke-linecap='round'/%3E%3Cpath d='M32 36c-11 0-17-6-17-15 10 0 17 6 17 15z' fill='%237FBFA0'/%3E%3Cpath d='M32 32c0-10 6-17 16-17 0 10-6 17-16 17z' fill='%23EAF0E9'/%3E%3C/svg%3E">
 <link rel="apple-touch-icon" href="data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 64 64'%3E%3Crect width='64' height='64' rx='14' fill='%231E4D3B'/%3E%3Cpath d='M32 52V30' stroke='%23EAF0E9' stroke-width='5' stroke-linecap='round'/%3E%3Cpath d='M32 36c-11 0-17-6-17-15 10 0 17 6 17 15z' fill='%237FBFA0'/%3E%3Cpath d='M32 32c0-10 6-17 16-17 0 10-6 17-16 17z' fill='%23EAF0E9'/%3E%3C/svg%3E">
 <meta name="theme-color" content="#1E4D3B">
+<!-- Two faces from Google Fonts in one request. Young Serif is the display
+     face for titles and highlights, single weight, 400 only. Shantell Sans is
+     the hand the journal entries are set in, also 400 only. Preconnect so the
+     woff2 is not stuck behind a cold DNS and TLS handshake after the
+     stylesheet lands. -->
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Shantell+Sans:wght@400&family=Young+Serif&display=swap">
 <script>try{var _t=JSON.parse(localStorage.getItem('theme')||'null');if(_t)document.documentElement.dataset.theme=_t;}catch(e){}</script>
 <style>
   /* ============================================================
@@ -17,8 +25,10 @@
      the whole row, chip and tile that belong to it, so the page is legible as a
      garden before it is read as an interface. Nothing shouts in capitals.
 
-     UI     Avenir Next , the site's own voice
-     Prose  Charter     , what the model writes, in something you read
+     UI       Avenir Next  , the site's own voice
+     Prose    Charter      , what the model writes, in something you read
+     Display  Young Serif  , titles and the one number worth looking at
+     Hand     Shantell Sans, the journal, because those words are mine
      ============================================================ */
   :root{
     --paper:#EFF2EA; --field:#FFFFFF; --ink:#17211B; --dim:#6C7A70; --rule:#E1E7DA;
@@ -26,6 +36,18 @@
     --ph-grow:#9BC7AA; --ph-flower:#DDA0B4; --ph-fruit:#E79A4E; --ph-harvest:#CC5438;
     --ui:"Avenir Next","Avenir","Segoe UI",system-ui,sans-serif;
     --prose:"Charter","Iowan Old Style","Georgia",serif;
+    --display:"Young Serif","Charter","Iowan Old Style","Georgia",serif;
+    --hand:"Shantell Sans","Avenir Next",system-ui,sans-serif;
+    /* One ladder for every size on the site. 1.125, a major second, stepped
+       off a 16px reading base and rounded to whole pixels, because half
+       pixels were how 15.5 and 14.5 and 13.5 got here in the first place.
+       Two rungs rounded onto 13 and 14, which are the same size to a reader,
+       so the lower one is pulled down to 12 and the ladder stays countable.
+       t1 eyebrows and ticks, t2 meta and captions, t3 the UI default,
+       t4 reading prose, t5 sub-heads, t6 area heads, t7 section titles and
+       the one number worth looking at, t8 the masthead. Nothing off it. */
+    --t1:11px; --t2:12px; --t3:14px; --t4:16px;
+    --t5:18px; --t6:20px; --t7:23px; --t8:29px;
     --s1:4px; --s2:8px; --s3:12px; --s4:18px; --s5:28px; --s6:44px;
     --r-lg:20px; --r-md:14px; --r-sm:10px; --r-pill:999px;
     --tint:#9BC7AA;
@@ -50,7 +72,7 @@
   *{box-sizing:border-box}
   [hidden]{display:none!important}
   html,body{margin:0}
-  body{background:var(--paper);color:var(--ink);font:15px/1.5 var(--ui);-webkit-text-size-adjust:100%}
+  body{background:var(--paper);color:var(--ink);font:var(--t3)/1.5 var(--ui);-webkit-text-size-adjust:100%}
   button{font:inherit;color:inherit}
   :focus-visible{outline:2px solid var(--leaf);outline-offset:2px}
   .vhid{position:absolute;width:1px;height:1px;overflow:hidden;clip:rect(0 0 0 0)}
@@ -64,9 +86,13 @@
 
   /* ---- masthead ---- */
   .mast{display:flex;align-items:baseline;gap:var(--s2);flex-wrap:wrap;margin-bottom:var(--s4)}
-  .mast h1{font-size:clamp(20px,3vw,25px);font-weight:600}
-  .mast .where{font-size:13px;color:var(--dim)}
-  .mast .fresh{margin-left:auto;font-size:12px;color:var(--dim)}
+  /* The display face at its own size. Young Serif is single weight, so 400 is
+     stated to stop a faux bold, the sans tracking is zeroed because it was cut
+     for a different face, and the leading closes to the 1.11 of the specimen. */
+  .mast h1{font-family:var(--display);font-size:clamp(var(--t7),3vw,var(--t8));
+    font-weight:400;line-height:1.12;letter-spacing:0}
+  .mast .where{font-size:var(--t3);color:var(--dim)}
+  .mast .fresh{margin-left:auto;font-size:var(--t2);color:var(--dim)}
 
   /* ---- a section is a card ---- */
   .sect{background:var(--field);border:1px solid var(--rule);border-radius:var(--r-lg);
@@ -74,45 +100,60 @@
   .sect:last-child{margin-bottom:0}
   .sect > .hd{display:flex;align-items:baseline;gap:var(--s2);flex-wrap:wrap;
     padding-bottom:var(--s3);margin-bottom:var(--s4);border-bottom:2px solid var(--ink)}
-  .sect > .hd h2{font-size:21px;letter-spacing:-.02em}
-  .sect > .hd .meta{margin-left:auto;font-size:13px;color:var(--dim)}
+  /* Same face one step down. A point smaller than the sans it replaces, since
+     the large x-height already reads bigger at the same nominal size. */
+  .sect > .hd h2{font-family:var(--display);font-size:var(--t7);
+    font-weight:400;line-height:1.18;letter-spacing:0}
+  .sect > .hd .meta{margin-left:auto;font-size:var(--t2);color:var(--dim)}
   .sect > .hd .meta b{font-weight:600;color:var(--tomato)}
   /* the plant list: one row per plant, health in words, season bar, guidance */
   /* One column for the names, so every bar starts and ends at the same x and
      the month scale above them lines up with all of them. */
   .sect{--namecol:300px}
-  .prow{padding:10px 0;border-bottom:1px solid var(--rule)}
+  .prow{padding:var(--s2) 0;border-bottom:1px solid var(--rule)}
   .phead{display:grid;grid-template-columns:var(--namecol) 1fr;align-items:center;gap:var(--s2)}
-  .pname{display:flex;align-items:baseline;flex-wrap:wrap;gap:2px var(--s2);background:none;
+  .pname{display:flex;align-items:baseline;flex-wrap:wrap;gap:var(--s1) var(--s2);background:none;
     border:0;padding:0;font:inherit;color:inherit;cursor:pointer;text-align:left;min-width:0}
-  .pname .art{align-self:center;width:34px;height:34px;flex:none;overflow:hidden;
-    border-radius:var(--r-sm)}
+  /* The drawing identifies the plant, it does not rank it, so it is sized to
+     sit beside the name rather than to outweigh it. */
+  .pname .art{align-self:center;width:26px;height:26px;flex:none;overflow:hidden;
+    border-radius:var(--r-pill)}
   .pname .art svg{width:100%;height:100%;display:block}
-  .pname em{font-style:normal;color:var(--dim);font-size:.85em}
+  /* The plant name is the card's title, and now the heaviest thing in it. The
+     b was carrying a browser bold the single-weight face cannot serve, so
+     weight is pinned to 400. */
+  .pname b{font-family:var(--display);font-size:var(--t5);font-weight:400;
+    line-height:1.25;letter-spacing:0}
+  .pname em{font-style:normal;color:var(--dim);font-size:var(--t2)}
   .water{color:var(--dim)}
   .wline>span{display:flex;align-items:center;gap:var(--s3);flex-wrap:wrap}
-  .waterbtn{display:inline-flex;align-items:center;gap:5px;border:1px solid var(--rule);
-    background:var(--paper);border-radius:var(--r-pill);padding:2px 10px;cursor:pointer;
-    font:inherit;font-size:12px;color:var(--ink)}
+  .waterbtn{display:inline-flex;align-items:center;gap:var(--s1);border:1px solid var(--rule);
+    background:var(--paper);border-radius:var(--r-pill);padding:var(--s1) var(--s3);cursor:pointer;
+    font:inherit;font-size:var(--t2);color:var(--ink)}
   .waterbtn:hover,.waterbtn:focus-visible{border-color:var(--water);color:var(--water)}
-  .photobtn{display:inline-flex;align-items:center;gap:6px;border:1px solid var(--rule);
-    background:var(--paper);border-radius:var(--r-pill);padding:6px 15px;cursor:pointer;
-    font:inherit;font-size:13.5px;color:var(--ink)}
+  .photobtn{display:inline-flex;align-items:center;gap:var(--s2);border:1px solid var(--rule);
+    background:var(--paper);border-radius:var(--r-pill);padding:var(--s2) var(--s4);cursor:pointer;
+    font:inherit;font-size:var(--t3);color:var(--ink)}
   .photobtn:hover,.photobtn:focus-visible{border-color:var(--leaf);color:var(--pine)}
   /* Two paragraphs that read differently: what it is doing, then what to do.
-     A label each, on one shared column so the prose lines up. */
-  .status,.guide,.wline{display:grid;grid-template-columns:58px 1fr;gap:var(--s2);
-    margin:3px 0 0;font-size:.92em;line-height:1.45}
+     The label sits above its text rather than in a column beside it, so both
+     paragraphs start at the same x AND wrap at the same measure, and neither
+     one can look indented next to the other. */
+  .status,.guide,.wline{display:grid;grid-template-columns:1fr;gap:var(--s1);
+    margin:0;font-size:var(--t3);line-height:1.5}
   .wline{margin-top:var(--s3)}
-  .lbl{font-size:10.5px;letter-spacing:.09em;text-transform:uppercase;font-weight:600;
-    color:var(--dim);padding-top:.32em}
+  /* .32em, not a spacing step: it is what drops a 11px eyebrow onto the same
+     baseline as the sentence beside it when the two do share a line. */
+  .lbl{font-size:var(--t1);letter-spacing:.09em;text-transform:uppercase;font-weight:600;
+    color:var(--dim);padding-top:0}
+  .status,.guide,.wline{grid-template-rows:auto auto}
   .status{color:var(--dim)}
   .status>span{color:var(--ink)}
   .guide{color:var(--ink)}
   .legend{display:flex;align-items:center;gap:var(--s3);flex-wrap:wrap;
-    margin:0 0 var(--s3);padding:0 var(--s4);font-size:12.5px;color:var(--dim)}
-  .legend span{display:flex;align-items:center;gap:5px}
-  .legend .sep{width:1px;height:12px;background:var(--rule);padding:0}
+    margin:0 0 var(--s3);padding:0 var(--s4);font-size:var(--t2);color:var(--dim)}
+  .legend span{display:flex;align-items:center;gap:var(--s1)}
+  .legend .sep{width:1px;height:var(--s3);background:var(--rule);padding:0}
   .sw{width:14px;height:6px;border-radius:3px;display:inline-block}
   .sw.grow{background:var(--ph-grow)} .sw.flower{background:var(--ph-flower)}
   .sw.fruit{background:var(--ph-fruit)} .sw.harvest{background:var(--ph-harvest)}
@@ -126,17 +167,48 @@
      name sits above the chart instead of beside it. */
   .plist{display:grid;gap:var(--s4);margin:0 0 var(--s6);
     grid-template-columns:repeat(auto-fill,minmax(min(430px,100%),1fr))}
-  .plist .phead{grid-template-columns:1fr;gap:6px}
+  /* ---- the plant card ----
+     Four bands, and the gaps do the grouping. The name and the year belong to
+     each other, so s3 between them and nothing else inside that block. The
+     two sentences the model wrote are a pair of their own, s4 below the year.
+     The water row is the only thing here you can press, so a rule fences it
+     off from everything you only read.
+
+     Five treatments, not one: the name in the display face, the year as a
+     ribbon, the status in the UI face at UI size, the care in the reading
+     face one step up on a tinted band, and the water line small and quiet.
+     A card you can scan rather than a card you have to read. */
+  .plist .phead{grid-template-columns:1fr;gap:var(--s3)}
   /* The plant is the card now. Nothing wraps the grid any more, so the card
      takes the field colour and the lift the old section card used to have,
-     and it sits straight on the paper. */
-  .plist .prow{padding:var(--s4);background:var(--field);
-    border:1px solid var(--rule);border-radius:var(--r-lg);box-shadow:var(--shadow)}
+     and it sits straight on the paper. overflow so the care band can run to
+     the card's own edge. */
+  .plist .prow{display:flex;flex-direction:column;padding:var(--s4);background:var(--field);
+    overflow:hidden;border:1px solid var(--rule);border-radius:var(--r-lg);box-shadow:var(--shadow)}
+  .plist .status{margin-top:var(--s4)}
+  /* Care is the sentence to act on. It takes the tint, the reading face and
+     the full width of the card: a band of the card rather than a box wedged
+     between two loose lines, which is what an inset panel looked like. */
+  .plist .guide{margin:var(--s3) 0 0;padding:0 0 0 var(--s3);
+    border-left:2px solid color-mix(in srgb,var(--leaf) 55%,transparent)}
+  .plist .guide > span{font-family:var(--prose);font-size:var(--t3);line-height:1.55}
+  .plist .guide .lbl{color:var(--pine)}
+  /* The action, fenced off from the reading. auto on the top so that in a
+     row of two the shorter card puts its water line on the same bottom edge
+     as the taller one, instead of leaving the card empty underneath it. */
+  .plist .wline{display:flex;align-items:center;gap:var(--s3);
+    margin:auto calc(-1 * var(--s4)) calc(-1 * var(--s1));
+    padding:var(--s3) var(--s4) 0;border-top:1px solid var(--rule);font-size:var(--t2)}
+  .plist .wline .lbl{display:none}
+  .plist .wline > span{flex:1}
+  .plist .waterbtn{margin-left:auto}
   /* The area name labels the grid under it from the page itself: no box, no
      rule, nothing that would read as a second card around the plants. */
   .areahd{display:flex;align-items:baseline;gap:var(--s2);flex-wrap:wrap;
-    margin:0 0 var(--s3);font-size:20px;letter-spacing:-.02em}
-  .areahd span{font-size:13px;font-weight:400;letter-spacing:0;color:var(--dim)}
+    margin:0 0 var(--s3);font-family:var(--display);font-size:var(--t6);
+    font-weight:400;line-height:1.2;letter-spacing:0}
+  /* The count is a label, not a title, so it goes back to the UI face. */
+  .areahd span{font-family:var(--ui);font-size:var(--t3);font-weight:400;letter-spacing:0;color:var(--dim)}
   /* The forecast reads for the balcony only, so it stands on its own above
      the balcony plants instead of boxing them in. */
   .wxblock{margin:0 0 var(--s4)}
@@ -146,34 +218,50 @@
   .lgd-row .legend{margin:0 0 var(--s5);padding:0}
   /* A tooltip that answers straight away, rather than the browser's slow one. */
   #tip{position:fixed;z-index:60;pointer-events:none;opacity:0;transition:opacity .08s;
-    background:var(--ink);color:var(--paper);font-size:12px;line-height:1.3;
-    padding:5px 9px;border-radius:var(--r-sm);white-space:nowrap;
+    background:var(--ink);color:var(--paper);font-size:var(--t2);line-height:1.3;
+    padding:var(--s1) var(--s2);border-radius:var(--r-sm);white-space:nowrap;
     box-shadow:0 4px 14px rgba(0,0,0,.18)}
   #tip.on{opacity:1}
   .prow .track .bar{cursor:default}
-  .monthscale{position:relative;height:.95em;margin:0 0 3px;font-size:11px;color:var(--dim);opacity:.75}
+  /* The scale is the chart's label, so it is read at full strength rather
+     than ghosted under it. */
+  .monthscale{position:relative;height:1.05em;margin:0 0 var(--s1);font-size:var(--t1);color:var(--dim)}
   .monthscale b{position:absolute;font-weight:400;transform:translateX(-50%)}
-  .prow .track{position:relative;height:6px;border-radius:3px;
+  /* 6px read as a divider rule rather than as data. Nine is a ribbon: still
+     one line of the card, but unmistakably a measured thing. The segments
+     stay square and the track clips them, so the year is one continuous band
+     instead of a row of separate lozenges. */
+  .prow .track{position:relative;height:9px;border-radius:var(--r-pill);
     background:var(--rule);overflow:hidden}
   .prow .track .bar.future{opacity:.4}
   .sect>.prow:first-of-type{padding-top:0}
-  .prow .track .bar{position:absolute;top:0;height:100%;border-radius:3px}
+  .prow .track .bar{position:absolute;top:0;height:100%}
   .prow .track .bar.grow{background:var(--ph-grow)} .prow .track .bar.flower{background:var(--ph-flower)}
   .prow .track .bar.fruit{background:var(--ph-fruit)} .prow .track .bar.harvest{background:var(--ph-harvest)}
-  .prow .track .tline{position:absolute;top:-2px;width:2px;height:10px;background:var(--ink)}
+  /* Today overshoots the track top and bottom by 2px so it is readable
+     against a pale phase as well as a dark one. */
+  .prow .track .tline{position:absolute;top:-2px;width:2px;height:13px;background:var(--ink)}
   .hrow{padding:var(--s2) 0;border-bottom:1px solid var(--rule)}
-  .striplabel{align-self:center;padding:0 var(--s2);font-size:12px;color:var(--dim)}
-  .wchk{display:flex;align-items:center;gap:6px;font-size:.85em;color:var(--dim)}
-  @media (max-width:760px){
+  .striplabel{align-self:center;padding:0 var(--s2);font-size:var(--t2);color:var(--dim)}
+  .wchk{display:flex;align-items:center;gap:var(--s2);font-size:var(--t2);color:var(--dim)}
+  /* Every other breakpoint in here asks the page container, not the window,
+     so these do too: the phone preview is then the same page a phone gets. */
+  @container (max-width:760px){
     .sect{--namecol:1fr}
-    .phead{grid-template-columns:1fr;gap:6px}
-    .status,.guide,.wline{grid-template-columns:48px 1fr;gap:6px}
+    .phead{grid-template-columns:1fr;gap:var(--s3)}
   }
 
   /* ---- the journal ----
      A spine down the left carries the season: each entry's dot takes the colour
-     of the phase the plant was in that day, the same colours as the charts. */
-  .jmonth{font-size:12.5px;letter-spacing:.02em;color:var(--dim);
+     of the phase the plant was in that day, the same colours as the charts.
+
+     The entry text is the one thing on this site I wrote myself, so it is set
+     in a hand. Shantell Sans, not a script: it keeps a sans skeleton and its
+     figures stay crisp, which matters because these notes carry volumes,
+     times and temperatures. Only the sentence gets it. Dates, tags, month
+     headings and controls stay in the UI face, or the page turns into a
+     scrapbook and nothing is findable. */
+  .jmonth{font-size:var(--t2);letter-spacing:.02em;color:var(--dim);
     margin:var(--s4) 0 var(--s2);padding-left:calc(var(--jrail) + var(--s3))}
   .jmonth:first-of-type{margin-top:var(--s2)}
   .jlist{--jrail:88px;list-style:none;margin:0;padding:0}
@@ -182,7 +270,10 @@
     gap:var(--s3);padding:0 0 var(--s4)}
   .jent::before{content:"";position:absolute;left:calc(var(--jrail) + 5px);top:.75em;bottom:0;
     width:2px;background:var(--rule)}
-  .jent:last-child::before{bottom:auto;height:calc(100% - 1.4em)}
+  /* Under the last entry the spine is a tail, not a line to nowhere, and
+     with a single entry there is nothing to hang off it at all. */
+  .jent:last-child::before{bottom:auto;height:var(--s5)}
+  .jent:only-child::before{display:none}
   .jent::after{content:"";position:absolute;left:var(--jrail);top:calc(.75em - 5px);
     width:12px;height:12px;border-radius:50%;background:var(--dim);
     box-shadow:0 0 0 3px var(--field)}
@@ -190,30 +281,35 @@
   .jent.ph-flower::after{background:var(--ph-flower)}
   .jent.ph-fruit::after{background:var(--ph-fruit)}
   .jent.ph-harvest::after{background:var(--ph-harvest)}
-  .jdate{text-align:right;font-size:12.5px;color:var(--dim);padding-top:.15em;white-space:nowrap}
+  /* .15em, not a spacing step: it drops the date onto the first baseline of
+     the entry beside it, which is a type measurement, not a gap. */
+  .jdate{text-align:right;font-size:var(--t2);color:var(--dim);padding-top:.15em;white-space:nowrap}
   .jbody{padding-left:var(--s3);min-width:0}
-  .jbody .prose{margin:0;max-width:60ch}
-  .aside{margin:4px 0 0;font-size:13px;color:var(--dim);font-style:italic;max-width:60ch}
-  .jgap{margin:var(--s3) 0 0;font-size:12px;color:var(--dim)}
+  .jbody .prose{margin:0;max-width:60ch;font-family:var(--hand);
+    font-size:var(--t4);line-height:1.7;letter-spacing:.005em}
+  .aside{margin:var(--s1) 0 0;font-size:var(--t2);color:var(--dim);font-style:italic;max-width:60ch}
+  .jgap{margin:var(--s3) 0 0;font-size:var(--t2);color:var(--dim)}
   .jgap::before{content:"";display:inline-block;width:18px;height:1px;
-    background:var(--rule);vertical-align:middle;margin-right:7px}
+    background:var(--rule);vertical-align:middle;margin-right:var(--s2)}
   /* controls stay out of the way until you reach for them */
-  .jbody .entry-acts{opacity:0;transition:opacity .12s;margin-top:4px}
+  .jbody .entry-acts{opacity:0;transition:opacity .12s;margin-top:var(--s1)}
   .jent:hover .entry-acts,.jbody:focus-within .entry-acts{opacity:1}
   @media (hover:none){.jbody .entry-acts{opacity:1}}
   /* a plant named in an entry, standing in for its name */
   /* A tag stands in for a plant's name mid-sentence, so it has to sit on the
      line like a word, not float above it like a button. */
-  .ptag{display:inline-flex;align-items:center;gap:4px;vertical-align:-.18em;
+  .ptag{display:inline-flex;align-items:center;gap:var(--s1);vertical-align:-.18em;
     border:1px solid var(--rule);background:var(--paper);border-radius:var(--r-pill);
-    padding:0 7px 0 2px;margin:0 1px;line-height:1.35;font:inherit;font-size:.8em;
+    /* The pill's own padding is optical, it hugs a 15px avatar and a word,
+     and its size rides the sentence it is sitting in. */
+    padding:0 7px 0 2px;margin:0 1px;line-height:1.35;font:inherit;font-size:.82em;
     cursor:pointer;color:inherit;font-family:var(--ui)}
   .ptag .av{width:15px;height:15px;flex:none;overflow:hidden;border-radius:var(--r-pill)}
   .ptag .av svg{width:100%;height:100%;display:block}
   .ptag:hover,.ptag:focus-visible{border-color:var(--leaf);background:var(--field)}
-  @media (max-width:560px){
+  @container (max-width:560px){
     .jlist,.sect{--jrail:0px}
-    .jent{grid-template-columns:1fr;gap:2px}
+    .jent{grid-template-columns:1fr;gap:var(--s1)}
     .jent::before,.jent::after{display:none}
     .jdate{text-align:left}
     .jbody{padding-left:0;border-left:2px solid var(--rule);padding-left:var(--s3)}
@@ -224,8 +320,8 @@
   /* ---- the variety page: text left, pictures in a narrow column ---- */
   .wiki{display:grid;grid-template-columns:1fr 260px;gap:var(--s5)}
   .wtext .prose{max-width:62ch}
-  .facts{display:grid;grid-template-columns:auto 1fr;gap:6px var(--s3);margin:var(--s4) 0 0;
-    font-size:13.5px;border-top:1px solid var(--rule);padding-top:var(--s3)}
+  .facts{display:grid;grid-template-columns:auto 1fr;gap:var(--s2) var(--s4);margin:var(--s4) 0 0;
+    font-size:var(--t3);border-top:1px solid var(--rule);padding-top:var(--s3)}
   .facts dt{color:var(--dim)}
   .facts dd{margin:0}
   .facts dd a{color:var(--ink);text-decoration:underline;text-underline-offset:2px;
@@ -235,18 +331,19 @@
   .wpics figure{margin:0}
   .wpics img{width:100%;aspect-ratio:4/3;object-fit:cover;border-radius:var(--r-md);
     border:1px solid var(--rule);display:block}
-  .wpics figcaption{margin-top:5px;font-size:12px;color:var(--dim)}
-  @media (max-width:760px){
+  .wpics figcaption{margin-top:var(--s1);font-size:var(--t2);color:var(--dim)}
+  .wpics figcaption i{font-style:normal;opacity:.65;white-space:nowrap}
+  @container (max-width:760px){
     .wiki{grid-template-columns:1fr;gap:var(--s4)}
     .wpics{flex-direction:row}
     .wpics figure{flex:1 1 0;min-width:0}
   }
 
   /* a sub-heading inside a section: smaller, its own rule, its own air */
-  .sub{display:flex;align-items:baseline;gap:var(--s2);margin:var(--s5) 0 var(--s2);font-size:15px;
-    font-weight:600;color:var(--ink);padding-bottom:6px;border-bottom:1px solid var(--rule)}
+  .sub{display:flex;align-items:baseline;gap:var(--s2);margin:var(--s5) 0 var(--s2);font-size:var(--t5);
+    font-weight:600;color:var(--ink);padding-bottom:var(--s2);border-bottom:1px solid var(--rule)}
   .sub:first-of-type{margin-top:var(--s4)}
-  .sub .n{margin-left:auto;font-weight:400;font-size:12.5px;color:var(--dim)}
+  .sub .n{margin-left:auto;font-weight:400;font-size:var(--t2);color:var(--dim)}
 
   /* ---- the nav: it governs the whole page, so it sits above the whole page ---- */
   /* Every plant is reachable without scrolling sideways, so the strip wraps.
@@ -254,33 +351,34 @@
      than eating the screen on a phone. */
   .nav{position:sticky;top:0;z-index:15;background:var(--paper);margin:0 0 var(--s4);
     padding:var(--s2) 0;border-bottom:1px solid var(--rule)}
-  @media (max-width:760px){.nav{position:static}}
-  .strip{display:flex;flex-wrap:wrap;gap:6px;padding:2px}
-  .chip{display:inline-flex;align-items:center;gap:6px;flex:none;border:1px solid var(--rule);
-    background:var(--field);border-radius:var(--r-pill);padding:3px 12px 3px 3px;cursor:pointer;
-    font-size:13.5px;white-space:nowrap}
+  @container (max-width:760px){.nav{position:static}}
+  /* The 4px of padding is room for a focus ring, not a gap. */
+  .strip{display:flex;flex-wrap:wrap;gap:var(--s2);padding:var(--s1)}
+  .chip{display:inline-flex;align-items:center;gap:var(--s2);flex:none;border:1px solid var(--rule);
+    background:var(--field);border-radius:var(--r-pill);padding:var(--s1) var(--s3) var(--s1) var(--s1);
+    cursor:pointer;min-height:32px;font-size:var(--t3);white-space:nowrap}
   .chip .av{width:24px;height:24px;flex:none;overflow:hidden;border-radius:var(--r-pill)}
   .chip .av svg{width:100%;height:100%;display:block}
   .chip:hover{border-color:var(--leaf)}
   .chip[aria-pressed="true"]{background:var(--ink);color:var(--paper);border-color:var(--ink);font-weight:600}
-  .chip.all{padding:3px 14px}
+  .chip.all{padding:var(--s1) var(--s4)}
 
   /* ---- the chart: one soft row per plant ---- */
-  .row{display:flex;align-items:center;gap:var(--s3);padding:11px 2px;width:100%;text-align:left;
+  .row{display:flex;align-items:center;gap:var(--s3);padding:var(--s3) var(--s1);width:100%;text-align:left;
     border-top:1px solid var(--rule)}
-  .row.head,.row.axis{border-top:none;padding:2px}
-  .row.axis{border-top:1px solid var(--rule);padding-top:8px}
+  .row.head,.row.axis{border-top:none;padding:var(--s1)}
+  .row.axis{border-top:1px solid var(--rule);padding-top:var(--s2)}
   .row .art{width:40px;height:40px;flex:none;overflow:hidden;border-radius:var(--r-sm)}
   .row .art svg{width:100%;height:100%;display:block}
   .row .who{width:136px;flex:none;min-width:0}
-  .row .who b{display:block;font-size:14px;font-weight:600;white-space:nowrap;overflow:hidden;
+  .row .who b{display:block;font-size:var(--t3);font-weight:600;white-space:nowrap;overflow:hidden;
     text-overflow:ellipsis;letter-spacing:-.01em}
-  .row .who em{display:block;font-style:normal;font-size:12px;color:var(--dim);margin-top:2px}
+  .row .who em{display:block;font-style:normal;font-size:var(--t2);color:var(--dim);margin-top:2px}
   .row .bars{flex:1 1 auto;min-width:88px}
-  .row .now{flex:0 0 clamp(168px,26%,280px);min-width:0;display:flex;gap:7px;align-items:flex-start}
-  .row .now .mk{flex:none;font-size:13px;line-height:1.35}
-  .row .now .txt{min-width:0;font-size:14px;line-height:1.35}
-  .row .now .txt em{display:block;font-style:normal;font-size:11.5px;color:var(--dim);margin-top:1px}
+  .row .now{flex:0 0 clamp(168px,26%,280px);min-width:0;display:flex;gap:var(--s2);align-items:flex-start}
+  .row .now .mk{flex:none;font-size:var(--t3);line-height:1.35}
+  .row .now .txt{min-width:0;font-size:var(--t3);line-height:1.35}
+  .row .now .txt em{display:block;font-style:normal;font-size:var(--t1);color:var(--dim);margin-top:1px}
   .row .now.bad .txt{color:var(--tomato);font-weight:600}
   .row .now.watch .txt{color:var(--water)}
   @keyframes settle{0%{transform:scale(1.01)}100%{transform:none}}
@@ -291,147 +389,158 @@
   .bar{position:absolute;top:0;height:100%}
   .bar.grow{background:var(--ph-grow)} .bar.flower{background:var(--ph-flower)}
   .bar.fruit{background:var(--ph-fruit)} .bar.harvest{background:var(--ph-harvest)}
-  .scale{position:relative;display:block;height:14px;font-size:11px;color:var(--dim)}
+  .scale{position:relative;display:block;height:14px;font-size:var(--t1);color:var(--dim)}
   .scale b{position:absolute;transform:translateX(-50%);font-weight:400}
   .scale b.today{color:var(--leaf);font-weight:600;transform:translateX(-4px)}
-  .legend{display:flex;gap:var(--s3);flex-wrap:wrap;margin-top:var(--s3);font-size:12px;color:var(--dim)}
-  .legend i{display:inline-block;width:18px;height:8px;border-radius:var(--r-pill);margin-right:6px;vertical-align:0}
+  .legend{display:flex;gap:var(--s3);flex-wrap:wrap;margin-top:var(--s3);font-size:var(--t2);color:var(--dim)}
+  .legend i{display:inline-block;width:18px;height:8px;border-radius:var(--r-pill);margin-right:var(--s2);vertical-align:0}
 
   /* ---- prose the model wrote ---- */
-  .lede{font-family:var(--prose);font-size:21px;line-height:1.35;margin:0 0 var(--s3);font-weight:400}
-  .lede .mk{margin-right:7px}
+  .lede{font-family:var(--prose);font-size:var(--t7);line-height:1.35;margin:0 0 var(--s3);font-weight:400}
+  .lede .mk{margin-right:var(--s2)}
   .lede.bad{color:var(--tomato)} .lede.watch{color:var(--water)}
-  p.prose{font-family:var(--prose);font-size:15.5px;line-height:1.6;margin:0 0 var(--s3);max-width:62ch}
-  .quote{font-style:italic;color:var(--dim);font-size:14.5px;line-height:1.5}
-  .data{font-size:12px;color:var(--dim)}
+  p.prose{font-family:var(--prose);font-size:var(--t4);line-height:1.6;margin:0 0 var(--s3);max-width:62ch}
+  .quote{font-style:italic;color:var(--dim);font-size:var(--t3);line-height:1.5}
+  .data{font-size:var(--t2);color:var(--dim)}
 
-  /* ---- lists you act on ---- */
+  /* ---- lists you act on ----
+     The 1px and 2px nudges below are optical: they drop a small line onto the
+     baseline of the bigger one beside it. They are type, not spacing. */
   .list{display:flex;flex-direction:column}
-  .task{display:flex;gap:var(--s2);align-items:flex-start;padding:13px 2px;
+  .task{display:flex;gap:var(--s2);align-items:flex-start;padding:var(--s3) var(--s1);
     border-top:1px solid var(--rule)}
   .task:first-child{border-top:none}
-  .task .mk{width:22px;flex:none;text-align:center;font-size:15px}
+  .task .mk{width:22px;flex:none;text-align:center;font-size:var(--t4)}
   .task .body{flex:1;min-width:0}
-  .task .what{font-size:14.5px;font-weight:600}
-  .task .whose{font-size:12px;color:var(--dim);display:block;margin-top:1px}
-  .task .why{display:block;font-size:13.5px;color:var(--dim);line-height:1.45;margin-top:4px;
+  .task .what{font-size:var(--t3);font-weight:600}
+  .task .whose{font-size:var(--t2);color:var(--dim);display:block;margin-top:1px}
+  .task .why{display:block;font-size:var(--t3);color:var(--dim);line-height:1.45;margin-top:var(--s1);
     font-family:var(--prose)}
   .task.done{opacity:.45}
   .task.added{background:color-mix(in srgb,var(--leaf) 9%,transparent);border-radius:var(--r-sm)}
   .task.changed{background:color-mix(in srgb,var(--pollen) 12%,transparent);border-radius:var(--r-sm)}
   .task.cut{opacity:.55}
   .task.cut .what{text-decoration:line-through;text-decoration-color:var(--tomato)}
-  .flag{font-size:13px;font-weight:700;width:12px;flex:none;padding-top:1px}
+  .flag{font-size:var(--t3);font-weight:700;width:12px;flex:none;padding-top:1px}
   .flag.add{color:var(--leaf)} .flag.chg{color:var(--pollen)} .flag.cut{color:var(--tomato)}
   .tick{border:1px solid var(--leaf);color:var(--leaf);background:var(--field);border-radius:var(--r-pill);
-    font-size:12.5px;padding:7px 13px;cursor:pointer;white-space:nowrap;flex:none}
+    font-size:var(--t2);padding:var(--s2) var(--s3);cursor:pointer;white-space:nowrap;flex:none}
   .task.done .tick{background:var(--leaf);color:var(--field);border-color:var(--leaf)}
 
   /* ---- weather ---- */
   .wx{padding:0 0 var(--s3);margin-bottom:var(--s3);border-bottom:1px solid var(--rule)}
-  .wx .read{display:flex;gap:var(--s3);align-items:baseline;flex-wrap:wrap;font-size:13px;color:var(--dim)}
-  .wx .read .deg{font-size:28px;font-weight:600;color:var(--ink);letter-spacing:-.02em}
+  .wx .read{display:flex;gap:var(--s3);align-items:baseline;flex-wrap:wrap;font-size:var(--t3);color:var(--dim)}
+  /* The temperature is the one number worth looking at, so it takes the
+     display face. Single weight, no faux bold, no sans tracking. */
+  .wx .read .deg{font-family:var(--display);font-size:var(--t7);font-weight:400;
+    line-height:1.15;color:var(--ink);letter-spacing:0}
   .wx .read .deg.hot{color:var(--tomato)} .wx .read .cold{color:var(--water)}
+  /* The alert is a line, not a card. The warning and the reason sit on the
+     same line and wrap together, so a cold night costs two rows of page
+     instead of a block. */
   .wx .warn{margin-top:var(--s2);background:color-mix(in srgb,var(--tomato) 10%,transparent);
-    border-radius:var(--r-sm);padding:10px var(--s3)}
+    border-radius:var(--r-sm);padding:var(--s1) var(--s3);font-size:var(--t3);line-height:1.4}
   .wx .warn.cold{background:color-mix(in srgb,var(--water) 12%,transparent)}
-  .wx .warn b{display:block;font-size:14px;font-weight:600;color:var(--tomato);margin-bottom:2px}
+  .wx .warn b{font-weight:600;color:var(--tomato)}
   .wx .warn.cold b{color:var(--water)}
-  .wx .warn span{font-size:13.5px;color:var(--dim);line-height:1.45;font-family:var(--prose)}
+  .wx .warn span{color:var(--dim)}
+  .wx .warn span::before{content:' '}
 
   /* ---- segmented control ---- */
-  .segs{display:flex;gap:3px;background:var(--paper);border-radius:var(--r-pill);padding:3px}
-  .segs button{border:none;background:none;color:var(--dim);font-size:13px;border-radius:var(--r-pill);
-    padding:6px 14px;cursor:pointer;min-height:32px}
+  .segs{display:flex;gap:var(--s1);background:var(--paper);border-radius:var(--r-pill);padding:var(--s1)}
+  .segs button{border:none;background:none;color:var(--dim);font-size:var(--t3);border-radius:var(--r-pill);
+    padding:var(--s2) var(--s4);cursor:pointer;min-height:32px}
   .segs button[aria-selected="true"]{background:var(--field);color:var(--ink);font-weight:600;
     box-shadow:var(--shadow)}
 
   /* ---- month ---- */
   .navrow{display:flex;align-items:center;gap:var(--s1);margin-bottom:var(--s3)}
   .navrow button{border:1px solid var(--rule);background:var(--field);border-radius:var(--r-pill);
-    min-width:34px;height:34px;cursor:pointer;font-size:15px}
-  .navrow .lab{min-width:160px;text-align:center;font-size:15px;font-weight:600}
-  .dow{display:grid;grid-template-columns:repeat(7,1fr);font-size:11.5px;color:var(--dim);
-    text-align:center;padding-bottom:6px}
-  .grid{display:grid;grid-template-columns:repeat(7,1fr);gap:4px}
+    min-width:34px;height:34px;cursor:pointer;font-size:var(--t4)}
+  .navrow .lab{min-width:160px;text-align:center;font-size:var(--t4);font-weight:600}
+  .dow{display:grid;grid-template-columns:repeat(7,1fr);font-size:var(--t1);color:var(--dim);
+    text-align:center;padding-bottom:var(--s2)}
+  .grid{display:grid;grid-template-columns:repeat(7,1fr);gap:var(--s1)}
   .cell{min-height:58px;background:var(--paper);border:1px solid transparent;border-radius:var(--r-sm);
-    padding:5px 6px;cursor:pointer;position:relative;text-align:left}
+    padding:var(--s1) var(--s2);cursor:pointer;position:relative;text-align:left}
   .cell:hover{border-color:var(--leaf)}
   .cell.out{background:none;cursor:default}
   .cell.past{opacity:.45}
   .cell.today{background:color-mix(in srgb,var(--leaf) 14%,transparent);border-color:var(--leaf)}
   .cell.hot{border-color:color-mix(in srgb,var(--tomato) 55%,transparent)}
   .cell.cold{border-color:color-mix(in srgb,var(--water) 55%,transparent)}
-  .cell .d{font-size:12.5px;font-weight:600}
-  .cell .t{position:absolute;top:5px;right:6px;font-size:10.5px;color:var(--dim)}
+  .cell .d{font-size:var(--t2);font-weight:600}
+  .cell .t{position:absolute;top:var(--s1);right:var(--s2);font-size:var(--t1);color:var(--dim)}
   .cell .t.warm{color:var(--tomato)}
-  .dots{display:flex;flex-wrap:wrap;gap:3px;margin-top:6px}
+  .dots{display:flex;flex-wrap:wrap;gap:var(--s1);margin-top:var(--s2)}
   .dot{width:6px;height:6px;border-radius:var(--r-pill);display:inline-block}
   .dot.water{background:var(--water)} .dot.pollen{background:var(--pollen)} .dot.care{background:var(--leaf)}
   .dot.note{background:var(--ink)}
   .dot.photo{background:none;box-shadow:inset 0 0 0 1.5px var(--dim)}
 
   /* ---- journal ---- */
-  .day{display:flex;align-items:center;gap:var(--s2);margin:var(--s4) 0 var(--s2);font-size:13px;
+  .day{display:flex;align-items:center;gap:var(--s2);margin:var(--s4) 0 var(--s2);font-size:var(--t3);
     font-weight:600;color:var(--dim)}
   .day i{flex:1;height:1px;background:var(--rule)}
-  .day span:last-child{font-weight:400;font-size:12px}
+  .day span:last-child{font-weight:400;font-size:var(--t2)}
   .entry{padding:var(--s3) 0;border-top:1px solid var(--rule)}
-  .entry .said{font-family:var(--prose);font-size:16.5px;line-height:1.45;margin:0 0 var(--s2)}
-  .entry .read{display:flex;gap:var(--s2);align-items:flex-start;padding:8px 0 0;margin-top:6px}
+  .entry .said{font-family:var(--prose);font-size:var(--t4);line-height:1.45;margin:0 0 var(--s2)}
+  .entry .read{display:flex;gap:var(--s2);align-items:flex-start;padding:var(--s2) 0 0;margin-top:var(--s2)}
   .entry .read .art{width:32px;height:32px;flex:none;border-radius:var(--r-sm);overflow:hidden;background:var(--field)}
   .entry .read .art svg{width:100%;height:100%;display:block}
-  .entry .read b{font-size:13.5px;font-weight:600;display:block}
-  .entry .read span{font-size:14px;line-height:1.45;font-family:var(--prose)}
+  .entry .read b{font-size:var(--t3);font-weight:600;display:block}
+  .entry .read span{font-size:var(--t3);line-height:1.45;font-family:var(--prose)}
   .entry.live{border-left:3px solid var(--leaf);padding-left:var(--s3)}
 
   /* ---- photos ---- */
-  .shots{display:grid;grid-template-columns:repeat(auto-fill,minmax(84px,1fr));gap:6px}
+  .shots{display:grid;grid-template-columns:repeat(auto-fill,minmax(84px,1fr));gap:var(--s2)}
   .shots button{padding:0;border:none;border-radius:var(--r-md);overflow:hidden;background:var(--wash);
     cursor:pointer;aspect-ratio:1;position:relative;display:block}
   .shots svg{width:100%;height:100%;display:block}
   .shots .when{position:absolute;left:0;right:0;bottom:0;background:linear-gradient(to top,rgba(8,14,10,.62),transparent);
-    color:#fff;font-size:11px;padding:14px 5px 5px;text-align:center}
+    color:#fff;font-size:var(--t1);padding:var(--s4) var(--s1) var(--s1);text-align:center}
   figure.ref{margin:var(--s3) 0 0}
   figure.ref img{width:100%;max-height:210px;object-fit:cover;border-radius:var(--r-md);display:block}
-  figure.ref figcaption{font-size:12px;color:var(--dim);margin-top:6px}
+  figure.ref figcaption{font-size:var(--t2);color:var(--dim);margin-top:var(--s2)}
 
   /* ---- life ---- */
   ul.life{list-style:none;margin:0;padding:0}
-  ul.life li{display:flex;gap:var(--s3);padding:9px 2px;border-top:1px solid var(--rule)}
+  ul.life li{display:flex;gap:var(--s3);padding:var(--s2) var(--s1);border-top:1px solid var(--rule)}
   ul.life li:first-child{border-top:none}
-  ul.life .when{flex:none;width:76px;font-size:12px;color:var(--dim);padding-top:2px}
-  ul.life .what{flex:1;min-width:0;font-size:14.5px;line-height:1.45}
+  ul.life .when{flex:none;width:76px;font-size:var(--t2);color:var(--dim);padding-top:2px}
+  ul.life .what{flex:1;min-width:0;font-size:var(--t3);line-height:1.45}
 
   .seasonstrip{padding:var(--s1) 0 var(--s3)}
-  .seasonstrip .track{margin:5px 0}
+  .seasonstrip .track{margin:var(--s1) 0}
   .note{padding:var(--s3) 0;border-top:1px solid var(--rule)}
-  .note .prose{margin-bottom:6px}
+  .note .prose{margin-bottom:var(--s2)}
   .note .prose:last-child{margin-bottom:0}
   .dimmed{color:var(--dim)}
-  .lede em{display:block;font-style:normal;font-family:var(--ui);font-size:13px;color:var(--dim);margin-top:5px}
-  .none{color:var(--dim);font-size:14.5px;font-family:var(--prose);font-style:italic;padding:var(--s2) 0}
+  .lede em{display:block;font-style:normal;font-family:var(--ui);font-size:var(--t2);color:var(--dim);margin-top:var(--s1)}
+  .none{color:var(--dim);font-size:var(--t3);font-family:var(--prose);font-style:italic;padding:var(--s2) 0}
 
   /* ---- the composer ---- */
   .dock{margin:0 0 var(--s5)}
   .dock .box{background:var(--field);border:1px solid var(--rule);border-radius:var(--r-lg);
     overflow:hidden;transition:border-color .15s ease}
   .dock:focus-within .box{border-color:var(--leaf);box-shadow:0 0 0 3px color-mix(in srgb,var(--leaf) 14%,transparent)}
-  .dock .top{display:flex;align-items:center;gap:var(--s2);padding:11px var(--s4);font-size:12.5px;color:var(--dim)}
-  .dock .top .tag{display:inline-flex;align-items:center;gap:6px;color:var(--ink);background:var(--wash);
-    border-radius:var(--r-pill);padding:3px 11px 3px 3px;max-width:52%;overflow:hidden;white-space:nowrap}
+  .dock .top{display:flex;align-items:center;gap:var(--s2);padding:var(--s3) var(--s4);font-size:var(--t2);color:var(--dim)}
+  .dock .top .tag{display:inline-flex;align-items:center;gap:var(--s2);color:var(--ink);background:var(--wash);
+    border-radius:var(--r-pill);padding:var(--s1) var(--s3) var(--s1) var(--s1);max-width:52%;
+    overflow:hidden;white-space:nowrap}
   .dock .top .tag svg{width:20px;height:20px;border-radius:var(--r-pill)}
   .dock .top .fold{margin-left:auto;border:none;background:none;color:var(--dim);cursor:pointer;
-    font-size:11px;padding:6px;min-width:28px;border-radius:var(--r-pill)}
+    font-size:var(--t1);padding:var(--s2);min-width:28px;border-radius:var(--r-pill)}
   .dock .in{padding:0 var(--s4) var(--s3)}
-  .dock textarea{width:100%;min-height:52px;resize:none;font:inherit;font-size:17px;color:var(--ink);
+  .dock textarea{width:100%;min-height:52px;resize:none;font:inherit;
+    font-family:var(--hand);font-size:var(--t4);line-height:1.6;color:var(--ink);
     background:none;border:none;padding:0 0 var(--s2);transition:min-height .16s ease}
   .dock textarea:focus{outline:none}
   .dock:focus-within textarea,.dock.tall textarea{min-height:104px}
   .dock .acts{display:flex;align-items:center;gap:var(--s2)}
   .dock .acts .sp{flex:1}
   .dock .acts button{border:1px solid var(--rule);background:var(--field);border-radius:var(--r-pill);
-    padding:8px 14px;cursor:pointer;font-size:13px}
+    padding:var(--s2) var(--s4);cursor:pointer;font-size:var(--t3)}
   .dock .acts .save{border-color:var(--leaf);color:var(--leaf)}
   .dock .acts .save:disabled{opacity:.35;cursor:default}
   .dock .acts .save.on{background:var(--leaf);color:#fff;border-color:var(--leaf)}
@@ -440,8 +549,10 @@
 
   /* ---- narrow: a plant line cannot hold four columns on a phone, so it stacks:
          name and drawing, then how it is doing, then its year ---- */
+  /* 50px is not a gap, it is the width of the drawing plus the gap after it,
+     so the stacked rows line up under the name instead of under the picture. */
   @container (max-width:760px){
-    .row{flex-wrap:wrap;row-gap:7px;padding:11px var(--s3)}
+    .row{flex-wrap:wrap;row-gap:var(--s2);padding:var(--s3)}
     .row .who{flex:1 1 auto;width:auto}
     .row .now{flex:1 1 100%;order:3;padding-left:50px}
     .row .bars{flex:1 1 100%;order:4;padding-left:50px}
@@ -459,45 +570,46 @@
   #lock.on{display:flex}
   .waiting{width:min(430px,100%);background:var(--field);border-radius:var(--r-lg);
     padding:var(--s4) var(--s4) var(--s3);box-shadow:0 20px 54px rgba(16,32,22,.24)}
-  .waiting .said{font-family:var(--prose);font-size:17.5px;line-height:1.45;margin:0 0 var(--s3)}
-  .waiting .steps{display:flex;gap:5px;margin-bottom:var(--s2)}
+  .waiting .said{font-family:var(--prose);font-size:var(--t5);line-height:1.45;margin:0 0 var(--s3)}
+  .waiting .steps{display:flex;gap:var(--s1);margin-bottom:var(--s2)}
   .waiting .steps i{flex:1;height:5px;background:var(--paper);border-radius:var(--r-pill);
     overflow:hidden;position:relative}
   .waiting .steps i b{position:absolute;inset:0 auto 0 0;background:var(--leaf);border-radius:var(--r-pill)}
-  .waiting .stage{font-size:13px;font-weight:600;color:var(--leaf)}
-  .waiting .eta{font-size:12px;color:var(--dim);margin-top:2px}
-  .waiting .found{margin-top:var(--s3);display:flex;flex-direction:column;gap:5px}
-  .waiting .found .read{display:flex;gap:var(--s2);align-items:flex-start;padding:9px var(--s3);
+  .waiting .stage{font-size:var(--t3);font-weight:600;color:var(--leaf)}
+  .waiting .eta{font-size:var(--t2);color:var(--dim);margin-top:2px}
+  .waiting .found{margin-top:var(--s3);display:flex;flex-direction:column;gap:var(--s1)}
+  .waiting .found .read{display:flex;gap:var(--s2);align-items:flex-start;padding:var(--s2) var(--s3);
     background:var(--wash);border-radius:var(--r-sm)}
   .waiting .found .art{width:30px;height:30px;flex:none;border-radius:var(--r-sm);overflow:hidden;background:var(--field)}
   .waiting .found .art svg{width:100%;height:100%;display:block}
-  .waiting .found b{font-size:13.5px;font-weight:600;display:block}
-  .waiting .found span{font-size:14px;line-height:1.4;font-family:var(--prose)}
+  .waiting .found b{font-size:var(--t3);font-weight:600;display:block}
+  .waiting .found span{font-size:var(--t3);line-height:1.4;font-family:var(--prose)}
   .waiting .out{margin-top:var(--s3);border:none;background:none;color:var(--dim);cursor:pointer;
-    font-size:12.5px;text-decoration:underline;padding:6px 0}
+    font-size:var(--t2);text-decoration:underline;padding:var(--s2) 0}
   body.locked{overflow:hidden}
   @media(prefers-reduced-motion:reduce){.row.touched{animation:none}}
 
 
   /* ---- pieces the live site needs on top of the prototype's system ---- */
-  .chip.small{padding:6px 13px}
+  .chip.small{padding:var(--s2) var(--s3)}
   .chip.small .av{display:none}
-  .cshots{display:flex;gap:6px;flex-wrap:wrap;margin-bottom:var(--s2)}
+  .cshots{display:flex;gap:var(--s2);flex-wrap:wrap;margin-bottom:var(--s2)}
   .cshot{position:relative}
   .cshot img{width:74px;height:74px;object-fit:cover;border-radius:var(--r-sm);display:block}
   .cshot .rm{position:absolute;top:-7px;right:-7px;width:24px;height:24px;border-radius:var(--r-pill);
-    border:1px solid var(--rule);background:var(--field);cursor:pointer;font-size:13px;line-height:1;padding:0}
+    border:1px solid var(--rule);background:var(--field);cursor:pointer;font-size:var(--t3);line-height:1;padding:0}
   .shots button img{width:100%;height:100%;object-fit:cover;display:block}
   .entry-acts{display:flex;gap:var(--s3);margin-top:var(--s2)}
-  .lnk{border:none;background:none;color:var(--dim);cursor:pointer;font-size:12.5px;
-    text-decoration:underline;padding:4px 0}
+  .lnk{border:none;background:none;color:var(--dim);cursor:pointer;font-size:var(--t2);
+    text-decoration:underline;padding:var(--s1) 0}
   .lnk:hover{color:var(--leaf)}
-  .chips-row{display:flex;gap:6px;flex-wrap:wrap;align-items:center;margin-top:var(--s2)}
-  .note textarea{width:100%;min-height:74px;resize:vertical;font:inherit;font-size:15px;color:var(--ink);
-    background:var(--paper);border:1px solid var(--leaf);border-radius:var(--r-sm);padding:10px}
-  .foot{display:flex;align-items:center;gap:var(--s4);flex-wrap:wrap;padding:var(--s4) 2px 0;
+  .chips-row{display:flex;gap:var(--s2);flex-wrap:wrap;align-items:center;margin-top:var(--s2)}
+  .note textarea{width:100%;min-height:74px;resize:vertical;font:inherit;
+    font-family:var(--hand);font-size:var(--t4);line-height:1.6;color:var(--ink);
+    background:var(--paper);border:1px solid var(--leaf);border-radius:var(--r-sm);padding:var(--s3)}
+  .foot{display:flex;align-items:center;gap:var(--s4);flex-wrap:wrap;padding:var(--s4) var(--s1) 0;
     border-top:1px solid var(--rule);margin-top:var(--s6)}
-  .theme-switch{display:inline-flex;align-items:center;gap:10px;cursor:pointer;font-size:12.5px;color:var(--dim)}
+  .theme-switch{display:inline-flex;align-items:center;gap:var(--s3);cursor:pointer;font-size:var(--t2);color:var(--dim)}
   .theme-switch input{position:absolute;opacity:0;width:0;height:0}
   .theme-switch .track2{width:42px;height:24px;border-radius:var(--r-pill);background:var(--rule);
     position:relative;flex:none;transition:background .15s ease}
@@ -507,7 +619,7 @@
   .theme-switch input:checked + .track2 .knob{transform:translateX(18px)}
   .theme-switch .tl.act{color:var(--ink)}
   #lockbtn{border:1px solid var(--rule);background:var(--field);color:var(--dim);border-radius:var(--r-pill);
-    padding:7px 14px;font-size:12.5px;cursor:pointer}
+    padding:var(--s2) var(--s4);font-size:var(--t2);cursor:pointer}
 
   /* ---- overlays kept from the live site, restyled ---- */
   #viewer{position:fixed;inset:0;background:rgba(10,14,11,.92);display:none;z-index:30;
@@ -515,24 +627,25 @@
   #viewer.on{display:flex}
   #viewer img{max-width:94vw;max-height:72vh;border-radius:var(--r-md)}
   #viewer button{border:1px solid rgba(255,255,255,.25);background:rgba(255,255,255,.1);color:#fff;
-    border-radius:var(--r-pill);padding:10px 16px;font:inherit;font-size:13px;cursor:pointer}
+    border-radius:var(--r-pill);padding:var(--s3) var(--s4);font:inherit;font-size:var(--t3);cursor:pointer}
   #viewer .vnav{position:absolute;top:50%;transform:translateY(-50%);width:46px;height:46px;padding:0;
-    font-size:22px;display:flex;align-items:center;justify-content:center}
-  #viewer #viewer-prev{left:12px} #viewer #viewer-next{right:12px}
+    font-size:var(--t7);display:flex;align-items:center;justify-content:center}
+  #viewer #viewer-prev{left:var(--s3)} #viewer #viewer-next{right:var(--s3)}
   #viewer .vnav:disabled{opacity:.25;cursor:default}
-  #viewer .vcap{font-size:13px;color:#EAF0EA}
+  #viewer .vcap{font-size:var(--t3);color:#EAF0EA}
   .modal{position:fixed;inset:0;background:rgba(10,14,11,.7);display:none;z-index:35;
     align-items:flex-end;justify-content:center}
   .modal.open{display:flex}
   .modal.center{align-items:center}
   .pk-card{background:var(--field);width:100%;max-width:560px;border-radius:var(--r-lg) var(--r-lg) 0 0;
     padding:var(--s4);max-height:82vh;overflow-y:auto}
-  .pk-head{display:flex;align-items:center;justify-content:space-between;font-size:17px;font-weight:600;
+  .pk-head{display:flex;align-items:center;justify-content:space-between;font-size:var(--t5);font-weight:600;
     margin-bottom:var(--s3)}
-  .pk-head button{border:none;background:none;color:var(--dim);font-size:23px;cursor:pointer;min-width:38px}
+  .pk-head button{border:none;background:none;color:var(--dim);font-size:var(--t7);cursor:pointer;min-width:38px}
   .pk-grid,.cp-grid{display:grid;grid-template-columns:repeat(auto-fill,minmax(88px,1fr));gap:var(--s2)}
-  .pk-grid button{border:1px solid var(--rule);background:var(--paper);border-radius:var(--r-md);padding:9px 6px;
-    cursor:pointer;display:flex;flex-direction:column;align-items:center;gap:6px;font-size:12px;text-align:center}
+  .pk-grid button{border:1px solid var(--rule);background:var(--paper);border-radius:var(--r-md);
+    padding:var(--s2);cursor:pointer;display:flex;flex-direction:column;align-items:center;
+    gap:var(--s2);font-size:var(--t2);text-align:center}
   .pk-grid button .av{width:40px;height:40px;border-radius:var(--r-sm);overflow:hidden}
   .pk-grid button .av svg{width:100%;height:100%;display:block}
   .cp-grid button{border:1px solid var(--rule);background:var(--paper);border-radius:var(--r-md);overflow:hidden;
@@ -540,23 +653,24 @@
   .cp-grid .cp-photo img{width:100%;height:100%;object-fit:cover;display:block}
   .cp-grid .cp-photo.sel{outline:3px solid var(--leaf);outline-offset:-3px}
   .cp-grid .cp-new,.cp-grid .cp-def{display:flex;flex-direction:column;align-items:center;justify-content:center;
-    gap:6px;color:var(--dim);font-size:11px}
+    gap:var(--s2);color:var(--dim);font-size:var(--t1)}
   .cp-grid .cp-green{width:34px;height:34px;border-radius:var(--r-sm);background:linear-gradient(135deg,#2E7D52,#93BFA3)}
   .unlock-card{max-width:400px;border-radius:var(--r-lg);margin:auto var(--s3);padding:var(--s4)}
-  .unlock-card h3{font-size:17px;margin-bottom:var(--s2)}
-  .unlock-card p{margin:0 0 var(--s3);font-size:14px;color:var(--dim);line-height:1.55}
-  .unlock-card input{width:100%;font:inherit;font-size:16px;color:var(--ink);background:var(--paper);
-    border:1px solid var(--rule);border-radius:var(--r-sm);padding:11px 12px}
+  .unlock-card h3{font-size:var(--t5);margin-bottom:var(--s2)}
+  .unlock-card p{margin:0 0 var(--s3);font-size:var(--t3);color:var(--dim);line-height:1.55}
+  .unlock-card input{width:100%;font:inherit;font-size:var(--t4);color:var(--ink);background:var(--paper);
+    /* 16px, never smaller: anything under it makes iOS zoom the page on focus. */
+    border:1px solid var(--rule);border-radius:var(--r-sm);padding:var(--s3)}
   .unlock-card .row2{display:flex;gap:var(--s2);justify-content:flex-end;margin-top:var(--s3)}
-  .unlock-card button{font:inherit;font-size:14px;border:1px solid var(--rule);background:var(--paper);
-    border-radius:var(--r-pill);padding:9px 16px;cursor:pointer}
+  .unlock-card button{font:inherit;font-size:var(--t3);border:1px solid var(--rule);background:var(--paper);
+    border-radius:var(--r-pill);padding:var(--s2) var(--s4);cursor:pointer}
   .unlock-card button.go{border-color:var(--leaf);background:var(--leaf);color:#fff;font-weight:600}
   #toasts{position:fixed;left:0;right:0;bottom:var(--s4);z-index:45;display:flex;flex-direction:column;
     align-items:center;gap:var(--s2);pointer-events:none;padding:0 var(--s3)}
   .toast{pointer-events:auto;background:var(--ink);color:var(--paper);border-radius:var(--r-pill);
-    padding:11px 18px;font-size:13.5px;display:flex;align-items:center;gap:var(--s3);max-width:520px;
+    padding:var(--s3) var(--s4);font-size:var(--t3);display:flex;align-items:center;gap:var(--s3);max-width:520px;
     box-shadow:0 6px 22px rgba(0,0,0,.3)}
-  .toast button{border:none;background:none;color:#9FE0BE;font-size:12.5px;cursor:pointer;padding:2px 4px}
+  .toast button{border:none;background:none;color:#9FE0BE;font-size:var(--t2);cursor:pointer;padding:var(--s1)}
 
   /* ---- one plant, in full ----
      The list is twenty plants at a glance. This is one plant at reading size,
@@ -564,14 +678,20 @@
      its own phases, the dates get a line each, and the two paragraphs the
      model writes get the prose face they were written for. */
   .pfull > .hd{align-items:center}
-  .pfull .pfull-art{width:42px;height:42px;flex:none;overflow:hidden;border-radius:var(--r-sm)}
+  /* The section above is this pot, this one is the cultivar it belongs to, so
+     the eyebrow says which of the two you are reading and the title names it.
+     Two pots of the same variety were otherwise two pages with one heading. */
+  .sect > .hd.vhd{display:block}
+  .sect > .hd.vhd .lbl{display:block;margin-bottom:var(--s1)}
+  /* Same token as the card's, one size up because this one is a page head. */
+  .pfull .pfull-art{width:36px;height:36px;flex:none;overflow:hidden;border-radius:var(--r-pill)}
   .pfull .pfull-art svg{width:100%;height:100%;display:block}
 
   /* One tall band, so the year still reads left to right in a single line. The
      expected tail of a phase is hatched, not just faded, and the today marker
      names itself instead of being a bare tick. */
   .pfull-chart{margin-bottom:var(--s4)}
-  .pfull-chart .monthscale{height:1.15em;margin-bottom:5px;font-size:12px;opacity:1}
+  .pfull-chart .monthscale{height:1.15em;margin-bottom:var(--s1);font-size:var(--t2)}
   .pfull-track{position:relative;height:56px;border-radius:var(--r-sm);
     background:var(--rule);overflow:hidden}
   /* Names sit along the bottom of the band, so the today marker has the top
@@ -586,54 +706,72 @@
   .pfull-seg.fruit{background:var(--ph-fruit)} .pfull-seg.harvest{background:var(--ph-harvest)}
   /* The name sits on a wash of the card colour so it stays readable on every
      phase, from the palest green to the darkest harvest red. */
-  .pfull-seg b{position:relative;z-index:1;margin:0 var(--s2) 7px;padding:3px 9px;
+  .pfull-seg b{position:relative;z-index:1;margin:0 var(--s2) var(--s2);padding:var(--s1) var(--s2);
     border-radius:var(--r-pill);background:color-mix(in srgb,var(--field) 80%,transparent);
-    color:var(--ink);font-size:12.5px;font-weight:600;white-space:nowrap;overflow:hidden}
+    color:var(--ink);font-size:var(--t2);font-weight:600;white-space:nowrap;overflow:hidden}
   .pfull-fut{position:absolute;top:0;height:100%;border-radius:0 var(--r-sm) var(--r-sm) 0;
     background:repeating-linear-gradient(135deg,
       color-mix(in srgb,var(--field) 62%,transparent) 0 6px,transparent 6px 13px)}
   .pfull-today{position:absolute;top:0;bottom:0;width:2px;background:var(--ink)}
-  .pfull-today b{position:absolute;top:5px;left:5px;padding:2px 8px;border-radius:var(--r-pill);
-    background:var(--ink);color:var(--paper);font-size:11px;font-weight:600;white-space:nowrap}
+  /* The label hangs under the track rather than inside it, so it never lands on
+     a phase name. Clamped off the edges so a season ending today cannot push
+     the pill out of the card. */
+  .pfull-axis{position:relative;height:1.5em;margin:var(--s1) 0 var(--s3)}
+  .pfull-todaylbl{position:absolute;top:0;transform:translateX(-50%);padding:var(--s1) var(--s2);
+    border-radius:var(--r-pill);background:var(--ink);color:var(--paper);
+    font-size:var(--t1);font-weight:600;white-space:nowrap}
 
   /* The dates under the chart. Wrapping rather than a grid, so on a narrow
      screen the mark drops to its own line instead of squeezing the dates. */
   .pfull-stages{list-style:none;margin:0;padding:0;border-top:1px solid var(--rule)}
-  .pfull-stage{display:flex;align-items:center;flex-wrap:wrap;gap:6px var(--s3);
-    padding:11px 2px;border-bottom:1px solid var(--rule);font-size:14.5px}
+  .pfull-stage{display:flex;align-items:center;flex-wrap:wrap;gap:var(--s2) var(--s3);
+    padding:var(--s3) var(--s1);border-bottom:1px solid var(--rule);font-size:var(--t3)}
   .pfull-stage .sw{width:16px;height:8px;border-radius:var(--r-pill);flex:none}
   .pfull-name{font-weight:600;min-width:98px}
   .pfull-when{color:var(--dim)}
-  .pfull-nowtag{font-style:normal;font-size:11px;letter-spacing:.06em;text-transform:uppercase;
-    font-weight:600;padding:2px 8px;border-radius:var(--r-pill);background:var(--ink);color:var(--paper)}
-  .pfull-mark{margin-left:auto;font-style:normal;font-size:11px;letter-spacing:.07em;
-    text-transform:uppercase;font-weight:600;padding:3px 10px;border-radius:var(--r-pill);
+  .pfull-nowtag{font-style:normal;font-size:var(--t1);letter-spacing:.06em;text-transform:uppercase;
+    font-weight:600;padding:var(--s1) var(--s2);border-radius:var(--r-pill);background:var(--ink);color:var(--paper)}
+  .pfull-mark{margin-left:auto;font-style:normal;font-size:var(--t1);letter-spacing:.07em;
+    text-transform:uppercase;font-weight:600;padding:var(--s1) var(--s3);border-radius:var(--r-pill);
     border:1px solid var(--rule);color:var(--dim)}
   .pfull-mark.recorded{color:var(--pine);border-color:color-mix(in srgb,var(--leaf) 45%,transparent);
     background:color-mix(in srgb,var(--leaf) 10%,transparent)}
   .pfull-mark.expected{border-style:dashed}
-  .pfull-key,.pfull-none{margin:var(--s3) 0 0;font-size:12.5px;line-height:1.5;color:var(--dim)}
+  .pfull-none{margin:var(--s3) 0 0;font-size:var(--t2);line-height:1.5;color:var(--dim)}
 
-  /* Status and care side by side while there is room, each in its own panel so
-     the two stay told apart once they are the same size. */
-  .pfull-say{display:grid;gap:var(--s3);margin:var(--s4) 0 var(--s4);
-    grid-template-columns:repeat(auto-fit,minmax(min(290px,100%),1fr))}
-  .pfull .status,.pfull .guide{grid-template-columns:1fr;align-content:start;gap:5px;margin:0;
-    padding:var(--s3) var(--s4) var(--s4);background:var(--paper);border-radius:var(--r-md);
-    font-size:15.5px;line-height:1.6}
-  .pfull .status > span,.pfull .guide > span{font-family:var(--prose)}
+  /* Two different kinds of sentence, so two different treatments. Status is
+     what the model saw, a quiet note with the time of the reading on it. Care
+     is what to do about it, so it gets the tint, the accent edge and the
+     reading face. Same size panels made them read as the same thing. */
+  /* Held to a measure. On a 1120px page the same two paragraphs ran to well
+     over a hundred characters a line, which is not a reading width. */
+  .pfull-say{margin:var(--s5) 0 0;max-width:66ch}
+  .pfull .status,.pfull .guide{grid-template-columns:1fr;align-content:start;gap:var(--s1);margin:0}
   .pfull .lbl{padding-top:0}
-  .pfull .wline{margin:0;font-size:1em;align-items:center}
+  .pfull .status{padding:0 0 var(--s4);font-size:var(--t4);line-height:1.55}
+  .pfull .status > span{color:var(--ink)}
+  .pfull .guide{padding:0 0 0 var(--s4);
+    border-left:2px solid color-mix(in srgb,var(--leaf) 55%,transparent)}
+  .pfull .guide > span{font-family:var(--prose);font-size:var(--t4);line-height:1.6}
+  .pfull .guide .lbl{color:var(--pine)}
+  /* When the reading happened. Sits on the label line, never competing with it. */
+  .ago{font-style:normal;font-weight:400;letter-spacing:0;text-transform:none;
+    font-size:var(--t1);color:var(--dim);margin-left:var(--s2);white-space:nowrap}
+  .pfull .wline{display:flex;align-items:center;gap:var(--s3);
+    margin:var(--s4) 0 0;padding-top:var(--s4);border-top:1px solid var(--rule)}
+  .pfull .wline .lbl{display:none}
+  .pfull .wline > span{flex:1}
+  .pfull .waterbtn{margin-left:auto}
 
   @container (max-width:560px){
     .pfull-track{height:46px}
-    .pfull-seg b{font-size:11.5px;padding:2px 7px;margin:0 5px 5px}
+    .pfull-seg b{font-size:var(--t1);padding:2px var(--s2);margin:0 var(--s1) var(--s1)}
     /* At this width the four parts of a stage line only fit without the column
        the name keeps on a wide screen. */
-    .pfull-stage{gap:5px var(--s2);font-size:14px}
+    .pfull-stage{gap:var(--s1) var(--s2)}
     .pfull-name{min-width:0}
-    .pfull-mark{padding:3px 8px;letter-spacing:.05em}
-    .pfull .status,.pfull .guide{padding:var(--s3)}
+    .pfull-mark{padding:var(--s1) var(--s2);letter-spacing:.05em}
+    .pfull .status,.pfull .guide{padding:0 0 0 var(--s3)}
   }
 </style>
 </head>
@@ -975,57 +1113,65 @@ function factValue(f,k){
     ? `<a href="${esc(f.buyUrl)}" target="_blank" rel="noopener">${v}</a>` : v;
 }
 
-/* A second photo for anything grown for a crop, so the page shows both the
-   plant and the thing you are waiting for. Every URL here was checked. */
+/* A second photo for anything grown for a crop: the fruit you are waiting for,
+   or for a herb a zoomed leaf. Mint is missing on purpose: it was a supermarket
+   cooking bunch, the variety is unknown, so there is nothing honest to show.
+   Every file lives in public/img and nothing is hotlinked. Each row is
+   [src, caption, credit]; see public/img/CREDITS.md for the full provenance. */
 const FRUIT={
- tigerella:['https://upload.wikimedia.org/wikipedia/commons/thumb/6/6c/Balkoncontent_Tomatensorte_Tigerella.jpg/1280px-Balkoncontent_Tomatensorte_Tigerella.jpg','Striped tomatoes, about 6 cm'],
- noire:['https://upload.wikimedia.org/wikipedia/commons/thumb/2/2c/Black_krim_tomato.jpg/1280px-Black_krim_tomato.jpg','A dark beefsteak, about 10 cm'],
- chilli:['https://upload.wikimedia.org/wikipedia/commons/2/26/Cubanelle_Peppers.jpg','Long frying peppers, about 15 cm'],
- maurin:['https://upload.wikimedia.org/wikipedia/commons/thumb/7/7d/Malina.jpg/1280px-Malina.jpg','Ripe berries, about 2 cm'],
- 'takala-1':['https://upload.wikimedia.org/wikipedia/commons/thumb/7/7d/Malina.jpg/1280px-Malina.jpg','Ripe berries, about 2 cm'],
- 'takala-2':['https://upload.wikimedia.org/wikipedia/commons/thumb/7/7d/Malina.jpg/1280px-Malina.jpg','Ripe berries, about 2 cm'],
+ tigerella:['/img/tigerella-fruit.jpg','Tigerella tomatoes, striped, about 6 cm','BureX, CC BY-SA 4.0'],
+ noire:['/img/noire-fruit.jpg','Noire de Crimée beefsteak, about 10 cm','Johnh, CC BY-SA 3.0'],
+ chilli:['/img/lombardo-pods.jpg','Lombardo pods, 12 to 15 cm','Seeds of Plenty'],
+ parsley:['/img/parsley-leaf.jpg','Curly parsley leaf, close up','Mustila Puutarha'],
+ basil:['/img/basil-leaf.jpg','Genovese basil leaves, close up','Goldlocki, CC BY-SA 3.0'],
+ maurin:['/img/maurin-berries.jpg','Maurin Makea berries on the cane','Prisma'],
+ 'takala-1':['/img/takala-1-berries.jpg','Takalan Herkku berries ripening','Prisma'],
+ 'takala-2':['/img/takala-2-berries.jpg','Takalan Herkku berries, about 2 cm','Mustila Puutarha'],
 };
 
 const PROFILE={
  basil:{t:'Basil “Italiano Classico”',src:'Biltema seeds',ids:['basil-1','basil-2'],
-   body:['Genovese basil, the classic pesto type, two pots of it. Pinch the stem above a leaf pair every week and it stays a bushy 30 to 40 cm instead of running to flower. It wants 20°C and sulks below 12°C.',
-     'Harvest from the top, never strip the bottom leaves. Liquid feed every 2 weeks.']},
- mint:{t:'Mint',src:'Bought as a plant',ids:['mint'],
-   body:['Not bought as a plant at all. It was a supermarket bunch for cooking, I buried one stem and it rooted and came back. Now 40 to 90 cm and sprawling wider than that.',
+   body:['Genovese basil, the classic pesto type. Pinch the stem out above a leaf pair every week and it branches into a bush instead of running up to flower. Once it does flower the leaves go bitter, so keep the tips off it.',
+     'Harvest from the top, never strip the bottom leaves: the plant regrows from the growth points you leave behind. Liquid feed every 2 weeks.']},
+ mint:{t:'Mint',src:'From a rooted cutting',ids:['mint'],
+   body:['A perennial that spreads by underground runners. It is one of the easiest plants to start: a cut stem from a bunch of cooking mint will root in water or damp compost in a week or two.',
      'Keep it in its own pot. Share a bed with it and it runs underground and takes the lot. Harvest outer stems at the base, and cut it back hard when it sprawls.']},
  chilli:{t:'Chilli “Lombardo”',src:'Biltema 14-2867',ids:['chilli-1','chilli-2'],
-   body:['Mild Italian frying chilli. A knee-high bush, 50 to 70 cm, with long thin fruit that ripens green to red. Early and productive, but it wants real warmth: it stalls below 15°C.',
+   body:['Mild Italian frying chilli. A knee-high bush carrying long thin fruit that ripens green to red. Early and heavy cropping for its size, but it wants real warmth and stops growing when it gets chilly.',
      'Seedlings damp off easily. Give them all the light there is, rotate the pots so they do not lean, and pot up at 4 to 6 true leaves.',
-     'No bees behind the glazing, so tap the flowers at midday to set fruit. Pick green for a mild crunch or red for sweeter warmth. Picking often means more fruit.']},
+     'Grown under cover there is nothing to move the flowers, so tap them at midday to set fruit. Pick green for a mild crunch or red for sweeter warmth. Picking often means more fruit.']},
  tigerella:{t:'Tomato “Tigerella”',src:'Nelson Garden',ids:['tomato-1'],
-   body:['Striped heirloom cordon. It runs to 2 m or more, so give it a tall stake or a string to the ceiling, and pinch the side shoots weekly.',
-     'Shake the flower trusses at midday to set fruit behind glass. Uneven watering splits the fruit and brings blossom end rot, so keep it steady. High-K feed weekly.',
-     'Ripe when the stripes turn orange-red. Handles a cool Tampere summer well.']},
+   body:['Striped heirloom cordon. It keeps growing until something stops it, so give it a tall stake or a string to the ceiling and pinch out the side shoots weekly.',
+     'Shake the flower trusses at midday to set fruit under cover. Uneven watering splits the skins and brings on blossom end rot, so keep it steady. High-K feed weekly once the first truss sets.',
+     'Ripe when the green stripes turn orange over a red ground, and it stays a touch firmer than a plain red tomato. Sets fruit in a cool summer better than most cordons.']},
  noire:{t:'Tomato “Noire de Crimée”',src:'Nelson Garden',ids:['tomato-2'],
-   body:['Black beefsteak cordon, 1.5 to 2 m and hungry with it. High-K feed weekly from the first flowers.',
+   body:['Black beefsteak cordon, a Crimean heirloom. Tall, and hungry with it: high-K feed weekly from the first flowers.',
      'Shake the trusses at midday, and stake it properly, the fruit gets heavy.',
      'Ripe when SOFT, not by colour. It stays dark brown-red and darkest on the shoulders, so squeeze gently rather than waiting for red.']},
  parsley:{t:'Curly parsley (Persilja)',src:'Biltema 14-2820',ids:['parsley-1','parsley-2'],
-   body:['Curly dark green type, two pots of it, a mound about 30 cm tall. The marathon runner: up to 4 weeks to germinate is normal.',
-     'Bolts in heat, so shade it on a 30°C day. Harvest outer stems at the base only and the centre keeps producing into late autumn. Comes indoors to a windowsill for winter.']},
+   body:['Curly dark green type, a low mound of tightly crimped leaves. The marathon runner of the seed tray, so do not give the pot up for dead while you wait for it.',
+     'It bolts in heat, so shade it on a hot day. Harvest outer stems at the base only and the centre keeps producing into late autumn, and it carries on through winter if you lift it to a windowsill.',
+     'Being a biennial it flowers in its second season and the leaves turn coarse, so most people sow again rather than keep the old plant.']},
  monstera:{t:'Monstera deliciosa',src:'IKEA · indoors',ids:['monstera'],
-   body:['Newly bought, so let it settle a few weeks away from draughts and radiators. No feeding or repotting yet. Keep the room above 15°C. Given a pole it will reach 2 m indoors.',
-     'Overwatering is the one thing that kills it. Wipe the big leaves now and then, dust blocks the light. Once it settles, give the aerial roots a pole to climb and the new leaves start splitting.']},
- hedera:{t:'Ivy · Hedera helix',src:'IKEA · balcony',ids:['hedera'],
-   body:['The tough one. Happy in the shady corner where nothing else grows, and it stays out all winter down to about -10°C. It trails or climbs as far as you let it, 2 m and more.',
-     'Check the leaf undersides, spider mites love warm dry glazed air. Trim wandering vines any time, it regrows from any node.']},
+   body:['A climbing aroid from the rainforests of southern Mexico and Central America. In the wild it hauls itself up tree trunks by its aerial roots, and the leaves only cut themselves into the familiar splits and holes once the plant is mature and has something to climb. Give it a moss pole and the roots grab on.',
+     'Overwatering is the one thing that reliably kills it, so let the top of the compost dry before the next soak. Brown scorch marks mean too much direct sun, small plain leaves mean too little light, and draughts and radiators crisp the edges.',
+     'Wipe the big leaves now and then, dust blocks the light. The fruit it is named for needs conditions no living room offers, so it is a foliage plant in practice.']},
+ hedera:{t:'Ivy · Hedera helix',src:'IKEA · indoors',ids:['hedera'],
+   body:['The tough one. Ivy grows in deep shade where little else will, takes hard frost, and lives happily indoors or out. It clings with short root hairs along the stem, so it will go up a pole, a wire or a rough wall on its own without being tied in.',
+     'Give it something to trail from or climb and it keeps going as far as you let it. Trim wandering vines any time, it regrows from any node, and a cut piece roots in a glass of water.',
+     'Check the leaf undersides, spider mites love warm dry indoor air and ivy is a favourite of theirs. The sap irritates some skin, so wear gloves for a big cut back.']},
  maurin:{t:'Raspberry “Maurin Makea”',src:'Finnish summer raspberry',ids:['rasp-maurin'],
-   body:['A Finnish summer (floricane) raspberry grown for very sweet berries. Canes reach 1.5 to 2 m, so they need tying in. Ahead of the other two: it set green fruit back in July and is colouring up now.',
-     'Keep the water even while the berries swell or they split. Pick every 2 or 3 days once they colour, a dead-ripe berry pulls free with a light tug.',
-     'Tie the fruiting canes to a support so glass heat and wind do not snap them. Once a cane has fruited, cut it to the ground and keep this year\'s fresh canes for next summer.']},
- 'takala-1':{t:'Raspberry “Takalan Herkku” 1',src:'New pot · Finnish summer raspberry',ids:['rasp-takala-1'],
-   body:['A hardy Finnish summer (floricane) raspberry with large sweet berries, bought as a young plant. Canes reach 1.5 to 2 m. Just potted, so this year is about growing canes and the main crop comes next summer.',
-     'A new pot dries fast behind the glazing, so keep it steady while it establishes. Half-strength feed weekly.',
-     'Tie the new canes to a support against wind and glass heat, and check the leaf undersides for spider mites. Cut each cane to the ground once it has fruited.']},
- 'takala-2':{t:'Raspberry “Takalan Herkku” 2',src:'New pot · Finnish summer raspberry',ids:['rasp-takala-2'],
-   body:['The second Takalan Herkku pot, same variety, same young plant. Canes reach 1.5 to 2 m. Just potted, so canes this year and the main crop next summer.',
-     'A new pot dries fast behind the glazing, so keep it steady while it establishes. Half-strength feed weekly.',
-     'Give it its own support and room from pot 1 for airflow. Check the leaf undersides for spider mites, and cut each cane to the ground once it has fruited.']},
+   body:['A Finnish summer (floricane) raspberry bred for very sweet berries and an early crop. It fruits on canes grown the season before, so a new plant spends its first season making canes and crops properly from the second onward.',
+     'Keep the water even while the berries swell or they split. Pick every 2 or 3 days once they colour, a dead-ripe berry pulls free with a light tug and leaves its plug on the plant.',
+     'Tie the fruiting canes to a support, heat and wind snap them otherwise. Once a cane has fruited it dies, so cut it to the ground and leave the fresh canes standing for the following summer.']},
+ 'takala-1':{t:'Raspberry “Takalan Herkku”',src:'Finnish summer raspberry',ids:['rasp-takala-1'],
+   body:['A hardy Finnish summer (floricane) raspberry with large sweet berries. It fruits on canes grown the season before, so a new plant makes canes in its first season and crops properly from the second onward.',
+     'Tie the canes to a support: they grow tall and the fruiting ones get heavy enough to snap in wind. Keep the water steady while the berries swell, and remember a pot dries out far faster than open ground.',
+     'Check the leaf undersides for spider mites, which come on in warm dry air. Once a cane has fruited it dies, so cut it to the ground and leave the fresh canes standing.']},
+ 'takala-2':{t:'Raspberry “Takalan Herkku”',src:'Finnish summer raspberry',ids:['rasp-takala-2'],
+   body:['A hardy Finnish summer (floricane) raspberry with large sweet berries. It fruits on canes grown the season before, so a new plant makes canes in its first season and crops properly from the second onward.',
+     'Tie the canes to a support: they grow tall and the fruiting ones get heavy enough to snap in wind. Keep the water steady while the berries swell, and remember a pot dries out far faster than open ground.',
+     'Check the leaf undersides for spider mites, which come on in warm dry air. Once a cane has fruited it dies, so cut it to the ground and leave the fresh canes standing.']},
 };
 Object.entries(PROFILE).forEach(([key,pr])=>(pr.ids||[]).forEach(id=>{KEY_BY_ID[id]=key;}));
 
@@ -1042,20 +1188,23 @@ const ART={
 };
 ART['takala-1']=ART['takala-2']=ART.maurin;
 
-/* The "what the whole plant looks like" photo: the full plant from soil to top,
-   with a pot, a wall or a path in frame so you can tell how big it gets. */
+/* The "what the whole plant looks like" photo. A portrait, not a scene: one
+   plant, whole, filling the frame against a quiet background, the way a nursery
+   or a plant shop photographs it. The pot gives the scale and the caption gives
+   the number. Every file lives in public/img and nothing is hotlinked. Each row
+   is [src, caption, credit]; see public/img/CREDITS.md for the full provenance. */
 const REAL={
- tigerella:['https://upload.wikimedia.org/wikipedia/commons/thumb/1/15/2014-11-01_-_P%C3%A9_de_Tomate.JPG/1280px-2014-11-01_-_P%C3%A9_de_Tomate.JPG','Cordon tomato in a pot, 2 m'],
- noire:['https://upload.wikimedia.org/wikipedia/commons/thumb/d/db/Cherry-Tomatoes-Greenhouse-Sitia-Crete-Greece-1.jpg/1280px-Cherry-Tomatoes-Greenhouse-Sitia-Crete-Greece-1.jpg','Cordon tomatoes over 2 m tall'],
- chilli:['https://upload.wikimedia.org/wikipedia/commons/thumb/b/b8/Hungarian_wax_pepper_plant.jpg/1280px-Hungarian_wax_pepper_plant.jpg','A potted chilli bush, 50 cm'],
- parsley:['https://upload.wikimedia.org/wikipedia/commons/thumb/8/86/Petroselinum_crispum_Mooskrause_2021-09-01_0211.jpg/1280px-Petroselinum_crispum_Mooskrause_2021-09-01_0211.jpg','A curly mound, about 30 cm'],
- basil:['https://upload.wikimedia.org/wikipedia/commons/thumb/d/d2/Basilikum_auf_der_Fensterbank.jpg/1280px-Basilikum_auf_der_Fensterbank.jpg','Basil in pots, about 40 cm'],
- mint:['https://upload.wikimedia.org/wikipedia/commons/thumb/2/23/Mentha_spicata_-_Gr%C3%BCne_Minze%2C_Kloster%2C_2024_Bakonyb%C3%A9l.jpg/1280px-Mentha_spicata_-_Gr%C3%BCne_Minze%2C_Kloster%2C_2024_Bakonyb%C3%A9l.jpg','A sprawling clump, about 60 cm'],
- monstera:['https://upload.wikimedia.org/wikipedia/commons/thumb/6/6d/Monstera_deliciosa_A.jpg/1280px-Monstera_deliciosa_A.jpg','A grown plant, over 2 m'],
- hedera:['https://upload.wikimedia.org/wikipedia/commons/thumb/b/b9/Hedera_helix_%27Buttercup%27_Urn_2000px.JPG/1280px-Hedera_helix_%27Buttercup%27_Urn_2000px.JPG','Ivy smothering a 60 cm urn'],
- maurin:['https://upload.wikimedia.org/wikipedia/commons/thumb/7/73/Farming_Himbeeren_-_panoramio.jpg/1280px-Farming_Himbeeren_-_panoramio.jpg','Canes tied to wires, 1.5 m'],
- 'takala-1':['https://upload.wikimedia.org/wikipedia/commons/thumb/7/73/Farming_Himbeeren_-_panoramio.jpg/1280px-Farming_Himbeeren_-_panoramio.jpg','Canes tied to wires, 1.5 m'],
- 'takala-2':['https://upload.wikimedia.org/wikipedia/commons/thumb/7/73/Farming_Himbeeren_-_panoramio.jpg/1280px-Farming_Himbeeren_-_panoramio.jpg','Canes tied to wires, 1.5 m'],
+ tigerella:['/img/tigerella-plant.jpg','Potted cordon tomato, about 2 m','Michal Robak, Pexels'],
+ noire:['/img/noire-plant.jpg','Cordon tomato in a pot, 2 m','Bacho Nadiradze, Pexels'],
+ chilli:['/img/lombardo-plant.jpg','Lombardo seedlings, nursery plugs','Eridano Vivai'],
+ parsley:['/img/parsley-plant.jpg','Curly parsley in a pot, 30 cm','Lepola via K-Rauta'],
+ basil:['/img/basil-plant.jpg','Potted basil, about 40 cm tall','Didsss, Pexels'],
+ mint:['/img/mint-plant.jpg','Potted mint, sprawls to 60 cm','Valentin Ivantsov, Pexels'],
+ monstera:['/img/monstera-plant.jpg','Young potted Monstera, reaches 2 m','IKEA'],
+ hedera:['/img/hedera-plant.jpg','Potted ivy, trails 2 m','IKEA'],
+ maurin:['/img/maurin-plant.jpg','Raspberry in a pot, 1.5 m','Lubera'],
+ 'takala-1':['/img/takala-1-plant.jpg','Potted raspberry cane, about 1.5 m','Lubera'],
+ 'takala-2':['/img/takala-2-plant.jpg','Raspberry grown in a pot, 1.5 m','Lubera'],
 };
 const S_START=new Date('2026-06-29'),S_END=new Date('2026-10-05');
 const spos=d=>Math.max(0,Math.min(100,(new Date(d)-S_START)/(S_END-S_START)*100));
@@ -1466,7 +1615,7 @@ function plantRowHTML(p){
       </button>
       <div class="chart">${monthScaleHTML()}${seasonBarHTML(p)}</div>
     </div>
-    <p class="status"><b class="lbl">Status</b><span>${
+    <p class="status"><b class="lbl">Status${status?readAgo():''}</b><span>${
       status?esc(status):'No reading yet.'}</span></p>
     <p class="guide"><b class="lbl">Care</b><span>${care&&care.guidance?esc(care.guidance)
       :'No guidance yet. Add a note, or wait for tonight\'s update.'}</span></p>
@@ -1655,6 +1804,9 @@ const pfullDate=d=>niceDate(d)+(d.slice(0,4)===todayISO().slice(0,4)?'':' '+d.sl
    so it gets the height to carry its own phase names, and the part of a phase
    that has not happened yet is hatched as well as faded: colour on its own
    never says "expected". */
+const readAgo=()=>careDoc&&careDoc.generatedAt
+  ? `<i class="ago">read ${esc(relTime(careDoc.generatedAt))}</i>` : '';
+
 function pfullChartHTML(spans){
   const T=todayISO(),t=wpos(T);
   const seg=([c,f,to])=>{
@@ -1667,9 +1819,12 @@ function pfullChartHTML(spans){
       `<i class="pfull-fut" style="left:${fl}%;width:${100-fl}%"></i>`:''}${w>=7?
       `<b>${esc(PHASE_LABEL[c]||c)}</b>`:''}</i>`;
   };
+  const on=t>=0&&t<=100;
   return `<div class="pfull-chart">${monthScaleHTML()}
-    <div class="pfull-track">${spans.map(seg).join('')}${t>=0&&t<=100?
-      `<i class="pfull-today" style="left:${t}%"><b>Today</b></i>`:''}</div></div>`;
+    <div class="pfull-track">${spans.map(seg).join('')}${on?
+      `<i class="pfull-today" style="left:${t}%"></i>`:''}</div>
+    <div class="pfull-axis">${on?
+      `<b class="pfull-todaylbl" style="left:${Math.min(Math.max(t,4),96)}%">Today</b>`:''}</div></div>`;
 }
 
 /* The same phases again, this time with their dates spelled out and each one
@@ -1690,10 +1845,7 @@ function pfullStagesHTML(p,spans){
       ${i===at?'<em class="pfull-nowtag">now</em>':''}
       <span class="pfull-when">${esc(pfullDate(f))} to ${esc(pfullDate(to))}</span>
       <em class="pfull-mark ${rec?'recorded':'expected'}">${rec?'Recorded':'Expected'}</em>
-    </li>`;}).join('')}</ol>
-    <p class="pfull-key">Recorded means I wrote the change down, or it is where the
-      plant says it is today. Expected is what the variety table and tonight's
-      guidance point to, so the dates can still move.</p>`;
+    </li>`;}).join('')}</ol>`;
 }
 
 function plantHTML(p){
@@ -1703,12 +1855,12 @@ function plantHTML(p){
   return `${legendHTML()}
     <section class="sect pfull">
       <div class="hd"><span class="pfull-art">${avatarFor(p.id)}</span>
-        <h2>${esc(pr.t||p.name)}</h2>
+        <h2>${esc(p.name)}</h2>
         <span class="meta">${p.area==='indoor'?'Indoor':'Balcony'} · ${esc(p.stage)}</span></div>
       ${pfullChartHTML(spans)}
       ${pfullStagesHTML(p,spans)}
       <div class="pfull-say">
-        <p class="status"><b class="lbl">Status</b><span>${
+        <p class="status"><b class="lbl">Status${p.observations?readAgo():''}</b><span>${
           p.observations?esc(p.observations):'No reading yet.'}</span></p>
         <p class="guide"><b class="lbl">Care</b><span>${care&&care.guidance?esc(care.guidance)
           :'No guidance yet. Add a note, or wait for tonight\'s update.'}</span></p>
@@ -1722,7 +1874,8 @@ function plantHTML(p){
     <section class="sect">${plantJournalHTML(p)}</section>
 
     <section class="sect">
-      <div class="hd"><h2>About this variety</h2></div>
+      <div class="hd vhd"><b class="lbl">About this variety</b>
+        <h2>${esc(pr.t||p.name)}</h2></div>
       <div class="wiki">
         <div class="wtext">
           ${(pr.body||[]).map(b=>`<p class="prose">${esc(b)}</p>`).join('')}
@@ -1732,9 +1885,9 @@ function plantHTML(p){
         </div>
         <div class="wpics">
           ${REAL[key]?`<figure><img src="${REAL[key][0]}" alt="${esc(REAL[key][1])}" loading="lazy"
-            onerror="this.parentElement.style.display='none'"><figcaption>${esc(REAL[key][1].split(' · ')[0])}</figcaption></figure>`:''}
+            onerror="this.parentElement.style.display='none'"><figcaption>${esc(REAL[key][1].split(' · ')[0])}${REAL[key][2]?` <i>${esc(REAL[key][2])}</i>`:''}</figcaption></figure>`:''}
           ${FRUIT[key]?`<figure><img src="${FRUIT[key][0]}" alt="${esc(FRUIT[key][1])}" loading="lazy"
-            onerror="this.parentElement.style.display='none'"><figcaption>${esc(FRUIT[key][1])}</figcaption></figure>`:''}
+            onerror="this.parentElement.style.display='none'"><figcaption>${esc(FRUIT[key][1])}${FRUIT[key][2]?` <i>${esc(FRUIT[key][2])}</i>`:''}</figcaption></figure>`:''}
         </div>
       </div>
     </section>`;
