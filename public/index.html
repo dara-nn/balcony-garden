@@ -124,11 +124,26 @@
      page is 1120px less its gutters, which is room for exactly two columns and
      never three, so every bar keeps the same width. In the narrower cell the
      name sits above the chart instead of beside it. */
-  .plist{display:grid;gap:var(--s4);
+  .plist{display:grid;gap:var(--s4);margin:0 0 var(--s6);
     grid-template-columns:repeat(auto-fill,minmax(min(430px,100%),1fr))}
   .plist .phead{grid-template-columns:1fr;gap:6px}
-  .plist .prow{padding:var(--s4);background:var(--paper);
-    border:1px solid var(--rule);border-radius:var(--r-md)}
+  /* The plant is the card now. Nothing wraps the grid any more, so the card
+     takes the field colour and the lift the old section card used to have,
+     and it sits straight on the paper. */
+  .plist .prow{padding:var(--s4);background:var(--field);
+    border:1px solid var(--rule);border-radius:var(--r-lg);box-shadow:var(--shadow)}
+  /* The area name labels the grid under it from the page itself: no box, no
+     rule, nothing that would read as a second card around the plants. */
+  .areahd{display:flex;align-items:baseline;gap:var(--s2);flex-wrap:wrap;
+    margin:0 0 var(--s3);font-size:20px;letter-spacing:-.02em}
+  .areahd span{font-size:13px;font-weight:400;letter-spacing:0;color:var(--dim)}
+  /* The forecast reads for the balcony only, so it stands on its own above
+     the balcony plants instead of boxing them in. */
+  .wxblock{margin:0 0 var(--s4)}
+  .wxblock .wx{padding:0;margin:0;border-bottom:0}
+  /* The legend is reference, not content: once at the top, flush with the
+     cards now that no card padding is left to line it up with. */
+  .lgd-row .legend{margin:0 0 var(--s5);padding:0}
   /* A tooltip that answers straight away, rather than the browser's slow one. */
   #tip{position:fixed;z-index:60;pointer-events:none;opacity:0;transition:opacity .08s;
     background:var(--ink);color:var(--paper);font-size:12px;line-height:1.3;
@@ -542,6 +557,84 @@
     padding:11px 18px;font-size:13.5px;display:flex;align-items:center;gap:var(--s3);max-width:520px;
     box-shadow:0 6px 22px rgba(0,0,0,.3)}
   .toast button{border:none;background:none;color:#9FE0BE;font-size:12.5px;cursor:pointer;padding:2px 4px}
+
+  /* ---- one plant, in full ----
+     The list is twenty plants at a glance. This is one plant at reading size,
+     so nothing here is sized to fit a column: the bar is tall enough to name
+     its own phases, the dates get a line each, and the two paragraphs the
+     model writes get the prose face they were written for. */
+  .pfull > .hd{align-items:center}
+  .pfull .pfull-art{width:42px;height:42px;flex:none;overflow:hidden;border-radius:var(--r-sm)}
+  .pfull .pfull-art svg{width:100%;height:100%;display:block}
+
+  /* One tall band, so the year still reads left to right in a single line. The
+     expected tail of a phase is hatched, not just faded, and the today marker
+     names itself instead of being a bare tick. */
+  .pfull-chart{margin-bottom:var(--s4)}
+  .pfull-chart .monthscale{height:1.15em;margin-bottom:5px;font-size:12px;opacity:1}
+  .pfull-track{position:relative;height:56px;border-radius:var(--r-sm);
+    background:var(--rule);overflow:hidden}
+  /* Names sit along the bottom of the band, so the today marker has the top
+     edge to itself and the two never collide. */
+  .pfull-seg{position:absolute;top:0;height:100%;display:flex;align-items:flex-end;overflow:hidden;
+    container:pseg/inline-size;
+    border-radius:var(--r-sm);box-shadow:inset 0 0 0 1px color-mix(in srgb,var(--ink) 8%,transparent)}
+  /* A short phase drops its name rather than showing a syllable of it. The
+     dated list under the chart says the same thing in full anyway. */
+  @container pseg (max-width:96px){ .pfull-seg b{display:none} }
+  .pfull-seg.grow{background:var(--ph-grow)} .pfull-seg.flower{background:var(--ph-flower)}
+  .pfull-seg.fruit{background:var(--ph-fruit)} .pfull-seg.harvest{background:var(--ph-harvest)}
+  /* The name sits on a wash of the card colour so it stays readable on every
+     phase, from the palest green to the darkest harvest red. */
+  .pfull-seg b{position:relative;z-index:1;margin:0 var(--s2) 7px;padding:3px 9px;
+    border-radius:var(--r-pill);background:color-mix(in srgb,var(--field) 80%,transparent);
+    color:var(--ink);font-size:12.5px;font-weight:600;white-space:nowrap;overflow:hidden}
+  .pfull-fut{position:absolute;top:0;height:100%;border-radius:0 var(--r-sm) var(--r-sm) 0;
+    background:repeating-linear-gradient(135deg,
+      color-mix(in srgb,var(--field) 62%,transparent) 0 6px,transparent 6px 13px)}
+  .pfull-today{position:absolute;top:0;bottom:0;width:2px;background:var(--ink)}
+  .pfull-today b{position:absolute;top:5px;left:5px;padding:2px 8px;border-radius:var(--r-pill);
+    background:var(--ink);color:var(--paper);font-size:11px;font-weight:600;white-space:nowrap}
+
+  /* The dates under the chart. Wrapping rather than a grid, so on a narrow
+     screen the mark drops to its own line instead of squeezing the dates. */
+  .pfull-stages{list-style:none;margin:0;padding:0;border-top:1px solid var(--rule)}
+  .pfull-stage{display:flex;align-items:center;flex-wrap:wrap;gap:6px var(--s3);
+    padding:11px 2px;border-bottom:1px solid var(--rule);font-size:14.5px}
+  .pfull-stage .sw{width:16px;height:8px;border-radius:var(--r-pill);flex:none}
+  .pfull-name{font-weight:600;min-width:98px}
+  .pfull-when{color:var(--dim)}
+  .pfull-nowtag{font-style:normal;font-size:11px;letter-spacing:.06em;text-transform:uppercase;
+    font-weight:600;padding:2px 8px;border-radius:var(--r-pill);background:var(--ink);color:var(--paper)}
+  .pfull-mark{margin-left:auto;font-style:normal;font-size:11px;letter-spacing:.07em;
+    text-transform:uppercase;font-weight:600;padding:3px 10px;border-radius:var(--r-pill);
+    border:1px solid var(--rule);color:var(--dim)}
+  .pfull-mark.recorded{color:var(--pine);border-color:color-mix(in srgb,var(--leaf) 45%,transparent);
+    background:color-mix(in srgb,var(--leaf) 10%,transparent)}
+  .pfull-mark.expected{border-style:dashed}
+  .pfull-key,.pfull-none{margin:var(--s3) 0 0;font-size:12.5px;line-height:1.5;color:var(--dim)}
+
+  /* Status and care side by side while there is room, each in its own panel so
+     the two stay told apart once they are the same size. */
+  .pfull-say{display:grid;gap:var(--s3);margin:var(--s4) 0 var(--s4);
+    grid-template-columns:repeat(auto-fit,minmax(min(290px,100%),1fr))}
+  .pfull .status,.pfull .guide{grid-template-columns:1fr;align-content:start;gap:5px;margin:0;
+    padding:var(--s3) var(--s4) var(--s4);background:var(--paper);border-radius:var(--r-md);
+    font-size:15.5px;line-height:1.6}
+  .pfull .status > span,.pfull .guide > span{font-family:var(--prose)}
+  .pfull .lbl{padding-top:0}
+  .pfull .wline{margin:0;font-size:1em;align-items:center}
+
+  @container (max-width:560px){
+    .pfull-track{height:46px}
+    .pfull-seg b{font-size:11.5px;padding:2px 7px;margin:0 5px 5px}
+    /* At this width the four parts of a stage line only fit without the column
+       the name keeps on a wide screen. */
+    .pfull-stage{gap:5px var(--s2);font-size:14px}
+    .pfull-name{min-width:0}
+    .pfull-mark{padding:3px 8px;letter-spacing:.05em}
+    .pfull .status,.pfull .guide{padding:var(--s3)}
+  }
 </style>
 </head>
 <body>
@@ -583,10 +676,10 @@ stored on this device only, so it is asked once.</p>
 <div id="toasts" role="status" aria-live="polite"></div>
 <input type="file" id="ph-input" accept="image/*" multiple hidden>
 
-<script src="garden-data.js"></script>
+<script src="/garden-data.js"></script>
 <script type="module">
-import { weatherAlerts, normalizeHealth } from './care-rules.js';
-import { groupByArea, waterLabel, seasonSpans, chartWindow, monthTicks, tagEntryText, journalGroups } from './garden-view.js';
+import { weatherAlerts, normalizeHealth } from '/care-rules.js';
+import { groupByArea, waterLabel, seasonSpans, phaseOfStage, chartWindow, monthTicks, tagEntryText, journalGroups } from '/garden-view.js';
 
 /* ================= basics ================= */
 const $=s=>document.querySelector(s);
@@ -885,12 +978,12 @@ function factValue(f,k){
 /* A second photo for anything grown for a crop, so the page shows both the
    plant and the thing you are waiting for. Every URL here was checked. */
 const FRUIT={
- tigerella:['https://upload.wikimedia.org/wikipedia/commons/thumb/6/6c/Balkoncontent_Tomatensorte_Tigerella.jpg/1280px-Balkoncontent_Tomatensorte_Tigerella.jpg','Striped ripe fruit'],
- noire:['https://upload.wikimedia.org/wikipedia/commons/thumb/2/2c/Black_krim_tomato.jpg/1280px-Black_krim_tomato.jpg','A ripe dark beefsteak'],
- chilli:['https://upload.wikimedia.org/wikipedia/commons/2/26/Cubanelle_Peppers.jpg','Long frying peppers'],
- maurin:['https://upload.wikimedia.org/wikipedia/commons/thumb/7/7d/Malina.jpg/1280px-Malina.jpg','Ripe berries on the cane'],
- 'takala-1':['https://upload.wikimedia.org/wikipedia/commons/thumb/7/7d/Malina.jpg/1280px-Malina.jpg','Ripe berries on the cane'],
- 'takala-2':['https://upload.wikimedia.org/wikipedia/commons/thumb/7/7d/Malina.jpg/1280px-Malina.jpg','Ripe berries on the cane'],
+ tigerella:['https://upload.wikimedia.org/wikipedia/commons/thumb/6/6c/Balkoncontent_Tomatensorte_Tigerella.jpg/1280px-Balkoncontent_Tomatensorte_Tigerella.jpg','Striped tomatoes, about 6 cm'],
+ noire:['https://upload.wikimedia.org/wikipedia/commons/thumb/2/2c/Black_krim_tomato.jpg/1280px-Black_krim_tomato.jpg','A dark beefsteak, about 10 cm'],
+ chilli:['https://upload.wikimedia.org/wikipedia/commons/2/26/Cubanelle_Peppers.jpg','Long frying peppers, about 15 cm'],
+ maurin:['https://upload.wikimedia.org/wikipedia/commons/thumb/7/7d/Malina.jpg/1280px-Malina.jpg','Ripe berries, about 2 cm'],
+ 'takala-1':['https://upload.wikimedia.org/wikipedia/commons/thumb/7/7d/Malina.jpg/1280px-Malina.jpg','Ripe berries, about 2 cm'],
+ 'takala-2':['https://upload.wikimedia.org/wikipedia/commons/thumb/7/7d/Malina.jpg/1280px-Malina.jpg','Ripe berries, about 2 cm'],
 };
 
 const PROFILE={
@@ -948,18 +1041,21 @@ const ART={
  maurin:`<svg viewBox="0 0 80 80" xmlns="http://www.w3.org/2000/svg"><rect width="80" height="80" fill="#EAF0E9"/><path d="M40 40c-8 0-14 4-14 14 0 9 7 14 14 14s14-5 14-14c0-10-6-14-14-14z" fill="#B23A5B"/><g fill="#C9557A"><circle cx="34" cy="52" r="4.4"/><circle cx="46" cy="52" r="4.4"/><circle cx="40" cy="49" r="4.4"/><circle cx="31" cy="60" r="4.4"/><circle cx="49" cy="60" r="4.4"/><circle cx="40" cy="58" r="4.4"/><circle cx="35" cy="66" r="4.2"/><circle cx="45" cy="66" r="4.2"/></g><path d="M40 40l0-8" stroke="#2E7D52" stroke-width="3"/><path d="M40 34c-8-2-14-8-14-8 6 0 12 2 14 6 2-4 8-6 14-6 0 0-6 6-14 8z" fill="#2E7D52"/></svg>`,
 };
 ART['takala-1']=ART['takala-2']=ART.maurin;
+
+/* The "what the whole plant looks like" photo: the full plant from soil to top,
+   with a pot, a wall or a path in frame so you can tell how big it gets. */
 const REAL={
- tigerella:['https://upload.wikimedia.org/wikipedia/commons/thumb/d/dc/-2020-07-20_Bush_tomato_plant_%28Totem%29%2C_Trimingham%2C_Norfolk_%281%29.JPG/1280px--2020-07-20_Bush_tomato_plant_%28Totem%29%2C_Trimingham%2C_Norfolk_%281%29.JPG','A tomato plant on a cane'],
- noire:['https://upload.wikimedia.org/wikipedia/commons/thumb/e/eb/-2020-08-04_Bush_tomato_plant_%28Totem%29%2C_Trimingham%2C_Norfolk_%281%29.JPG/1280px--2020-08-04_Bush_tomato_plant_%28Totem%29%2C_Trimingham%2C_Norfolk_%281%29.JPG','A tomato plant in fruit'],
- chilli:['https://upload.wikimedia.org/wikipedia/commons/thumb/3/3f/Starr-101030-9376-Capsicum_annuum-habit_in_vegetable_garden-Olinda-Maui_%2824688522999%29.jpg/1280px-Starr-101030-9376-Capsicum_annuum-habit_in_vegetable_garden-Olinda-Maui_%2824688522999%29.jpg','A pepper plant in the ground'],
- parsley:['https://upload.wikimedia.org/wikipedia/commons/thumb/6/6a/Parsley_Curled.jpg/1280px-Parsley_Curled.jpg','A curly parsley plant'],
- basil:['https://upload.wikimedia.org/wikipedia/commons/thumb/8/83/Basil_plant_in_pot_1.jpg/1280px-Basil_plant_in_pot_1.jpg','Sweet basil in a pot'],
- mint:['https://upload.wikimedia.org/wikipedia/commons/thumb/f/fe/-2018-05-13_Garden_mint_plants%2C_Northrepps%2C_Cromer.JPG/1280px--2018-05-13_Garden_mint_plants%2C_Northrepps%2C_Cromer.JPG','Garden mint in soil'],
- monstera:['https://www.ikea.com/fi/en/images/products/monstera-deliciosa-potted-plant-swiss-cheese-plant__1177967_pe895590_s5.jpg?f=xl','The plant I bought'],
- hedera:['https://www.ikea.com/fi/en/images/products/hedera-helix-potted-plant-ivy__0902464_pe594502_s5.jpg?f=xl','The plant I bought'],
- maurin:['https://upload.wikimedia.org/wikipedia/commons/3/37/Wild_Rubus_idaeus.jpg','Raspberry canes in fruit'],
- 'takala-1':['https://upload.wikimedia.org/wikipedia/commons/3/37/Wild_Rubus_idaeus.jpg','Raspberry canes in fruit'],
- 'takala-2':['https://upload.wikimedia.org/wikipedia/commons/3/37/Wild_Rubus_idaeus.jpg','Raspberry canes in fruit'],
+ tigerella:['https://upload.wikimedia.org/wikipedia/commons/thumb/1/15/2014-11-01_-_P%C3%A9_de_Tomate.JPG/1280px-2014-11-01_-_P%C3%A9_de_Tomate.JPG','Cordon tomato in a pot, 2 m'],
+ noire:['https://upload.wikimedia.org/wikipedia/commons/thumb/d/db/Cherry-Tomatoes-Greenhouse-Sitia-Crete-Greece-1.jpg/1280px-Cherry-Tomatoes-Greenhouse-Sitia-Crete-Greece-1.jpg','Cordon tomatoes over 2 m tall'],
+ chilli:['https://upload.wikimedia.org/wikipedia/commons/thumb/b/b8/Hungarian_wax_pepper_plant.jpg/1280px-Hungarian_wax_pepper_plant.jpg','A potted chilli bush, 50 cm'],
+ parsley:['https://upload.wikimedia.org/wikipedia/commons/thumb/8/86/Petroselinum_crispum_Mooskrause_2021-09-01_0211.jpg/1280px-Petroselinum_crispum_Mooskrause_2021-09-01_0211.jpg','A curly mound, about 30 cm'],
+ basil:['https://upload.wikimedia.org/wikipedia/commons/thumb/d/d2/Basilikum_auf_der_Fensterbank.jpg/1280px-Basilikum_auf_der_Fensterbank.jpg','Basil in pots, about 40 cm'],
+ mint:['https://upload.wikimedia.org/wikipedia/commons/thumb/2/23/Mentha_spicata_-_Gr%C3%BCne_Minze%2C_Kloster%2C_2024_Bakonyb%C3%A9l.jpg/1280px-Mentha_spicata_-_Gr%C3%BCne_Minze%2C_Kloster%2C_2024_Bakonyb%C3%A9l.jpg','A sprawling clump, about 60 cm'],
+ monstera:['https://upload.wikimedia.org/wikipedia/commons/thumb/6/6d/Monstera_deliciosa_A.jpg/1280px-Monstera_deliciosa_A.jpg','A grown plant, over 2 m'],
+ hedera:['https://upload.wikimedia.org/wikipedia/commons/thumb/b/b9/Hedera_helix_%27Buttercup%27_Urn_2000px.JPG/1280px-Hedera_helix_%27Buttercup%27_Urn_2000px.JPG','Ivy smothering a 60 cm urn'],
+ maurin:['https://upload.wikimedia.org/wikipedia/commons/thumb/7/73/Farming_Himbeeren_-_panoramio.jpg/1280px-Farming_Himbeeren_-_panoramio.jpg','Canes tied to wires, 1.5 m'],
+ 'takala-1':['https://upload.wikimedia.org/wikipedia/commons/thumb/7/73/Farming_Himbeeren_-_panoramio.jpg/1280px-Farming_Himbeeren_-_panoramio.jpg','Canes tied to wires, 1.5 m'],
+ 'takala-2':['https://upload.wikimedia.org/wikipedia/commons/thumb/7/73/Farming_Himbeeren_-_panoramio.jpg/1280px-Farming_Himbeeren_-_panoramio.jpg','Canes tied to wires, 1.5 m'],
 };
 const S_START=new Date('2026-06-29'),S_END=new Date('2026-10-05');
 const spos=d=>Math.max(0,Math.min(100,(new Date(d)-S_START)/(S_END-S_START)*100));
@@ -1511,39 +1607,116 @@ function entryHTML(e){
 }
 
 /* The page is the list, so the list needs no heading of its own.
+   One card level only: the plant. The area is a heading on the page above
+   its grid, and the forecast is a block of its own above the balcony grid.
    The forecast belongs to the balcony group, not to the page: an indoor
    plant must never be sitting under a cold-night warning. */
 const count=(n,one,many)=>`${n} ${n===1?one:(many||one+'s')}`;
 function allPlantsHTML(){
   const T=todayISO(),all=plants();
-  return `${legendHTML()}
-    ${groupByArea(all).map(g=>`<section class="sect">
-      <div class="hd"><h2>${esc(g.label)}</h2><span class="meta">${count(g.plants.length,'plant')}</span></div>
-      ${g.area==='balcony'?wxHTML(T):''}
-      <div class="plist">${g.plants.map(plantRowHTML).join('')}</div>
-    </section>`).join('')}
+  return `<div class="lgd-row">${legendHTML()}</div>
+    ${groupByArea(all).map(g=>`
+      <h2 class="areahd">${esc(g.label)}<span>${count(g.plants.length,'plant')}</span></h2>
+      ${g.area==='balcony'?`<div class="wxblock">${wxHTML(T)}</div>`:''}
+      <div class="plist">${g.plants.map(plantRowHTML).join('')}</div>`).join('')}
     <section class="sect">${gardenJournalHTML()}</section>`;
 }
 
 /* ---- one plant, in full ---- */
+/* The page works out the plant's season once and hands the same spans to the
+   chart and to the dated list under it, so the two can never disagree. Same
+   call, same arguments, as the small bar on the list page. */
+function pfullSpans(p){
+  const row=SEASON.find(r=>r.key===KEY_BY_ID[p.id]);
+  return seasonSpans(row?row.ph:[],(statusDoc.plants[p.id]||{}).history||[],
+    upcomingFor(p.id),WIN.end,{stage:p.stage,date:todayISO()});
+}
+
+/* Which phases actually happened. A stage change I wrote down dates its phase,
+   and the stage the plant carries today is a recorded fact as well, since a
+   plant that never changed stage has no history at all. Everything else on the
+   chart is a guess: the variety table's, or tonight's guidance. */
+function pfullRecordedPhases(p){
+  const T=todayISO(),done=new Set();
+  for(const h of (statusDoc.plants[p.id]||{}).history||[]){
+    const ph=phaseOfStage(h.stage);
+    if(ph&&h.date&&h.date<=T)done.add(ph);
+  }
+  const now=phaseOfStage(p.stage);
+  if(now)done.add(now);
+  return done;
+}
+
+/* Dates read as they do everywhere else, with the year added only when it is
+   not this one, because a bar can run over new year. */
+const pfullDate=d=>niceDate(d)+(d.slice(0,4)===todayISO().slice(0,4)?'':' '+d.slice(0,4));
+
+/* The list bar is 6px because twenty of them share a page. There is one here,
+   so it gets the height to carry its own phase names, and the part of a phase
+   that has not happened yet is hatched as well as faded: colour on its own
+   never says "expected". */
+function pfullChartHTML(spans){
+  const T=todayISO(),t=wpos(T);
+  const seg=([c,f,to])=>{
+    const l=wpos(f),w=wpos(to)-l;
+    if(w<=0)return '';
+    const fl=f>=T?0:(wpos(T)-l)/w*100;
+    const tip=`${PHASE_LABEL[c]||c}, ${pfullDate(f)} to ${pfullDate(to)}`;
+    return `<i class="pfull-seg ${c}" style="left:${l}%;width:${w}%"
+      data-tip="${esc(tip)}" title="${esc(tip)}">${to>T?
+      `<i class="pfull-fut" style="left:${fl}%;width:${100-fl}%"></i>`:''}${w>=7?
+      `<b>${esc(PHASE_LABEL[c]||c)}</b>`:''}</i>`;
+  };
+  return `<div class="pfull-chart">${monthScaleHTML()}
+    <div class="pfull-track">${spans.map(seg).join('')}${t>=0&&t<=100?
+      `<i class="pfull-today" style="left:${t}%"><b>Today</b></i>`:''}</div></div>`;
+}
+
+/* The same phases again, this time with their dates spelled out and each one
+   said to be recorded or expected, because a hatch is not a sentence. */
+function pfullStagesHTML(p,spans){
+  if(!spans.length)return '<p class="pfull-none">No season worked out for this one yet.</p>';
+  const T=todayISO(),done=pfullRecordedPhases(p);
+  /* One phase is now, never two. Where one span ends the day the next begins,
+     the plant's own stage settles which of them today belongs to. */
+  const nowPh=phaseOfStage(p.stage);
+  let at=spans.findIndex(([c,f,to])=>f<=T&&to>=T&&c===nowPh);
+  if(at<0)at=spans.findIndex(([,f,to])=>f<=T&&to>=T);
+  return `<ol class="pfull-stages">${spans.map(([c,f,to],i)=>{
+    const rec=f<=T&&done.has(c);
+    return `<li class="pfull-stage">
+      <i class="sw ${c}"></i>
+      <span class="pfull-name">${esc(PHASE_LABEL[c]||c)}</span>
+      ${i===at?'<em class="pfull-nowtag">now</em>':''}
+      <span class="pfull-when">${esc(pfullDate(f))} to ${esc(pfullDate(to))}</span>
+      <em class="pfull-mark ${rec?'recorded':'expected'}">${rec?'Recorded':'Expected'}</em>
+    </li>`;}).join('')}</ol>
+    <p class="pfull-key">Recorded means I wrote the change down, or it is where the
+      plant says it is today. Expected is what the variety table and tonight's
+      guidance point to, so the dates can still move.</p>`;
+}
+
 function plantHTML(p){
   const key=KEY_BY_ID[p.id],pr=PROFILE[key]||{t:p.name,body:[],src:''};
   const care=(careDoc&&careDoc.plants&&careDoc.plants[p.id])||null;
+  const spans=pfullSpans(p);
   return `${legendHTML()}
-    <section class="sect">
-      <div class="hd"><h2>${esc(pr.t||p.name)}</h2>
+    <section class="sect pfull">
+      <div class="hd"><span class="pfull-art">${avatarFor(p.id)}</span>
+        <h2>${esc(pr.t||p.name)}</h2>
         <span class="meta">${p.area==='indoor'?'Indoor':'Balcony'} · ${esc(p.stage)}</span></div>
-      <div class="prow solo">
-        <div class="phead"><div class="chart">${monthScaleHTML()}${seasonBarHTML(p)}</div></div>
+      ${pfullChartHTML(spans)}
+      ${pfullStagesHTML(p,spans)}
+      <div class="pfull-say">
         <p class="status"><b class="lbl">Status</b><span>${
           p.observations?esc(p.observations):'No reading yet.'}</span></p>
         <p class="guide"><b class="lbl">Care</b><span>${care&&care.guidance?esc(care.guidance)
           :'No guidance yet. Add a note, or wait for tonight\'s update.'}</span></p>
-        <div class="wline"><b class="lbl">Water</b><span>
-          <span class="water">${esc(waterLabel(p.last,todayISO()))}</span>
-          <button class="waterbtn" data-act="water" data-val="${esc(p.id)}">💧 Water now</button>
-        </span></div>
       </div>
+      <div class="wline"><b class="lbl">Water</b><span>
+        <span class="water">${esc(waterLabel(p.last,todayISO()))}</span>
+        <button class="waterbtn" data-act="water" data-val="${esc(p.id)}">💧 Water now</button>
+      </span></div>
     </section>
 
     <section class="sect">${plantJournalHTML(p)}</section>

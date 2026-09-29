@@ -14,7 +14,8 @@ A personal tool, customized for my needs. I write notes and take photos of the p
 - **Season bar.** Each plant's growing, flowering, fruiting and harvest spans at a glance. The species table supplies the expectation, and where a real stage change has been recorded, that date replaces the default and the bar redraws around it.
 - **Watering, recorded not managed.** A small droplet button, or a "watered today" tick in the note box. It only ever answers "when did I last water this", never nags.
 - **One history.** Notes and photos in one stream, newest first, for the whole garden or for one plant. A note the AI could not place lands under "Unsorted" so I can assign it myself.
-- **Plant pages** with the variety care guide, flat SVG botanical art and a reference photo.
+- **A page per plant, with its own address.** `/p/<id>` is bookmarkable and shareable, and the back button walks the tabs. The page carries the full version of everything the list summarises.
+- **About this variety.** A short lead on what the variety is and its quirks, then a fact table: family, habit, height, sowing, light, warmth, pot, water, harvest, frost, crop, and where I bought it, linked to the shop. The prose and the table do not repeat each other. Beside them, a photo of the whole plant, and for anything that fruits, a second photo of the crop.
 - **Light and dark theme.**
 
 ## Architecture
@@ -65,6 +66,8 @@ All reads are public. All writes need `Authorization: Bearer <UPLOAD_PASS>`.
 | `/api/photos` | `GET`/`POST` | List photo metadata, or upload one (auth, query params `date`/`plant`). |
 | `/api/photos/:id` | `GET`/`PATCH`/`DELETE` | Stream one image; re-tag its plant (auth); delete it (auth). |
 | `/api/cover` | `GET`/`PUT` | Read or set the whole-garden cover photo id (`PUT` auth; empty id = default). |
+
+Anything under `/p/` is answered with the page itself, because the site is one document and the plant id is read back out of the address in the browser. `/3d` serves the 3D balcony from `public/scene.html`.
 
 **Cron:** a `scheduled` handler runs daily at 03:00 UTC (`triggers.crons` in `wrangler.jsonc`) and calls the same `replan()` as the write triggers, so the guidance stays current even on days I change nothing by hand.
 
