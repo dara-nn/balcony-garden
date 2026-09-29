@@ -81,6 +81,11 @@ export default {
       ctx.waitUntil(replan(env, { trigger: 'note' }));
       return new Response(JSON.stringify(doc.plants[body.plantId]), { headers: { 'content-type': 'application/json' } });
     }
+    // Every plant is its own address. The site is one document, so any '/p/'
+    // path is answered with it and the page reads the plant id out of the URL.
+    if (url.pathname === '/p' || url.pathname.startsWith('/p/')) {
+      return env.ASSETS.fetch(new Request(new URL('/', url), req));
+    }
     return env.ASSETS.fetch(req); // everything else = the static site
   },
   async scheduled(event, env, ctx) {

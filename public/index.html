@@ -124,10 +124,11 @@
      page is 1120px less its gutters, which is room for exactly two columns and
      never three, so every bar keeps the same width. In the narrower cell the
      name sits above the chart instead of beside it. */
-  .plist{display:grid;column-gap:var(--s6);
+  .plist{display:grid;gap:var(--s4);
     grid-template-columns:repeat(auto-fill,minmax(min(430px,100%),1fr))}
   .plist .phead{grid-template-columns:1fr;gap:6px}
-  .plist .prow{padding:var(--s4) 0}
+  .plist .prow{padding:var(--s4);background:var(--paper);
+    border:1px solid var(--rule);border-radius:var(--r-md)}
   /* A tooltip that answers straight away, rather than the browser's slow one. */
   #tip{position:fixed;z-index:60;pointer-events:none;opacity:0;transition:opacity .08s;
     background:var(--ink);color:var(--paper);font-size:12px;line-height:1.3;
@@ -799,71 +800,85 @@ const SEASON=[
    `fruit` is the second photo: what the crop itself looks like. */
 const FACTS={
  tigerella:{family:'Tomato, Solanum lycopersicum',type:'Cordon (indeterminate)',
-  sow:'March to early April indoors',sun:'Full sun, 6h+',pot:'20 L or more, one plant',
-  water:'Deep and even, daily in heat',harvest:'From ~75 days after planting out',
-  hardy:'None, dies at first frost',crop:'Red fruit with yellow stripes, 60 to 90 g',
+  height:'1.8 to 2.5 m up a stake or string',sow:'March to early April indoors',
+  sun:'Full sun, 6h+',temp:'Sets fruit 15 to 30°C, pollen dies over 32°C',
+  pot:'20 L or more, one plant',water:'Deep and even, daily in heat',
+  harvest:'From ~75 days after planting out',hardy:'None, dies at first frost',
+  crop:'Red fruit with yellow stripes, 60 to 90 g',
   buy:'Nelson Garden seeds',buyUrl:'https://www.nelsongarden.fi/tuotteet/tomaatti-tigerella-p313'},
  noire:{family:'Tomato, Solanum lycopersicum',type:'Cordon (indeterminate)',
-  sow:'March indoors',sun:'Full sun, 6h+',pot:'25 L or more, one plant',
-  water:'Deep and even, splits if erratic',harvest:'From ~80 days after planting out',
-  hardy:'None',crop:'Dark brown-red beefsteak, 200 to 400 g',
+  height:'1.5 to 2 m up a stake',sow:'March indoors',
+  sun:'Full sun, 6h+',temp:'Sets fruit 15 to 30°C, pollen dies over 32°C',
+  pot:'25 L or more, one plant',water:'Deep and even, splits if erratic',
+  harvest:'From ~80 days after planting out',hardy:'None',
+  crop:'Dark brown-red beefsteak, 200 to 400 g',
   buy:'Nelson Garden seeds',buyUrl:'https://www.nelsongarden.fi/tuotteet/pihvitomaatti-noire-de-crimee-p-91700'},
- chilli:{family:'Chilli, Capsicum annuum',type:'Bush, 50 to 70 cm',
-  sow:'February to March indoors, needs warmth',sun:'Full sun, the hotter the better',
+ chilli:{family:'Chilli, Capsicum annuum',type:'Bush',
+  height:'50 to 70 cm, bushy',sow:'February to March indoors, needs warmth',
+  sun:'Full sun, the hotter the better',temp:'Wants 20 to 28°C, stalls under 15°C',
   pot:'7 to 10 L',water:'Little and often, hates wet feet',
   harvest:'Green from ~70 days, red ~2 weeks later',hardy:'None, indoors below 10°C',
   crop:'Long mild frying pepper, green turning red',
   buy:'Biltema 14-2867',buyUrl:'https://www.biltema.fi/vapaa-aika/puutarha/istuttaminen/siemenet/chilipippuri-lombardo-2000066777'},
  maurin:{family:'Raspberry, Rubus idaeus',type:'Summer-fruiting cane',
-  sow:'Planted as a cane, autumn or spring',sun:'Sun to light shade',pot:'20 L or more',
-  water:'Steady while fruiting',harvest:'July to August on last year\'s canes',
-  hardy:'Very, overwinters outdoors in Finland',crop:'Sweet red berries',
-  sold:'Prisma, 10,95 euro',buyUrl:'https://www.prisma.fi/tuotteet/100057931/vadelma-maurin-makea-astiataimi-2l-ruukussa-100057931'},
+  height:'1.5 to 2 m canes, tie them in',sow:'Planted as a cane, autumn or spring',
+  sun:'Sun to light shade',temp:'Ripens best 18 to 25°C, wants the winter cold',
+  pot:'20 L or more',water:'Steady while fruiting',
+  harvest:"July to August on last year's canes",hardy:'Very, overwinters outdoors in Finland',
+  crop:'Sweet red berries',
+  buy:'Prisma summer plant shop, young plant',buyUrl:'https://www.prisma.fi/tuotteet/100057931/vadelma-maurin-makea-astiataimi-2l-ruukussa-100057931'},
  'takala-1':{family:'Raspberry, Rubus idaeus',type:'Summer-fruiting cane',
-  sow:'Planted as a cane, autumn or spring',sun:'Sun to light shade',pot:'20 L or more',
-  water:'Steady while fruiting',harvest:"July to August on last year's canes",
-  hardy:'Very, overwinters outdoors in Finland',crop:'Large sweet red berries',
-  sold:'Prisma, 10,95 euro',buyUrl:'https://www.prisma.fi/tuotteet/100065393/vadelma-takalan-herkku-2-l-astiataimi-rubus-idaeus-takalan-herkku-100065393'},
- 'takala-2':{family:'Raspberry, Rubus idaeus',type:'Summer-fruiting cane',
-  sow:'Planted as a cane, autumn or spring',sun:'Sun to light shade',pot:'20 L or more',
-  water:'Steady while fruiting',harvest:"July to August on last year's canes",
-  hardy:'Very, overwinters outdoors in Finland',crop:'Large sweet red berries',
-  sold:'Prisma, 10,95 euro',buyUrl:'https://www.prisma.fi/tuotteet/100065393/vadelma-takalan-herkku-2-l-astiataimi-rubus-idaeus-takalan-herkku-100065393'},
+  height:'1.5 to 2 m canes, tie them in',sow:'Planted as a cane, autumn or spring',
+  sun:'Sun to light shade',temp:'Ripens best 18 to 25°C, wants the winter cold',
+  pot:'20 L or more',water:'Steady while fruiting',
+  harvest:"July to August on last year's canes",hardy:'Very, overwinters outdoors in Finland',
+  crop:'Large sweet red berries',
+  buy:'Prisma summer plant shop, young plant',buyUrl:'https://www.prisma.fi/tuotteet/100065393/vadelma-takalan-herkku-2-l-astiataimi-rubus-idaeus-takalan-herkku-100065393'},
  parsley:{family:'Parsley, Petroselinum crispum',type:'Biennial, grown as annual',
-  sow:'April, slow, up to 4 weeks to germinate',sun:'Sun to part shade',pot:'5 L, or a bed',
-  water:'Evenly moist, bolts if dry',harvest:'Cut outer leaves from ~10 weeks',
-  hardy:'Survives light frost',crop:'Curly leaf',
+  height:'25 to 40 cm mound',sow:'April, slow, up to 4 weeks to germinate',
+  sun:'Sun to part shade',temp:'Happiest 15 to 25°C, bolts over 30°C',
+  pot:'5 L, or a bed',water:'Evenly moist, bolts if dry',
+  harvest:'Cut outer leaves from ~10 weeks',hardy:'Survives light frost',
+  crop:'Curly leaf',
   buy:'Biltema 14-2820',buyUrl:'https://www.biltema.fi/vapaa-aika/puutarha/istuttaminen/siemenet/persilja-2000055316'},
  basil:{family:'Basil, Ocimum basilicum',type:'Tender annual',
-  sow:'From May indoors, needs warmth',sun:'Full sun',pot:'3 L each',
-  water:'Moderate, never soggy',harvest:'Pinch the tops from ~8 weeks',
-  hardy:'None, sulks under 12°C',crop:'Leaves',
+  height:'30 to 50 cm if you keep pinching',sow:'From May indoors, needs warmth',
+  sun:'Full sun',temp:'Wants 20 to 25°C, sulks under 12°C',
+  pot:'3 L each',water:'Moderate, never soggy',
+  harvest:'Pinch the tops from ~8 weeks',hardy:'None, sulks under 12°C',
+  crop:'Leaves',
   buy:'Biltema 14-2863',buyUrl:'https://www.biltema.fi/vapaa-aika/puutarha/istuttaminen/siemenet/basilika-italiano-classico-2000066833'},
  mint:{family:'Mint, Mentha',type:'Perennial, spreads by runners',
-  sow:'From a plant or a cutting',sun:'Sun to part shade',
+  height:'40 to 90 cm, sprawls wider',sow:'From a plant or a cutting',
+  sun:'Sun to part shade',temp:'Happy 15 to 25°C, hardy well below zero',
   pot:'Its own pot, or it takes the bed',water:'Thirsty, keep the soil damp',
-  harvest:'Outer stems any time',
-  hardy:'Fully, returns each spring',crop:'Leaves',
-  sold:'Prisma, 6,50 euro',buyUrl:'https://www.prisma.fi/tuotteet/100206798/viherminttu-spearmint-mentha-spicata-100206798'},
+  harvest:'Outer stems any time',hardy:'Fully, returns each spring',
+  crop:'Leaves',
+  buy:'A supermarket bunch. I buried a stem and it came back'},
  monstera:{family:'Monstera deliciosa',type:'Climbing houseplant',
-  sow:'From a cutting with a node',sun:'Bright indirect, never direct',pot:'Up one size every 2 years',
-  water:'When the top half dries, less in winter',harvest:'Grown for foliage',
-  hardy:'None, indoors above 15°C',crop:'Split leaves once mature',
+  height:'2 m indoors given a pole',sow:'From a cutting with a node',
+  sun:'Bright indirect, never direct',temp:'Keep above 15°C, likes 18 to 27°C',
+  pot:'Up one size every 2 years',water:'When the top half dries, less in winter',
+  harvest:'Grown for foliage',hardy:'None, indoors above 15°C',
+  crop:'Split leaves once mature',
   buy:'IKEA, 12 cm pot',buyUrl:'https://www.ikea.com/fi/en/p/monstera-deliciosa-potted-plant-swiss-cheese-plant-50515493/'},
  hedera:{family:'Ivy, Hedera helix',type:'Evergreen climber or trailer',
-  sow:'From a cutting, roots easily',sun:'Shade to part sun',pot:'Any, tolerant',
-  water:'Moderate, drains freely',harvest:'Grown for foliage',
-  hardy:'Fully, to about -10°C',crop:'Evergreen leaves',
+  height:'Trails or climbs 2 m and more',sow:'From a cutting, roots easily',
+  sun:'Shade to part sun',temp:'Takes anything from -10°C to 25°C',
+  pot:'Any, tolerant',water:'Moderate, drains freely',
+  harvest:'Grown for foliage',hardy:'Fully, to about -10°C',
+  crop:'Evergreen leaves',
   buy:'IKEA, 13 cm pot',buyUrl:'https://www.ikea.com/fi/en/p/hedera-helix-potted-plant-ivy-66804047/'},
 };
-const FACT_LABEL={family:'Family',type:'Type',sow:'Sowing',sun:'Light',pot:'Pot',
-  water:'Water',harvest:'Harvest',hardy:'Frost',crop:'Crop',
-  buy:'Bought',sold:'Sold as'};
+FACTS['takala-2']=FACTS['takala-1'];
+const FACT_LABEL={family:'Family',type:'Type',height:'Height',sow:'Sowing',
+  sun:'Light',temp:'Warmth',pot:'Pot',water:'Water',harvest:'Harvest',
+  hardy:'Frost',crop:'Crop',buy:'Bought'};
 /* Every row is plain text except the one saying where it came from, which
    carries the shop's link. `buyUrl` has no label, so it never gets a row. */
 function factValue(f,k){
   const v=esc(f[k]);
-  return (k==='buy'||k==='sold')&&f.buyUrl
+  return k==='buy'&&f.buyUrl
     ? `<a href="${esc(f.buyUrl)}" target="_blank" rel="noopener">${v}</a>` : v;
 }
 
@@ -880,42 +895,42 @@ const FRUIT={
 
 const PROFILE={
  basil:{t:'Basil “Italiano Classico”',src:'Biltema seeds',ids:['basil-1','basil-2'],
-   body:['Genovese basil, the classic pesto type, two pots of it. Pinch the stem above a leaf pair every week and it goes bushy instead of running to flower.',
+   body:['Genovese basil, the classic pesto type, two pots of it. Pinch the stem above a leaf pair every week and it stays a bushy 30 to 40 cm instead of running to flower. It wants 20°C and sulks below 12°C.',
      'Harvest from the top, never strip the bottom leaves. Liquid feed every 2 weeks.']},
  mint:{t:'Mint',src:'Bought as a plant',ids:['mint'],
-   body:['Came as a plant rather than from seed, so it skipped the slow start.',
+   body:['Not bought as a plant at all. It was a supermarket bunch for cooking, I buried one stem and it rooted and came back. Now 40 to 90 cm and sprawling wider than that.',
      'Keep it in its own pot. Share a bed with it and it runs underground and takes the lot. Harvest outer stems at the base, and cut it back hard when it sprawls.']},
  chilli:{t:'Chilli “Lombardo”',src:'Biltema 14-2867',ids:['chilli-1','chilli-2'],
-   body:['Mild Italian frying chilli. Long thin fruit, green ripening to red, early and productive.',
+   body:['Mild Italian frying chilli. A knee-high bush, 50 to 70 cm, with long thin fruit that ripens green to red. Early and productive, but it wants real warmth: it stalls below 15°C.',
      'Seedlings damp off easily. Give them all the light there is, rotate the pots so they do not lean, and pot up at 4 to 6 true leaves.',
      'No bees behind the glazing, so tap the flowers at midday to set fruit. Pick green for a mild crunch or red for sweeter warmth. Picking often means more fruit.']},
  tigerella:{t:'Tomato “Tigerella”',src:'Nelson Garden',ids:['tomato-1'],
-   body:['Striped heirloom cordon. Stake it, and pinch the side shoots weekly.',
+   body:['Striped heirloom cordon. It runs to 2 m or more, so give it a tall stake or a string to the ceiling, and pinch the side shoots weekly.',
      'Shake the flower trusses at midday to set fruit behind glass. Uneven watering splits the fruit and brings blossom end rot, so keep it steady. High-K feed weekly.',
      'Ripe when the stripes turn orange-red. Handles a cool Tampere summer well.']},
  noire:{t:'Tomato “Noire de Crimée”',src:'Nelson Garden',ids:['tomato-2'],
-   body:['Black beefsteak cordon, tall and hungry. High-K feed weekly from the first flowers.',
+   body:['Black beefsteak cordon, 1.5 to 2 m and hungry with it. High-K feed weekly from the first flowers.',
      'Shake the trusses at midday, and stake it properly, the fruit gets heavy.',
      'Ripe when SOFT, not by colour. It stays dark brown-red and darkest on the shoulders, so squeeze gently rather than waiting for red.']},
  parsley:{t:'Curly parsley (Persilja)',src:'Biltema 14-2820',ids:['parsley-1','parsley-2'],
-   body:['Curly dark green type, two pots of it. The marathon runner: up to 4 weeks to germinate is normal.',
+   body:['Curly dark green type, two pots of it, a mound about 30 cm tall. The marathon runner: up to 4 weeks to germinate is normal.',
      'Bolts in heat, so shade it on a 30°C day. Harvest outer stems at the base only and the centre keeps producing into late autumn. Comes indoors to a windowsill for winter.']},
  monstera:{t:'Monstera deliciosa',src:'IKEA · indoors',ids:['monstera'],
-   body:['Newly bought, so let it settle a few weeks away from draughts and radiators. No feeding or repotting yet.',
+   body:['Newly bought, so let it settle a few weeks away from draughts and radiators. No feeding or repotting yet. Keep the room above 15°C. Given a pole it will reach 2 m indoors.',
      'Overwatering is the one thing that kills it. Wipe the big leaves now and then, dust blocks the light. Once it settles, give the aerial roots a pole to climb and the new leaves start splitting.']},
  hedera:{t:'Ivy · Hedera helix',src:'IKEA · balcony',ids:['hedera'],
-   body:['The tough one. Happy in the shady corner where nothing else grows, and it stays out all winter.',
+   body:['The tough one. Happy in the shady corner where nothing else grows, and it stays out all winter down to about -10°C. It trails or climbs as far as you let it, 2 m and more.',
      'Check the leaf undersides, spider mites love warm dry glazed air. Trim wandering vines any time, it regrows from any node.']},
  maurin:{t:'Raspberry “Maurin Makea”',src:'Finnish summer raspberry',ids:['rasp-maurin'],
-   body:['A Finnish summer (floricane) raspberry grown for very sweet berries. Ahead of the other two: it set green fruit back in July and is colouring up now.',
+   body:['A Finnish summer (floricane) raspberry grown for very sweet berries. Canes reach 1.5 to 2 m, so they need tying in. Ahead of the other two: it set green fruit back in July and is colouring up now.',
      'Keep the water even while the berries swell or they split. Pick every 2 or 3 days once they colour, a dead-ripe berry pulls free with a light tug.',
      'Tie the fruiting canes to a support so glass heat and wind do not snap them. Once a cane has fruited, cut it to the ground and keep this year\'s fresh canes for next summer.']},
  'takala-1':{t:'Raspberry “Takalan Herkku” 1',src:'New pot · Finnish summer raspberry',ids:['rasp-takala-1'],
-   body:['A hardy Finnish summer (floricane) raspberry with large sweet berries. Just potted, so this year is about growing canes and the main crop comes next summer.',
+   body:['A hardy Finnish summer (floricane) raspberry with large sweet berries, bought as a young plant. Canes reach 1.5 to 2 m. Just potted, so this year is about growing canes and the main crop comes next summer.',
      'A new pot dries fast behind the glazing, so keep it steady while it establishes. Half-strength feed weekly.',
      'Tie the new canes to a support against wind and glass heat, and check the leaf undersides for spider mites. Cut each cane to the ground once it has fruited.']},
  'takala-2':{t:'Raspberry “Takalan Herkku” 2',src:'New pot · Finnish summer raspberry',ids:['rasp-takala-2'],
-   body:['The second Takalan Herkku pot, same variety. Just potted, so canes this year and the main crop next summer.',
+   body:['The second Takalan Herkku pot, same variety, same young plant. Canes reach 1.5 to 2 m. Just potted, so canes this year and the main crop next summer.',
      'A new pot dries fast behind the glazing, so keep it steady while it establishes. Half-strength feed weekly.',
      'Give it its own support and room from pot 1 for airflow. Check the leaf undersides for spider mites, and cut each cane to the ground once it has fruited.']},
 };
@@ -1204,6 +1219,25 @@ function syncThemeBtn(){
    Nav above everything, the note under it, then the chart and one content
    region: the whole balcony, or the plant the nav has selected. */
 let V={plant:null,dockMin:false,feedFilter:''};
+/* A plant is a page, so it gets a page's address: '/p/<id>', bookmarkable,
+   shareable, and reachable with the back button. The page itself is one file,
+   so the Worker answers every '/p/' path with it and the id is read back out
+   of the URL here. */
+const pathOf=pid=>pid?'/p/'+encodeURIComponent(pid):'/';
+const plantFromPath=()=>{
+  const m=location.pathname.match(/^\/p\/([^/]+)\/?$/);
+  return m?decodeURIComponent(m[1]):null;
+};
+function syncTitle(){
+  const p=V.plant&&plantById(V.plant);
+  document.title=p?`${p.name}, Dara's Balcony Garden`:"Dara's Balcony Garden, Tampere";
+}
+function goTo(pid,push){
+  V.plant=pid;staged.watered=false;
+  if(push&&location.pathname!==pathOf(pid))history.pushState({plant:pid},'',pathOf(pid));
+  syncTitle();renderAll();
+}
+addEventListener('popstate',()=>{V.plant=plantFromPath();staged.watered=false;syncTitle();renderAll();});
 let touched=new Set(),busyAt=0;
 /* The one entry or note open in the inline editor, as {kind,id,plantId}. */
 let editing=null;
@@ -1575,7 +1609,7 @@ function renderAll(){
      </header>
      ${navBar()}
      ${dockHTML()}
-     ${V.plant?plantHTML(plantById(V.plant)||plants()[0]):allPlantsHTML()}
+     ${V.plant&&plantById(V.plant)?plantHTML(plantById(V.plant)):allPlantsHTML()}
      <footer class="foot">
        <label class="theme-switch">
          <span class="tl" data-for="light">Light</span>
@@ -1646,8 +1680,8 @@ async function saveEntry(){
 /* ================= actions ================= */
 let fileMode=null;
 const ACTIONS={
-  plant:pid=>{V.plant=pid;staged.watered=false;renderAll();window.scrollTo({top:0,behavior:'smooth'});},
-  all:()=>{V.plant=null;staged.watered=false;renderAll();},
+  plant:pid=>{goTo(pid,true);window.scrollTo({top:0,behavior:'smooth'});},
+  all:()=>goTo(null,true),
   month:v=>{view.m+=+v;
     if(view.m<0){view.m=11;view.y--;} if(view.m>11){view.m=0;view.y++;}
     renderAll();},
@@ -1718,7 +1752,7 @@ document.addEventListener('keydown',e=>{
     else if($('#coverpick').classList.contains('open'))closeCover();
     else if($('#picker').classList.contains('open'))closePicker(null);
     else if($('#viewer').classList.contains('on'))closeViewer();
-    else if(!busy&&V.plant){V.plant=null;renderAll();}
+    else if(!busy&&V.plant){goTo(null,true);}
     return;
   }
   if((e.metaKey||e.ctrlKey)&&e.key==='Enter'&&!busy)saveEntry();
@@ -1745,9 +1779,14 @@ $('#ph-input').onchange=async e=>{
 };
 
 /* ================= go ================= */
+V.plant=plantFromPath();
 renderAll();
 if(!forecast||forecast.fetched!==todayISO())loadWx();
-loadStatus().then(async()=>{await seedStatus();renderAll();});
+loadStatus().then(async()=>{
+  await seedStatus();
+  if(V.plant&&!plantById(V.plant)){V.plant=null;history.replaceState({},'','/');}
+  syncTitle();renderAll();
+});
 loadPlan().then(renderAll);
 loadEntries().then(renderAll);
 loadPhotos();loadCover();
