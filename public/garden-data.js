@@ -5,13 +5,10 @@
    - bump "version" on every change so the app merges it in
    - "area" is "balcony" (glazed balcony, feels the forecast) or "indoor" (heated
      room, does not). Move a plant indoors for winter by editing its area here.
-   - "resetTasksOn": set to today's date to clear the backlog — every plant then
-     counts as watered today and nothing shows overdue
    - add "water": "YYYY-MM-DD" to a plant to record "watered on that day"
 */
 window.GARDEN_SEED = JSON.parse(`{
-  "version": 8,
-  "resetTasksOn": "2026-07-21",
+  "version": 9,
   "plants": [
     { "id": "tomato-1", "name": "Tigerella tomato", "species": "tomato", "stage": "flowering", "area": "balcony",
       "note": "Striped, indeterminate — stake + pinch side shoots. Ripe when stripes turn orange-red. Tolerates cool summers." },

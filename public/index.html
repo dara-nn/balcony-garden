@@ -457,13 +457,12 @@
 
 <script src="garden-data.js"></script>
 <script type="module">
-import { effectiveInterval, weatherAlerts, normalizeHealth } from './care-rules.js';
+import { weatherAlerts, normalizeHealth } from './care-rules.js';
 import { groupByArea, waterLabel, historyStream, seasonSpans } from './garden-view.js';
 
 /* ================= basics ================= */
 const $=s=>document.querySelector(s);
 const store={get:k=>JSON.parse(localStorage.getItem(k)||'null'),set:(k,v)=>localStorage.setItem(k,JSON.stringify(v))};
-let _pushTimer=null,_stateStamp=store.get('stateStamp')||0,_synced=false;
 const TAMPERE={la:61.4981,lo:23.7610};
 const iso=d=>`${d.getFullYear()}-${String(d.getMonth()+1).padStart(2,'0')}-${String(d.getDate()).padStart(2,'0')}`;
 const todayISO=()=>iso(new Date());
@@ -542,37 +541,8 @@ const CARE={
    ready:{water:99,why:'Done drinking',
      weekly:[['care','Lift the bulb?','Half+ leaves brown → lift, dry 2 weeks somewhere airy.']]}}}
 };
-const careOf=p=>(CARE[p.species]?.care[p.stage])||{water:3,why:'',weekly:[],daily:[]};
-const baseInterval=p=>p.intervalOverride||careOf(p).water;
 
-/* ================= state ================= */
-let state=store.get('garden2')||{seedVersion:0,plants:[]};
-(function mergeSeed(){
-  const seed=window.GARDEN_SEED;if(!seed)return;
-  if(seed.version>state.seedVersion){
-    seed.plants.forEach(sp=>{
-      const ex=state.plants.find(p=>p.id===sp.id);
-      if(ex){ex.name=sp.name;ex.species=sp.species;ex.area=sp.area;ex.note=sp.note||ex.note;
-        if(sp.water)ex.last=sp.water;
-        if(sp.stage&&sp.stage!==ex.stage){ex.stage=sp.stage;(ex.history=ex.history||[]).push({date:todayISO(),stage:sp.stage});}}
-      else{const {water,...rest}=sp;state.plants.push({...rest,last:water||todayISO(),history:[{date:todayISO(),stage:sp.stage}]});}
-    });
-    state.plants=state.plants.filter(p=>seed.plants.some(sp=>sp.id===p.id)||p.userAdded);
-    state.seedVersion=seed.version;save();
-  }
-})();
-(function resetTasks(){
-  const seed=window.GARDEN_SEED;if(!seed||!seed.resetTasksOn)return;
-  if(state.resetTasksOn!==seed.resetTasksOn){
-    const T=todayISO();
-    state.plants.forEach(p=>{p.last=T;});
-    state.resetTasksOn=seed.resetTasksOn;
-    store.set('prevWater',{});store.set('doneLog',{});
-    save();
-  }
-})();
-function save(){store.set('garden2',state);pushState();}
-let doneLog=store.get('doneLog')||{};
+/* ================= server docs ================= */
 
 /* ================= server docs ================= */
 let statusDoc=store.get('statusDoc')||{updatedAt:0,plants:{}};
@@ -677,12 +647,9 @@ function plants(){
   const seed=window.GARDEN_SEED;if(!seed)return[];
   return seed.plants.map(sp=>{
     const s=statusDoc.plants[sp.id]||{};
-    const p={id:sp.id,name:sp.name,species:sp.species,area:sp.area||'balcony',
-      stage:s.stage||sp.stage,last:s.lastWatered||sp.water||todayISO(),
-      intervalOverride:s.intervalOverride,health:normalizeHealth(s.health),
-      observations:s.observations,notes:s.notes||[]};
-    p.interval=baseInterval(p);
-    return p;
+    return {id:sp.id,name:sp.name,species:sp.species,area:sp.area||'balcony',
+      stage:s.stage||sp.stage,last:s.lastWatered||sp.water||'',
+      health:normalizeHealth(s.health),observations:s.observations,notes:s.notes||[]};
   });
 }
 const plantById=id=>plants().find(p=>p.id===id);
@@ -690,50 +657,6 @@ const AREA_LABEL={balcony:'Parvekkeella',indoor:'Sisällä'};
 
 /* ================= task engine ================= */
 /* tasks[date] = { alerts:[…], groups:[{plant, tasks:[…]}] } */
-let tasks={},photoDates=new Set();
-function buildTasks(horizonISO){
-  const byDate={};const T=todayISO();
-  const list=plants();
-  const add=(date,plant,t)=>{
-    const d=byDate[date]=byDate[date]||{alerts:[],groups:[]};
-    let g=d.groups.find(x=>x.plant.id===plant.id);
-    if(!g){g={plant,tasks:[]};d.groups.push(g);}
-    g.tasks.push({...t,pid:plant.id});
-  };
-  list.forEach(p=>{
-    const planDays=(careDoc&&careDoc.plants&&careDoc.plants[p.id])||null;
-    const through=careDoc&&careDoc.through;
-    const covered=d=>!!(planDays&&through&&d<=through&&planDays[d]);
-    let last=p.last;
-    for(let d=T;d<=horizonISO;d=addDays(d,1)){
-      if(covered(d)){planDays[d].forEach(t=>add(d,p,t));continue;}
-      const eff=effectiveInterval(p,wxOf(d));
-      if(dBetween(last,d)>=eff){
-        const over=d===T&&dBetween(last,d)>eff;
-        add(d,p,{cat:'water',ico:'💧',what:'Water'+(over?' (overdue)':''),why:careOf(p).why,key:'w|'+p.id});
-        last=d;
-      }
-    }
-    if(T<=horizonISO&&(doneLog[T]||[]).includes('w|'+p.id)){
-      const g=(byDate[T]||{groups:[]}).groups.find(x=>x.plant.id===p.id);
-      if(!g||!g.tasks.some(t=>t.key==='w|'+p.id))
-        add(T,p,{cat:'water',ico:'💧',what:'Water',why:careOf(p).why,key:'w|'+p.id});
-    }
-    const c=careOf(p);
-    (c.daily||[]).forEach(([cat,what,why])=>{
-      for(let d=T;d<=horizonISO;d=addDays(d,1))
-        if(!covered(d))add(d,p,{cat,ico:cat==='pollen'?'✋':'🌱',what,why,key:cat+'|'+p.id+'|'+what});
-    });
-    (c.weekly||[]).forEach(([cat,what,why])=>{
-      for(let d=T;d<=horizonISO;d=addDays(d,1))
-        if(!covered(d)&&new Date(d).getDay()===0)add(d,p,{cat,ico:weeklyIco(what),what,why,key:'wk|'+p.id+'|'+what});
-    });
-  });
-  for(const d in byDate)byDate[d].alerts=weatherAlerts(d,wxOf(d),list);
-  return byDate;
-}
-const dayOf=date=>tasks[date]||{alerts:[],groups:[]};
-const flatTasks=date=>dayOf(date).groups.flatMap(g=>g.tasks);
 
 /* ================= avatars ================= */
 const KEY_BY_ID={};
@@ -849,55 +772,15 @@ const REAL={
 };
 const S_START=new Date('2026-06-29'),S_END=new Date('2026-10-05');
 const spos=d=>Math.max(0,Math.min(100,(new Date(d)-S_START)/(S_END-S_START)*100));
-function barsHTML(ph,marks){
-  const t=spos(todayISO());
-  return `<div class="track">${ph.map(([c,f,to])=>
-    `<div class="bar ${c}" style="left:${spos(f)}%;width:${Math.max(spos(to)-spos(f),1.5)}%" title="${c}"></div>`).join('')}
-    ${(marks||[]).map(d=>`<div class="pmark" style="left:${spos(d)}%"></div>`).join('')}
-    ${t>=0&&t<=100?`<div class="tline" style="left:${t}%"></div>`:''}</div>`;
-}
 /* The bar says where the season is. The list underneath says what actually happened:
    every stage change, note and photo this plant has, newest first. */
-function plantHistory(p){
-  const ev={};
-  const at=(d)=>(ev[d]=ev[d]||{stage:null,notes:[],photos:0});
-  ((state.plants.find(x=>x.id===p.id)||{}).history||[]).forEach(h=>{if(h.date&&h.stage)at(h.date).stage=h.stage;});
-  shown(p.notes).forEach(n=>at(n.date).notes.push(n.text));
-  photosFor(p.id).forEach(x=>at(x.date).photos++);
-  return Object.entries(ev).sort((a,b)=>b[0].localeCompare(a[0]));
-}
-function plantSeasonHTML_unused(key,p){
-  const r=SEASON.find(x=>x.key===key);
-  const marks=p?photosFor(p.id).map(x=>x.date):[];
-  const bar=r?`<div class="ticks" style="margin-left:0">${[['Kesä','2026-07-01'],['Elo','2026-08-01'],['Syys','2026-09-01'],['Loka','2026-10-01']]
-    .map(([l,d])=>`<b style="left:${spos(d)}%">${l}</b>`).join('')}</div>${barsHTML(r.ph,marks)}`:'';
-  if(!p)return bar||'<div class="none">—</div>';
-  const hist=plantHistory(p);
-  const list=hist.length?`<ul class="hist">${hist.map(([date,e])=>`<li>
-      <span class="hd">${esc(VKO[new Date(date).getDay()])} ${esc(shortDate(date))}</span>
-      <span class="hb2">
-        ${e.stage?`<span class="stagechip">🪴 ${esc(e.stage)}</span>`:''}
-        ${e.notes.map(t=>`<span class="hnote">${esc(t)}</span>`).join('')}
-        ${e.photos?`<span class="hphoto">📷 ${e.photos}</span>`:''}
-      </span></li>`).join('')}</ul>`
-    :'<div class="none">Ei historiaa</div>';
-  return bar+list;
-}
 
 /* ================= photos ================= */
 let PHOTOS=[];
 const photoURL=id=>'/api/photos/'+id;
 const shown=list=>list.filter(x=>!_hidden.has(x.id));
-function photosFor(pid){
-  const key=KEY_BY_ID[pid];
-  const ids=(PROFILE[key]&&PROFILE[key].ids)||[];
-  // legacy photos were tagged by variety key, newer ones by plant id
-  return shown(PHOTOS.filter(x=>x.plant===pid||(x.plant===key&&ids.length<=1)))
-    .sort((a,b)=>(b.date||'').localeCompare(a.date||'')||(b.created||0)-(a.created||0));
-}
 function applyPhotos(){
   PHOTOS.forEach(p=>{if(p.plant==='takala')p.plant='takala-1';});
-  photoDates=new Set(shown(PHOTOS).map(x=>x.date));
   renderAll();
 }
 async function loadPhotos(){
@@ -906,7 +789,7 @@ async function loadPhotos(){
 }
 async function uploadOne(blob,date,plant){
   const r=await apiWrite('POST','/api/photos?date='+encodeURIComponent(date)+'&plant='+encodeURIComponent(plant||''),blob,blob.type||'image/jpeg');
-  if(r&&r.ok){const rec=await r.json();PHOTOS.push(rec);photoDates=new Set(PHOTOS.map(x=>x.date));return rec;}
+  if(r&&r.ok){const rec=await r.json();PHOTOS.push(rec);return rec;}
   toast('Could not upload that photo.');
   return null;
 }
@@ -1024,21 +907,6 @@ $('#cp-grid').addEventListener('click',e=>{
 $('#cp-cancel').onclick=closeCover;
 $('#coverpick').addEventListener('click',e=>{if(e.target.id==='coverpick')closeCover();});
 
-let prevWater=store.get('prevWater')||{};
-function markDone(date,key){
-  const l=doneLog[date]=doneLog[date]||[];
-  const isWater=key.startsWith('w|'),id=key.slice(2),stash=date+'|'+id;
-  if(l.includes(key)){
-    doneLog[date]=l.filter(k=>k!==key);
-    if(isWater){const p=state.plants.find(x=>x.id===id);
-      if(p&&stash in prevWater){p.last=prevWater[stash];delete prevWater[stash];store.set('prevWater',prevWater);save();}}
-  }else{
-    l.push(key);
-    if(isWater){const p=state.plants.find(x=>x.id===id);
-      if(p){prevWater[stash]=p.last;store.set('prevWater',prevWater);p.last=date;save();}}
-  }
-  store.set('doneLog',doneLog);pushState();renderAll();fillSheet();
-}
 function deleteEntry(id){
   hold('Entry deleted',async()=>{
     const r=await apiWrite('DELETE','/api/entries/'+encodeURIComponent(id));
@@ -1145,36 +1013,6 @@ function syncLock(){
   b.hidden=!on;b.textContent='🔓 Lukitse';
 }
 
-/* ================= state sync ================= */
-function pushState(){
-  if(!_synced)return;
-  clearTimeout(_pushTimer);
-  _pushTimer=setTimeout(async()=>{
-    const pass=store.get('uploadPass');
-    if(!pass)return;                                  // a visitor's local ticks stay local
-    _stateStamp=Date.now();store.set('stateStamp',_stateStamp);
-    try{const r=await fetch('/api/progress',{method:'PUT',
-      headers:{'authorization':'Bearer '+pass,'content-type':'application/json'},
-      body:JSON.stringify({updatedAt:_stateStamp,garden2:state,doneLog})});
-      if(r&&r.status===401){store.set('uploadPass',null);syncLock();}
-    }catch(e){}
-  },800);
-}
-async function pullState(){
-  try{
-    const r=await fetch('/api/progress',{cache:'no-store'});if(!r.ok)return;
-    const doc=await r.json();
-    const fresh=doc&&typeof doc.updatedAt==='number';
-    if(fresh&&doc.updatedAt>_stateStamp){
-      if(doc.garden2){Object.keys(state).forEach(k=>delete state[k]);
-        Object.assign(state,doc.garden2);store.set('garden2',state);}
-      if(doc.doneLog){doneLog=doc.doneLog;store.set('doneLog',doneLog);}
-      _stateStamp=doc.updatedAt;store.set('stateStamp',_stateStamp);
-      renderAll();
-    }else if(!fresh&&store.get('uploadPass')){_synced=true;pushState();}
-  }catch(e){}
-  finally{_synced=true;}
-}
 
 /* ================= theme ================= */
 const effectiveTheme=()=>document.documentElement.dataset.theme||(matchMedia('(prefers-color-scheme:dark)').matches?'dark':'light');
@@ -1207,16 +1045,6 @@ function phaseNow(pid){
 }
 /* What a line says about a plant now: the model's read if there is one, else the
    fact that matters — a pot that is late is the only thing worth interrupting for. */
-function stateOf(p){
-  const since=dBetween(p.last,todayISO());
-  const meta=since<=0?'kasteltu tänään':`kasteltu ${since} pv sitten`;
-  const h=p.health,iss=((h&&h.issues)||[]).map(i=>i.label||i.type).filter(Boolean)[0];
-  if(h&&h.tone==='bad')return {mk:'⚠️',tone:'bad',text:iss||h.label,meta};
-  if(h&&h.tone==='watch')return {mk:'👀',tone:'watch',text:iss||h.label,meta};
-  if(since>effectiveInterval(p,wxOf(todayISO())))return {mk:'💧',tone:'watch',text:'maa kuivunut',meta};
-  if(h)return {mk:'🌿',tone:'good',text:h.label,meta};
-  return {mk:'🌿',tone:'good',text:p.stage,meta};
-}
 
 function navBar(){
   const groups=groupByArea(plants());
@@ -1316,53 +1144,11 @@ function historyHTML(list){
     :'<div class="none">Nothing recorded yet.</div>'}`;
 }
 
-function chartRow(p){
-  const s=stateOf(p),key=KEY_BY_ID[p.id],row=SEASON.find(r=>r.key===key);
-  return `<div class="row ${touched.has(p.id)?'touched':''}">
-    <span class="art">${avatarFor(p.id)}</span>
-    <span class="who"><b>${esc(p.name)}</b><em>${esc(phaseNow(p.id))}</em></span>
-    <span class="bars"><span class="track">${(row?row.ph:[]).map(([c,f,t])=>
-      `<i class="bar ${c}" style="left:${spos(f)}%;width:${Math.max(spos(t)-spos(f),1.5)}%"></i>`).join('')}</span></span>
-    <span class="now ${s.tone}"><span class="mk">${s.mk}</span>
-      <span class="txt">${esc(s.text)}<em>${esc(s.meta)}</em></span></span>
-  </div>`;
-}
-function chartHTML(){
-  const list=plants();
-  const scaleRow=(inner,cls)=>`<div class="row ${cls}"><span class="art"></span><span class="who"></span>
-    <span class="bars"><span class="scale">${inner}</span></span><span class="now"></span></div>`;
-  const need=list.filter(p=>p.health&&p.health.tone!=='good').length;
-  return `<section class="sect">
-    <div class="hd"><h2>Kasvit</h2>
-      <span class="meta">${need?`<b>${need} vaatii huomiota</b> · `:''}${list.length} kasvia</span></div>
-    ${scaleRow([['Kesä','2026-07-01'],['Elo','2026-08-01'],['Syys','2026-09-01'],['Loka','2026-10-01']]
-      .map(([l,d])=>`<b style="left:${spos(d)}%">${l}</b>`).join(''),'head')}
-    ${list.map(chartRow).join('')}
-    ${scaleRow(`<b class="today" style="left:${spos(todayISO())}%">▏tänään</b>`,'axis')}
-    <div class="legend">
-      <span><i style="background:var(--ph-grow)"></i>kasvaa</span>
-      <span><i style="background:var(--ph-flower)"></i>kukkii</span>
-      <span><i style="background:var(--ph-fruit)"></i>raakile</span>
-      <span><i style="background:var(--ph-harvest)"></i>sato</span></div>
-  </section>`;
-}
 
 /* ---- tasks and weather ---- */
-function taskRowHTML(date,t){
-  const done=(doneLog[date]||[]).includes(t.key);
-  const T=todayISO();
-  return `<div class="task ${done?'done':''}">
-    <span class="mk">${esc(t.ico)}</span>
-    <span class="body"><span class="what">${esc(t.what)}</span>
-      <span class="whose">${esc((plantById(t.pid)||{}).name||'')}</span>
-      ${t.why?`<span class="why">${esc(t.why)}</span>`:''}</span>
-    ${date===T?`<button class="tick" data-act="done" data-date="${date}" data-key="${esc(t.key)}"
-      aria-pressed="${done}">Tehty${done?' ✓':''}</button>`:''}
-  </div>`;
-}
 function wxHTML(date){
   const w=wxOf(date);if(!w)return'';
-  const al=dayOf(date).alerts;
+  const al=weatherAlerts(date,w,plants());   // the rule keeps this to outdoor plants
   return `<div class="wx">
     <div class="read">
       <span class="deg ${w.tmax>=27?'hot':''}">${wxIcon(w)} ${Math.round(w.tmax)}°</span>
@@ -1373,35 +1159,6 @@ function wxHTML(date){
     ${al.map(a=>`<div class="warn ${a.key.startsWith('cold')?'cold':''}">
       <b>${esc(a.ico)} ${esc(a.what)}</b><span>${esc(a.why)}</span></div>`).join('')}
   </div>`;
-}
-function dayListHTML(date){
-  const T=todayISO();
-  if(date<T)return '<div class="none">Mennyt päivä.</div>';
-  const list=flatTasks(date);
-  return list.length?`<div class="list">${list.map(t=>taskRowHTML(date,t)).join('')}</div>`
-    :'<div class="none">Ei tehtäviä</div>';
-}
-function monthHTML(){
-  const T=todayISO();
-  const first=new Date(view.y,view.m,1),daysIn=new Date(view.y,view.m+1,0).getDate(),lead=(first.getDay()+6)%7;
-  const nd=new Set(shown(entriesDoc.entries).map(e=>e.date));
-  let h=`<div class="navrow">
-    <button data-act="month" data-val="-1" aria-label="Edellinen kuukausi">‹</button>
-    <span class="lab">${KUUT[view.m]} ${view.y}</span>
-    <button data-act="month" data-val="1" aria-label="Seuraava kuukausi">›</button></div>
-    <div class="dow"><span>Ma</span><span>Ti</span><span>Ke</span><span>To</span><span>Pe</span><span>La</span><span>Su</span></div><div class="grid">`;
-  for(let i=0;i<lead;i++)h+='<div class="cell out"></div>';
-  for(let d=1;d<=daysIn;d++){
-    const date=iso(new Date(view.y,view.m,d)),w=wxOf(date),list=flatTasks(date),al=dayOf(date).alerts;
-    h+=`<button class="cell ${date===T?'today':''} ${date<T?'past':''} ${
-      al.some(a=>a.key.startsWith('heat'))?'hot':al.some(a=>a.key.startsWith('cold'))?'cold':''}"
-      data-act="day" data-val="${date}" aria-label="${dayLabel(date)}, ${list.length} tehtävää">
-      <span class="d">${d}</span>${w?`<span class="t ${w.tmax>=27?'warm':''}">${Math.round(w.tmax)}°</span>`:''}
-      <span class="dots">${list.slice(0,5).map(t=>
-        `<i class="dot ${t.cat==='water'?'water':t.cat==='pollen'?'pollen':'care'}"></i>`).join('')}${
-        nd.has(date)?'<i class="dot note"></i>':''}${photoDates.has(date)?'<i class="dot photo"></i>':''}</span></button>`;
-  }
-  return h+'</div>';
 }
 
 /* ---- what you wrote, and what the model made of it ---- */
@@ -1427,33 +1184,6 @@ function entryHTML(e){
       <button class="lnk" data-act="entry-del" data-val="${esc(e.id)}">Poista</button>
     </div>
   </article>`;
-}
-function journalHTML(){
-  const list=shown(entriesDoc.entries).slice().sort((a,b)=>
-    (b.date||'').localeCompare(a.date||'')||(b.createdAt||0)-(a.createdAt||0));
-  if(!list.length)return '<div class="none">Ei merkintöjä</div>';
-  let last='';
-  return list.map(e=>{
-    const hd=e.date!==last?`<div class="day"><span>${dayLabel(e.date)}</span><i></i>
-      ${e.date===todayISO()?'<span style="color:var(--leaf)">tänään</span>':''}</div>`:'';
-    last=e.date;
-    return hd+(editing&&editing.kind==='entry'&&editing.id===e.id?editBoxHTML('entry',e.id,'',e.text):entryHTML(e));
-  }).join('');
-}
-function photoFeedHTML(){
-  const list=(V.feedFilter?photosFor(V.feedFilter):shown(PHOTOS)).slice()
-    .sort((a,b)=>(b.date||'').localeCompare(a.date||'')||(b.created||0)-(a.created||0));
-  const chips=[`<button class="chip small" data-act="filter" data-val="" aria-pressed="${!V.feedFilter}">Kaikki</button>`]
-    .concat(plants().filter(p=>photosFor(p.id).length).map(p=>
-      `<button class="chip small" data-act="filter" data-val="${esc(p.id)}" aria-pressed="${V.feedFilter===p.id}">${esc(shortName(p.name))}</button>`));
-  if(!list.length)return `<div class="strip">${chips.join('')}</div><div class="none">Ei kuvia</div>`;
-  const groups=[];
-  list.forEach(x=>{const g=groups[groups.length-1];
-    if(g&&g.date===x.date)g.items.push(x);else groups.push({date:x.date,items:[x]});});
-  return `<div class="strip">${chips.join('')}</div>`+groups.map(g=>`
-    <div class="sub"><span>${dayLabel(g.date)}</span><span class="n">${g.items.length}</span></div>
-    <div class="shots">${g.items.map(x=>`<button data-act="view" data-val="${esc(x.id)}">
-      <img src="${photoURL(x.id)}" alt="" loading="lazy"></button>`).join('')}</div>`).join('');
 }
 
 /* The page is the list, so the list needs no heading of its own.
@@ -1611,10 +1341,8 @@ async function saveEntry(){
 /* ================= actions ================= */
 let fileMode=null;
 const ACTIONS={
-  plant:pid=>{V.plant=pid;V.day=null;renderAll();window.scrollTo({top:0,behavior:'smooth'});},
+  plant:pid=>{V.plant=pid;renderAll();window.scrollTo({top:0,behavior:'smooth'});},
   all:()=>{V.plant=null;renderAll();},
-  mode:v=>{V.mode=v;V.day=null;store.set('mode',v);renderAll();},
-  day:v=>{V.day=v;V.plant=null;renderAll();},
   month:v=>{view.m+=+v;
     if(view.m<0){view.m=11;view.y--;} if(view.m>11){view.m=0;view.y++;}
     renderAll();},
@@ -1624,7 +1352,6 @@ const ACTIONS={
   unstage:i=>{URL.revokeObjectURL(staged.top[i].url);staged.top.splice(i,1);renderAll();},
   filter:v=>{V.feedFilter=v;renderAll();},
   view:id=>viewPhoto(id),
-  done:(_,el)=>markDone(el.dataset.date,el.dataset.key),
   water:async id=>{
     const r=await apiWrite('PUT','/api/status/'+encodeURIComponent(id),
       JSON.stringify({lastWatered:todayISO()}),'application/json');
@@ -1699,10 +1426,8 @@ loadStatus().then(async()=>{await seedStatus();renderAll();});
 loadPlan().then(renderAll);
 loadEntries().then(renderAll);
 loadPhotos();loadCover();
-pullState();
 addEventListener('visibilitychange',()=>{
   if(document.hidden)return;
-  pullState();
   Promise.all([loadEntries(),loadStatus()]).then(refreshUI);
 });
 setInterval(()=>{if(busy)renderLock();},1000);

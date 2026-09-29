@@ -5,14 +5,6 @@
 
 const isOutdoors = (p) => (p.area || 'balcony') === 'balcony';
 
-/* Glazed balcony bakes: the hotter the day, the sooner the pot dries out. */
-const heatFactor = (t) => (t >= 32 ? 0.5 : t >= 28 ? 0.65 : t >= 24 ? 0.8 : 1);
-
-export function effectiveInterval(plant, wx) {
-  if (!wx || !isOutdoors(plant)) return plant.interval;
-  return Math.max(1, Math.round(plant.interval * heatFactor(wx.tmax)));
-}
-
 /* The model summarises a plant's health in its own words. Only the colour is
    constrained: `tone` picks the pill, `label` is whatever fits the plant.
    Reads written before that change carry `overall` from a fixed list instead. */

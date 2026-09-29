@@ -44,9 +44,6 @@ export default {
     if (url.pathname === '/api/photos' || url.pathname.startsWith('/api/photos/')) {
       return handlePhotos(req, env, url);
     }
-    if (url.pathname === '/api/progress') {
-      return handleState(req, env);
-    }
     if (url.pathname === '/api/status' && req.method === 'GET') {
       const doc = await readStatus(env);
       return new Response(JSON.stringify(doc), {
@@ -254,23 +251,3 @@ async function assignByHand(env, entry, plantIds) {
 
 // Shared garden state (task list) so the user's devices stay in sync.
 // One KV doc; reads public, writes need the passphrase. Whole-blob last-write-wins by updatedAt.
-async function handleState(req, env) {
-  if (req.method === 'GET') {
-    let doc = await env.PHOTOS.get('progress:garden');   // removed in full by the task-engine deletion
-    if (!doc) {
-      const legacy = await env.PHOTOS.get('state:garden'); // one-time migration read
-      if (legacy) doc = legacy;
-    }
-    return new Response(doc || '{}', { headers: { 'content-type': 'application/json', 'cache-control': 'no-store' } });
-  }
-  if (req.method === 'PUT') {
-    if (!isAuthed(req, env)) return new Response('Unauthorized', { status: 401 });
-    const body = await req.text();
-    if (!body) return new Response('Empty body', { status: 400 });
-    let parsed;
-    try { parsed = JSON.parse(body); } catch (e) { return new Response('Bad JSON', { status: 400 }); }
-    await env.PHOTOS.put('progress:garden', JSON.stringify(parsed));
-    return json(parsed);
-  }
-  return new Response('Method not allowed', { status: 405 });
-}
