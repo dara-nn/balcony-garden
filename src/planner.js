@@ -198,7 +198,7 @@ export async function replan(env, { trigger } = {}) {
       }
     } catch { return; } // photo-gathering failure (KV or encoding): leave stores intact
 
-    // Place is not stored with the condition — it is read from the inventory each run,
+    // Place is not stored with the condition: it is read from the inventory each run,
     // and only handed to the model, never written back.
     const seed = await readSeed(env);
     const areas = Object.fromEntries((seed?.plants || []).map((p) => [p.id, p.area || 'balcony']));
@@ -221,5 +221,5 @@ export async function replan(env, { trigger } = {}) {
     const merged = mergePlan(status, aiPlants, today, now);
     await writeStatus(env, merged.status);
     await writeCare(env, merged.care);
-  } catch { return; } // safety net: replan runs in ctx.waitUntil — no throw may escape
+  } catch { return; } // safety net: replan runs in ctx.waitUntil, no throw may escape
 }
