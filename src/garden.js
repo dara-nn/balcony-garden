@@ -25,6 +25,18 @@ export function upsertPlant(doc, plantId, fields, now) {
   return { ...doc, updatedAt: now, plants: { ...doc.plants, [plantId]: plant } };
 }
 
+/* Re-sorting an entry rewrites the notes it produced. A note the gardener has
+   reworded is no longer the model's to overwrite, so it survives. */
+export function dropDerivedNotes(doc, assigned, now) {
+  const plants = { ...doc.plants };
+  for (const { plantId, noteId } of assigned || []) {
+    const p = plants[plantId];
+    if (!p) continue;
+    plants[plantId] = { ...p, notes: (p.notes || []).filter((n) => n.id !== noteId || n.ai === false) };
+  }
+  return { ...doc, updatedAt: now, plants };
+}
+
 export function applyNoteOp(doc, { plantId, op, id, date, text }, now) {
   const plant = doc.plants[plantId];
   if (!plant) throw new Error('unknown plant');
@@ -32,7 +44,8 @@ export function applyNoteOp(doc, { plantId, op, id, date, text }, now) {
   if (op === 'add') {
     notes = [...notes, { id: id || `note-${now}`, date, text, createdAt: now }];
   } else if (op === 'edit') {
-    notes = notes.map((n) => (n.id === id ? { ...n, text, ...(date ? { date } : {}) } : n));
+    // once the gardener rewords it, it is no longer the model's sentence
+    notes = notes.map((n) => (n.id === id ? { ...n, text, ai: false, ...(date ? { date } : {}) } : n));
   } else if (op === 'delete') {
     notes = notes.filter((n) => n.id !== id);
   } else {

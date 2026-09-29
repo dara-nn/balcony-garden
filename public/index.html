@@ -1,5 +1,5 @@
 <!doctype html>
-<html lang="en">
+<html lang="fi">
 <head>
 <meta charset="utf-8">
 <meta name="viewport" content="width=device-width, initial-scale=1">
@@ -9,449 +9,513 @@
 <meta name="theme-color" content="#1E4D3B">
 <script>try{var _t=JSON.parse(localStorage.getItem('theme')||'null');if(_t)document.documentElement.dataset.theme=_t;}catch(e){}</script>
 <style>
+  /* ============================================================
+     Daran parvekepuutarha — the chart direction.
+
+     Soft, rounded, and organised by colour rather than by rules. Every plant
+     owns the background colour of its own illustration, and that colour washes
+     the whole row, chip and tile that belong to it, so the page is legible as a
+     garden before it is read as an interface. Nothing shouts in capitals.
+
+     UI     Avenir Next  — the site's own voice
+     Prose  Charter      — what the model writes, in something you read
+     ============================================================ */
   :root{
-    --paper:#F6F7F3; --cell:#FFFFFF; --line:#DDE3DA; --ink:#1B2420; --dim:#6B7A70;
-    --pine:#1E4D3B; --tomato:#D9472B; --water:#3E86B0; --pollen:#DE9E2E; --sage:#EAF0E9;
-    --radius:12px;
+    --paper:#EFF2EA; --field:#FFFFFF; --ink:#17211B; --dim:#6C7A70; --rule:#E1E7DA;
+    --pine:#1E4D3B; --leaf:#3E7D5C; --tomato:#C4462C; --water:#2F6E8F; --pollen:#B0810F;
+    --ph-grow:#9BC7AA; --ph-flower:#DDA0B4; --ph-fruit:#E79A4E; --ph-harvest:#CC5438;
+    --ui:"Avenir Next","Avenir","Segoe UI",system-ui,sans-serif;
+    --prose:"Charter","Iowan Old Style","Georgia",serif;
+    --s1:4px; --s2:8px; --s3:12px; --s4:18px; --s5:28px; --s6:44px;
+    --r-lg:20px; --r-md:14px; --r-sm:10px; --r-pill:999px;
+    --tint:#9BC7AA;
+    --wash:color-mix(in srgb,var(--tint) 16%,var(--field));
+    --shadow:0 2px 10px rgba(22,40,28,.05);
   }
-  /* dark palette: auto by OS, unless the user forced light; or forced dark by the toggle */
-  @media (prefers-color-scheme: dark){
-    :root:not([data-theme="light"]){ --paper:#141A16; --cell:#1C2420; --line:#2C3830; --ink:#EAF0EA; --dim:#8FA096;
-      --pine:#7FBFA0; --tomato:#F0704F; --water:#6BAED2; --pollen:#E8B85A; --sage:#232E27; }
-    :root:not([data-theme="light"]) .cell .t{color:#AEC0B5}
+  @media (prefers-color-scheme:dark){
+    :root:not([data-theme="light"]){
+      --paper:#0F140F; --field:#19201A; --ink:#E7EEE4; --dim:#8B9A8C; --rule:#27302A;
+      --pine:#8FCBA9; --leaf:#7FBFA0; --tomato:#EF7355; --water:#7BB9DB; --pollen:#DDB059;
+      --shadow:0 2px 12px rgba(0,0,0,.3);
+      --wash:color-mix(in srgb,var(--tint) 20%,var(--field));
+    }
   }
-  :root[data-theme="dark"]{ --paper:#141A16; --cell:#1C2420; --line:#2C3830; --ink:#EAF0EA; --dim:#8FA096;
-    --pine:#7FBFA0; --tomato:#F0704F; --water:#6BAED2; --pollen:#E8B85A; --sage:#232E27; }
-  :root[data-theme="dark"] .cell .t{color:#AEC0B5}
+  :root[data-theme="dark"]{
+    --paper:#0F140F; --field:#19201A; --ink:#E7EEE4; --dim:#8B9A8C; --rule:#27302A;
+    --pine:#8FCBA9; --leaf:#7FBFA0; --tomato:#EF7355; --water:#7BB9DB; --pollen:#DDB059;
+    --shadow:0 2px 12px rgba(0,0,0,.3);
+    --wash:color-mix(in srgb,var(--tint) 20%,var(--field));
+  }
+
   *{box-sizing:border-box}
+  [hidden]{display:none!important}
   html,body{margin:0}
-  body{font:15px/1.45 "Avenir Next","Futura","Helvetica Neue",sans-serif;
-    background:var(--paper);color:var(--ink);-webkit-text-size-adjust:100%}
-  main{max-width:860px;margin:0 auto;padding:18px 14px 40vh}
+  body{background:var(--paper);color:var(--ink);font:15px/1.5 var(--ui);-webkit-text-size-adjust:100%}
+  button{font:inherit;color:inherit}
+  :focus-visible{outline:2px solid var(--leaf);outline-offset:2px}
+  .vhid{position:absolute;width:1px;height:1px;overflow:hidden;clip:rect(0 0 0 0)}
+  h1,h2,h3{margin:0;font-weight:600;letter-spacing:-.01em}
+
+  #root{container-type:inline-size;position:relative;margin:0 auto;background:var(--paper)}
+  #root.phone{max-width:392px;box-shadow:0 0 0 1px var(--rule)}
+  .page{max-width:1120px;margin:0 auto;padding:var(--s4) var(--s4) var(--s5)}
+  @container (max-width:899px){ .page{padding:var(--s3) var(--s3) var(--s4)} }
 
   /* ---- masthead ---- */
-  #topbar{position:sticky;top:0;z-index:15;background:var(--paper)}
-  #topbar.stuck{padding:12px 0 0;border-bottom:2px solid var(--pine)}
-  #topbar.stuck .mast{margin:0}
-  #topbar.stuck .kuu{font-size:22px}
-  #topbar.stuck .nav{margin:6px 0 0}
-  #topbar.stuck .tabs{margin:10px 0 12px}
-  #topbar.stuck .side{padding-bottom:0;font-size:11.5px}
-  .mast{display:flex;align-items:flex-end;justify-content:space-between;gap:10px;flex-wrap:wrap}
-  .kuu{font-family:"Futura","Avenir Next",sans-serif;font-weight:700;letter-spacing:.06em;
-    text-transform:uppercase;font-size:clamp(30px,7vw,52px);line-height:1;color:var(--pine)}
-  .kuu b{color:var(--tomato)}
-  .mast .side{text-align:right;font-size:12.5px;color:var(--dim);padding-bottom:6px;white-space:nowrap}
-  .mast .side .now{font-size:15px;color:var(--ink);font-weight:600}
-  .nav{display:flex;gap:6px;align-items:center;margin:10px 0 4px}
-  .nav button{border:1px solid var(--line);background:var(--cell);color:var(--ink);
-    border-radius:999px;width:34px;height:34px;font-size:16px;cursor:pointer;font-weight:700}
-  .nav .sub{font-size:12px;letter-spacing:.14em;text-transform:uppercase;color:var(--dim);margin-left:6px}
+  .mast{display:flex;align-items:baseline;gap:var(--s2);flex-wrap:wrap;margin-bottom:var(--s4)}
+  .mast h1{font-size:clamp(20px,3vw,25px);font-weight:600}
+  .mast .where{font-size:13px;color:var(--dim)}
+  .mast .fresh{margin-left:auto;font-size:12px;color:var(--dim);background:var(--field);
+    border-radius:var(--r-pill);padding:5px 11px;border:1px solid var(--rule)}
 
-  /* ---- calendar ---- */
-  .cal{margin-top:8px;border-top:2px solid var(--pine)}
-  .dow{display:grid;grid-template-columns:repeat(7,1fr);font-size:11px;letter-spacing:.12em;
-    text-transform:uppercase;color:var(--dim);padding:20px 0 8px;text-align:center}
-  .grid{display:grid;grid-template-columns:repeat(7,1fr);gap:5px}
-  .cell{min-height:74px;min-width:0;background:var(--cell);border:1px solid var(--line);border-radius:var(--radius);
-    padding:6px 7px;cursor:pointer;position:relative;transition:transform .08s ease}
-  @media(hover:hover){.cell:hover{transform:translateY(-1px)}}
-  .cell:focus-visible{outline:2px solid var(--pine);outline-offset:1px}
-  .cell.out{opacity:.32;background:transparent}
-  .cell.past{opacity:.55}
-  .cell.today{border:2px solid var(--pine);background:var(--sage)}
-  .cell.hot{border-color:var(--tomato)}
-  .cell.cold{border-color:var(--water)}
-  .cell .d{font-weight:700;font-size:13px}
-  .cell.today .d::after{content:"·tänään";font-size:9px;letter-spacing:.08em;color:var(--pine);
-    text-transform:uppercase;margin-left:3px}
-  .cell .meta{position:absolute;top:5px;right:6px;display:flex;flex-direction:column;align-items:flex-end;gap:0;line-height:1.05}
-  .cell .meta .wx{font-size:13px}
-  .cell .t{font-size:10.5px;color:var(--dim);font-weight:600}
-  .cell .t.warm{color:var(--tomato)}
-  .seeds{display:flex;flex-wrap:wrap;gap:3px;margin-top:6px}
-  .seed{width:9px;height:9px;border-radius:50%}
-  .seed.water{background:var(--water)}
-  .seed.pollen{background:var(--pollen)}
-  .seed.care{background:var(--pine)}
-  .seed.photo{background:transparent;border:2px solid var(--dim);border-radius:2px;width:8px;height:8px}
-  .seed.more{width:auto;height:auto;font-size:9px;color:var(--dim);line-height:9px}
-  @media(max-width:560px){.cell{min-height:58px;padding:4px 5px;border-radius:9px}
-    .cell .t{display:none}.grid{gap:3px}
-    /* narrow columns cannot fit the "tänään" label; the green frame already marks today */
-    .cell.today .d::after{display:none}
-    /* weather always on its own line under the nav row, same on every month */
-    .mast .side{flex-basis:100%;text-align:left}}
+  /* ---- a section is a card ---- */
+  .sect{background:var(--field);border:1px solid var(--rule);border-radius:var(--r-lg);
+    padding:var(--s4) var(--s4) var(--s5);margin-bottom:var(--s6);box-shadow:var(--shadow)}
+  .sect:last-child{margin-bottom:0}
+  .sect > .hd{display:flex;align-items:baseline;gap:var(--s2);flex-wrap:wrap;
+    padding-bottom:var(--s3);margin-bottom:var(--s4);border-bottom:2px solid var(--ink)}
+  .sect > .hd h2{font-size:21px;letter-spacing:-.02em}
+  .sect > .hd .meta{margin-left:auto;font-size:13px;color:var(--dim)}
+  .sect > .hd .meta b{font-weight:600;color:var(--tomato)}
+  /* a sub-heading inside a section: smaller, its own rule, its own air */
+  .sub{display:flex;align-items:baseline;gap:var(--s2);margin:var(--s5) 0 var(--s2);font-size:15px;
+    font-weight:600;color:var(--ink);padding-bottom:6px;border-bottom:1px solid var(--rule)}
+  .sub:first-of-type{margin-top:var(--s4)}
+  .sub .n{margin-left:auto;font-weight:400;font-size:12.5px;color:var(--dim)}
 
-  .legend{display:flex;gap:14px;flex-wrap:wrap;margin:22px 2px 6px;font-size:11.5px;color:var(--dim);
-    letter-spacing:.04em}
-  .legend span{display:inline-flex;align-items:center;gap:5px}
-  .calnote{font-size:12px;color:var(--dim);margin:8px 2px 0;font-style:italic}
+  /* ---- the nav: it governs the whole page, so it sits above the whole page ---- */
+  .nav{position:sticky;top:0;z-index:15;background:var(--paper);margin:0 0 var(--s4);
+    padding:var(--s2) 0;border-bottom:1px solid var(--rule)}
+  .strip{display:flex;gap:6px;overflow-x:auto;padding:2px;scrollbar-width:thin}
+  .chip{display:inline-flex;align-items:center;gap:8px;flex:none;border:1px solid var(--rule);
+    background:var(--field);border-radius:var(--r-pill);padding:5px 15px 5px 5px;cursor:pointer;
+    font-size:14px;white-space:nowrap}
+  .chip .av{width:30px;height:30px;flex:none;overflow:hidden;border-radius:var(--r-pill)}
+  .chip .av svg{width:100%;height:100%;display:block}
+  .chip:hover{border-color:var(--leaf)}
+  .chip[aria-pressed="true"]{background:var(--ink);color:var(--paper);border-color:var(--ink);font-weight:600}
+  .chip.all{padding:5px 17px}
 
-  /* ---- season chart ---- */
-  :root{--ph-grow:#93BFA3;--ph-flower:#D793A8;--ph-fruit:#E08A3C;--ph-harvest:var(--tomato)}
-  .season{margin-top:42px;border-top:2px solid var(--pine);padding-top:28px}
-  .season .cap{display:flex;justify-content:space-between;align-items:baseline}
-  .season .cap h2{margin:0;font-family:"Futura","Avenir Next",sans-serif;font-weight:700;
-    letter-spacing:.06em;text-transform:uppercase;font-size:16px;color:var(--pine)}
-  .season .cap span{font-size:11px;color:var(--dim);letter-spacing:.12em;text-transform:uppercase}
-  .ticks{position:relative;height:14px;margin:8px 0 2px 92px;font-size:10px;color:var(--dim)}
-  .ticks b{position:absolute;transform:translateX(-50%);font-weight:600}
-  .srow{display:flex;align-items:center;gap:8px;margin:5px 0;cursor:pointer;border-radius:8px;padding:2px 4px}
-  .srow .save{width:26px;height:26px;flex:none;border-radius:6px;overflow:hidden;border:1px solid var(--line)}
-  .srow .save svg{width:100%;height:100%;display:block}
-  @media(hover:hover){.srow:hover{background:var(--sage)}}
-  .srow:focus-visible{outline:2px solid var(--pine);outline-offset:1px}
-  .srow .lbl{width:104px;flex-shrink:0;font-size:11.5px;color:var(--ink);white-space:nowrap;
-    overflow:hidden;text-overflow:ellipsis;text-align:left}
-  .track{position:relative;flex:1;height:14px;background:var(--sage);border-radius:7px;overflow:hidden}
+  /* ---- the chart: one soft row per plant ---- */
+  .row{display:flex;align-items:center;gap:var(--s3);padding:11px 2px;width:100%;text-align:left;
+    border-top:1px solid var(--rule)}
+  .row.head,.row.axis{border-top:none;padding:2px}
+  .row.axis{border-top:1px solid var(--rule);padding-top:8px}
+  .row .art{width:40px;height:40px;flex:none;overflow:hidden;border-radius:var(--r-sm)}
+  .row .art svg{width:100%;height:100%;display:block}
+  .row .who{width:136px;flex:none;min-width:0}
+  .row .who b{display:block;font-size:14px;font-weight:600;white-space:nowrap;overflow:hidden;
+    text-overflow:ellipsis;letter-spacing:-.01em}
+  .row .who em{display:block;font-style:normal;font-size:12px;color:var(--dim);margin-top:2px}
+  .row .bars{flex:1 1 auto;min-width:88px}
+  .row .now{flex:0 0 clamp(168px,26%,280px);min-width:0;display:flex;gap:7px;align-items:flex-start}
+  .row .now .mk{flex:none;font-size:13px;line-height:1.35}
+  .row .now .txt{min-width:0;font-size:14px;line-height:1.35}
+  .row .now .txt em{display:block;font-style:normal;font-size:11.5px;color:var(--dim);margin-top:1px}
+  .row .now.bad .txt{color:var(--tomato);font-weight:600}
+  .row .now.watch .txt{color:var(--water)}
+  @keyframes settle{0%{transform:scale(1.01)}100%{transform:none}}
+  .row.touched{animation:settle .7s ease-out;background:color-mix(in srgb,var(--leaf) 10%,transparent)}
+
+  .track{position:relative;display:block;height:10px;background:color-mix(in srgb,var(--ink) 8%,transparent);
+    border-radius:var(--r-pill);overflow:hidden}
   .bar{position:absolute;top:0;height:100%}
   .bar.grow{background:var(--ph-grow)} .bar.flower{background:var(--ph-flower)}
   .bar.fruit{background:var(--ph-fruit)} .bar.harvest{background:var(--ph-harvest)}
-  .tline{position:absolute;top:-3px;bottom:-3px;width:2px;background:var(--ink);z-index:2}
-  .season .foot{font-size:11px;color:var(--dim);margin-top:9px;line-height:1.6}
-  .slegend{display:flex;gap:12px;flex-wrap:wrap;margin-top:8px;font-size:11px;color:var(--dim)}
-  .slegend i{display:inline-block;width:10px;height:10px;border-radius:3px;margin-right:4px;vertical-align:-1px}
+  .scale{position:relative;display:block;height:14px;font-size:11px;color:var(--dim)}
+  .scale b{position:absolute;transform:translateX(-50%);font-weight:400}
+  .scale b.today{color:var(--leaf);font-weight:600;transform:translateX(-4px)}
+  .legend{display:flex;gap:var(--s3);flex-wrap:wrap;margin-top:var(--s3);font-size:12px;color:var(--dim)}
+  .legend i{display:inline-block;width:18px;height:8px;border-radius:var(--r-pill);margin-right:6px;vertical-align:0}
 
-  /* ---- day sheet ---- */
-  #sheet-backdrop{position:fixed;inset:0;z-index:17;background:rgba(10,14,11,.5);
-    opacity:0;pointer-events:none;transition:opacity .22s ease}
-  #sheet-backdrop.on{opacity:1;pointer-events:auto}
-  body.noscroll{overflow:hidden}
-  .sheet{position:fixed;left:0;right:0;bottom:0;z-index:18;max-width:860px;margin:0 auto;background:var(--cell);
-    border-top:2px solid var(--pine);border-radius:18px 18px 0 0;max-height:90vh;max-height:90dvh;overflow-y:auto;
-    padding:14px 14px 26px;transform:translateY(105%);transition:transform .22s ease;
-    box-shadow:0 -8px 30px rgba(0,0,0,.18)}
-  .sheet.open{transform:none}
-  @media(prefers-reduced-motion:reduce){.cell,.sheet{transition:none}}
-  .sheet .head{display:flex;align-items:center;gap:12px}
-  .sheet .tt{flex:1;min-width:0}
-  .sheet h2{margin:0;font-size:17px;font-weight:700;letter-spacing:.02em}
-  .sheet .wx{font-size:12.5px;color:var(--dim);display:block;margin-top:1px}
-  .feat{width:72px;height:72px;border-radius:16px;overflow:hidden;flex-shrink:0;
-    background:var(--sage);cursor:pointer}
-  .feat img,.feat svg{width:100%;height:100%;object-fit:cover;display:block}
-  .realfig{margin:14px 0 0;width:100%}
-  .photos .realfig img.realph{width:100%;height:auto;max-height:240px;object-fit:cover;
-    border-radius:12px;border:1px solid var(--line)}
-  .realfig figcaption{font-size:11px;color:var(--dim);margin-top:4px}
-  .sheet .close{border:none;background:none;font-size:22px;color:var(--dim);cursor:pointer;padding:2px 6px}
-  .task{display:flex;gap:10px;align-items:flex-start;padding:10px 2px;border-bottom:1px solid var(--line)}
-  .task:last-of-type{border-bottom:none}
-  .task .ico{width:22px;text-align:center;font-size:15px;padding-top:1px}
+  /* ---- prose the model wrote ---- */
+  .lede{font-family:var(--prose);font-size:21px;line-height:1.35;margin:0 0 var(--s3);font-weight:400}
+  .lede .mk{margin-right:7px}
+  .lede.bad{color:var(--tomato)} .lede.watch{color:var(--water)}
+  p.prose{font-family:var(--prose);font-size:15.5px;line-height:1.6;margin:0 0 var(--s3);max-width:62ch}
+  .quote{font-style:italic;color:var(--dim);font-size:14.5px;line-height:1.5}
+  .data{font-size:12px;color:var(--dim)}
+
+  /* ---- lists you act on ---- */
+  .list{display:flex;flex-direction:column}
+  .task{display:flex;gap:var(--s2);align-items:flex-start;padding:13px 2px;
+    border-top:1px solid var(--rule)}
+  .task:first-child{border-top:none}
+  .task .mk{width:22px;flex:none;text-align:center;font-size:15px}
   .task .body{flex:1;min-width:0}
-  .task .what{font-weight:600;font-size:14.5px}
-  .task .why{font-size:12.5px;color:var(--dim);margin-top:1px}
-  .task .done-btn{border:1px solid var(--pine);color:var(--pine);background:none;border-radius:999px;
-    padding:5px 12px;font-weight:700;font-size:12px;cursor:pointer;white-space:nowrap}
-  .task.checked{opacity:.45}
-  .task.checked .done-btn{background:var(--pine);color:var(--paper)}
-  .task.alert .what{color:var(--tomato)}
-  .empty{color:var(--dim);padding:14px 2px;font-size:14px}
+  .task .what{font-size:14.5px;font-weight:600}
+  .task .whose{font-size:12px;color:var(--dim);display:block;margin-top:1px}
+  .task .why{display:block;font-size:13.5px;color:var(--dim);line-height:1.45;margin-top:4px;
+    font-family:var(--prose)}
+  .task.done{opacity:.45}
+  .task.added{background:color-mix(in srgb,var(--leaf) 9%,transparent);border-radius:var(--r-sm)}
+  .task.changed{background:color-mix(in srgb,var(--pollen) 12%,transparent);border-radius:var(--r-sm)}
+  .task.cut{opacity:.55}
+  .task.cut .what{text-decoration:line-through;text-decoration-color:var(--tomato)}
+  .flag{font-size:13px;font-weight:700;width:12px;flex:none;padding-top:1px}
+  .flag.add{color:var(--leaf)} .flag.chg{color:var(--pollen)} .flag.cut{color:var(--tomato)}
+  .tick{border:1px solid var(--leaf);color:var(--leaf);background:var(--field);border-radius:var(--r-pill);
+    font-size:12.5px;padding:7px 13px;cursor:pointer;white-space:nowrap;flex:none}
+  .task.done .tick{background:var(--leaf);color:var(--field);border-color:var(--leaf)}
 
-  /* ---- per-plant status + notes (in the plant guide sheet) ---- */
-  .status{padding:10px 2px;border-bottom:1px solid var(--line)}
-  .status:last-of-type{border-bottom:none}
-  .status .stat-name{font-weight:600;font-size:14.5px;margin-bottom:3px}
-  .status .stat-row{font-size:12.5px;color:var(--dim);margin:3px 0;display:flex;flex-wrap:wrap;align-items:center;gap:4px}
-  .status .stat-row label{display:flex;align-items:center;gap:4px;color:var(--ink)}
-  .status .stat-row select,.status .stat-row input[type=date]{font:inherit;font-size:12.5px;color:var(--ink);
-    background:var(--cell);border:1px solid var(--line);border-radius:6px;padding:2px 5px}
-  .status .issues{margin:4px 0;padding-left:18px;font-size:12.5px;color:var(--tomato)}
-  .status .obs{margin:4px 0;font-size:12.5px;color:var(--dim);font-style:italic}
-  .status .notes{margin-top:8px}
-  .status .notes>b{font-size:12px;letter-spacing:.06em;text-transform:uppercase;color:var(--dim)}
-  .note-add{display:flex;gap:6px;margin:6px 0}
-  .note-add .note-input{flex:1;min-width:0;font:inherit;font-size:13px;color:var(--ink);
-    background:var(--cell);border:1px solid var(--line);border-radius:8px;padding:6px 9px}
-  .note-add .note-save{border:1px solid var(--pine);color:var(--pine);background:none;border-radius:8px;
-    padding:6px 12px;font-weight:700;font-size:12.5px;cursor:pointer;white-space:nowrap}
-  .note-list{list-style:none;margin:0;padding:0}
-  .note-list li{display:flex;align-items:baseline;gap:6px;padding:5px 0;border-bottom:1px solid var(--line);font-size:13px}
-  .note-list li:last-child{border-bottom:none}
-  .note-list .note-date{color:var(--dim);font-size:11.5px;white-space:nowrap}
-  .note-list .note-text{flex:1;min-width:0}
-  .note-list .none{color:var(--dim);font-size:12.5px}
-  .note-edit,.note-del{border:none;background:none;color:var(--dim);cursor:pointer;font-size:13px;padding:2px 4px}
-  .photos{display:flex;gap:7px;flex-wrap:wrap;margin-top:12px}
-  .photos img{width:82px;height:82px;object-fit:cover;border-radius:10px;border:1px solid var(--line);cursor:pointer}
-  .addph{width:82px;height:82px;border-radius:10px;border:1.5px dashed var(--dim);background:none;
-    color:var(--dim);font-size:22px;cursor:pointer}
-  #viewer{position:fixed;inset:0;background:rgba(10,14,11,.88);display:none;z-index:20;
-    align-items:center;justify-content:center;flex-direction:column;gap:12px;padding:18px}
-  #viewer img{max-width:94vw;max-height:78vh;border-radius:12px}
-  #viewer button{border:1px solid var(--line);background:var(--cell);color:var(--ink);
-    border-radius:999px;padding:8px 16px;font-weight:700;cursor:pointer}
-  #viewer .vnav{position:absolute;top:50%;transform:translateY(-50%);width:46px;height:46px;padding:0;
-    font-size:24px;line-height:1;display:flex;align-items:center;justify-content:center}
-  #viewer #viewer-prev{left:12px} #viewer #viewer-next{right:12px}
-  #viewer .vnav:disabled{opacity:.28;cursor:default}
-  #picker,#coverpick{position:fixed;inset:0;background:rgba(10,14,11,.72);display:none;z-index:30;
-    align-items:flex-end;justify-content:center;padding:0}
-  #picker.open,#coverpick.open{display:flex}
-  .pk-card{background:var(--cell);width:100%;max-width:560px;border-radius:16px 16px 0 0;
-    padding:16px 16px 22px;max-height:80vh;overflow-y:auto;box-shadow:0 -8px 30px rgba(0,0,0,.3)}
-  .pk-head{display:flex;align-items:center;justify-content:space-between;font-weight:800;font-size:16px;margin-bottom:12px}
-  .pk-head button{border:none;background:none;color:var(--dim);font-size:24px;line-height:1;cursor:pointer}
-  .pk-grid{display:grid;grid-template-columns:repeat(auto-fill,minmax(84px,1fr));gap:9px}
-  .pk-grid button{border:1px solid var(--line);background:var(--paper);border-radius:11px;padding:8px 5px;
-    cursor:pointer;color:var(--ink);display:flex;flex-direction:column;align-items:center;gap:5px;font-size:11px;font-weight:600;text-align:center;line-height:1.15}
-  .pk-grid button .av{width:40px;height:40px;border-radius:9px;overflow:hidden;border:1px solid var(--line)}
-  .pk-grid button .av svg{width:100%;height:100%;display:block}
-  .pk-grid button.gen .av{display:flex;align-items:center;justify-content:center;font-size:20px;background:var(--sage)}
-  @media(hover:hover){.pk-grid button:hover{border-color:var(--pine)}}
-  .tabs{display:flex;gap:6px;margin:20px 0 18px;align-items:center;flex-wrap:wrap}
-  .nav .todaybtn{width:auto;height:34px;padding:0 14px;font-size:12px;letter-spacing:.04em;margin-left:2px}
-  .tabs button{border:1px solid var(--line);background:var(--cell);color:var(--dim);
-    border-radius:999px;padding:6px 16px;font-weight:700;font-size:13.5px;cursor:pointer}
-  .tabs button.on{background:var(--pine);border-color:var(--pine);color:#fff}
-  .foot-bar{margin-top:44px;padding:22px 2px 8px;border-top:1px solid var(--line);display:flex;justify-content:center}
-  .theme-switch{display:inline-flex;align-items:center;gap:11px;cursor:pointer;
-    font-size:11px;letter-spacing:.12em;text-transform:uppercase;font-weight:700;color:var(--dim);-webkit-user-select:none;user-select:none}
-  .theme-switch input{position:absolute;opacity:0;width:0;height:0;pointer-events:none}
-  .theme-switch .track{width:46px;height:26px;border-radius:999px;background:var(--line);
-    position:relative;transition:background .15s ease;flex:none}
-  .theme-switch .knob{position:absolute;top:3px;left:3px;width:20px;height:20px;border-radius:50%;
-    background:var(--cell);box-shadow:0 1px 3px rgba(0,0,0,.35);transition:transform .15s ease}
-  .theme-switch input:checked + .track{background:var(--pine)}
-  .theme-switch input:checked + .track .knob{transform:translateX(20px)}
-  .theme-switch input:focus-visible + .track{outline:2px solid var(--pine);outline-offset:2px}
+  /* ---- weather ---- */
+  .wx{padding:0 0 var(--s3);margin-bottom:var(--s3);border-bottom:1px solid var(--rule)}
+  .wx .read{display:flex;gap:var(--s3);align-items:baseline;flex-wrap:wrap;font-size:13px;color:var(--dim)}
+  .wx .read .deg{font-size:28px;font-weight:600;color:var(--ink);letter-spacing:-.02em}
+  .wx .read .deg.hot{color:var(--tomato)} .wx .read .cold{color:var(--water)}
+  .wx .warn{margin-top:var(--s2);background:color-mix(in srgb,var(--tomato) 10%,transparent);
+    border-radius:var(--r-sm);padding:10px var(--s3)}
+  .wx .warn.cold{background:color-mix(in srgb,var(--water) 12%,transparent)}
+  .wx .warn b{display:block;font-size:14px;font-weight:600;color:var(--tomato);margin-bottom:2px}
+  .wx .warn.cold b{color:var(--water)}
+  .wx .warn span{font-size:13.5px;color:var(--dim);line-height:1.45;font-family:var(--prose)}
+
+  /* ---- segmented control ---- */
+  .segs{display:flex;gap:3px;background:var(--paper);border-radius:var(--r-pill);padding:3px}
+  .segs button{border:none;background:none;color:var(--dim);font-size:13px;border-radius:var(--r-pill);
+    padding:6px 14px;cursor:pointer;min-height:32px}
+  .segs button[aria-selected="true"]{background:var(--field);color:var(--ink);font-weight:600;
+    box-shadow:var(--shadow)}
+
+  /* ---- month ---- */
+  .navrow{display:flex;align-items:center;gap:var(--s1);margin-bottom:var(--s3)}
+  .navrow button{border:1px solid var(--rule);background:var(--field);border-radius:var(--r-pill);
+    min-width:34px;height:34px;cursor:pointer;font-size:15px}
+  .navrow .lab{min-width:160px;text-align:center;font-size:15px;font-weight:600}
+  .dow{display:grid;grid-template-columns:repeat(7,1fr);font-size:11.5px;color:var(--dim);
+    text-align:center;padding-bottom:6px}
+  .grid{display:grid;grid-template-columns:repeat(7,1fr);gap:4px}
+  .cell{min-height:58px;background:var(--paper);border:1px solid transparent;border-radius:var(--r-sm);
+    padding:5px 6px;cursor:pointer;position:relative;text-align:left}
+  .cell:hover{border-color:var(--leaf)}
+  .cell.out{background:none;cursor:default}
+  .cell.past{opacity:.45}
+  .cell.today{background:color-mix(in srgb,var(--leaf) 14%,transparent);border-color:var(--leaf)}
+  .cell.hot{border-color:color-mix(in srgb,var(--tomato) 55%,transparent)}
+  .cell.cold{border-color:color-mix(in srgb,var(--water) 55%,transparent)}
+  .cell .d{font-size:12.5px;font-weight:600}
+  .cell .t{position:absolute;top:5px;right:6px;font-size:10.5px;color:var(--dim)}
+  .cell .t.warm{color:var(--tomato)}
+  .dots{display:flex;flex-wrap:wrap;gap:3px;margin-top:6px}
+  .dot{width:6px;height:6px;border-radius:var(--r-pill);display:inline-block}
+  .dot.water{background:var(--water)} .dot.pollen{background:var(--pollen)} .dot.care{background:var(--leaf)}
+  .dot.note{background:var(--ink)}
+  .dot.photo{background:none;box-shadow:inset 0 0 0 1.5px var(--dim)}
+
+  /* ---- journal ---- */
+  .day{display:flex;align-items:center;gap:var(--s2);margin:var(--s4) 0 var(--s2);font-size:13px;
+    font-weight:600;color:var(--dim)}
+  .day i{flex:1;height:1px;background:var(--rule)}
+  .day span:last-child{font-weight:400;font-size:12px}
+  .entry{padding:var(--s3) 0;border-top:1px solid var(--rule)}
+  .entry .said{font-family:var(--prose);font-size:16.5px;line-height:1.45;margin:0 0 var(--s2)}
+  .entry .read{display:flex;gap:var(--s2);align-items:flex-start;padding:8px 0 0;margin-top:6px}
+  .entry .read .art{width:32px;height:32px;flex:none;border-radius:var(--r-sm);overflow:hidden;background:var(--field)}
+  .entry .read .art svg{width:100%;height:100%;display:block}
+  .entry .read b{font-size:13.5px;font-weight:600;display:block}
+  .entry .read span{font-size:14px;line-height:1.45;font-family:var(--prose)}
+  .entry.live{border-left:3px solid var(--leaf);padding-left:var(--s3)}
+
+  /* ---- photos ---- */
+  .shots{display:grid;grid-template-columns:repeat(auto-fill,minmax(84px,1fr));gap:6px}
+  .shots button{padding:0;border:none;border-radius:var(--r-md);overflow:hidden;background:var(--wash);
+    cursor:pointer;aspect-ratio:1;position:relative;display:block}
+  .shots svg{width:100%;height:100%;display:block}
+  .shots .when{position:absolute;left:0;right:0;bottom:0;background:linear-gradient(to top,rgba(8,14,10,.62),transparent);
+    color:#fff;font-size:11px;padding:14px 5px 5px;text-align:center}
+  figure.ref{margin:var(--s3) 0 0}
+  figure.ref img{width:100%;max-height:210px;object-fit:cover;border-radius:var(--r-md);display:block}
+  figure.ref figcaption{font-size:12px;color:var(--dim);margin-top:6px}
+
+  /* ---- life ---- */
+  ul.life{list-style:none;margin:0;padding:0}
+  ul.life li{display:flex;gap:var(--s3);padding:9px 2px;border-top:1px solid var(--rule)}
+  ul.life li:first-child{border-top:none}
+  ul.life .when{flex:none;width:76px;font-size:12px;color:var(--dim);padding-top:2px}
+  ul.life .what{flex:1;min-width:0;font-size:14.5px;line-height:1.45}
+
+  .seasonstrip{padding:var(--s1) 0 var(--s3)}
+  .seasonstrip .track{margin:5px 0}
+  .note{padding:var(--s3) 0;border-top:1px solid var(--rule)}
+  .note .prose{margin-bottom:6px}
+  .note .prose:last-child{margin-bottom:0}
+  .dimmed{color:var(--dim)}
+  .lede em{display:block;font-style:normal;font-family:var(--ui);font-size:13px;color:var(--dim);margin-top:5px}
+  .none{color:var(--dim);font-size:14.5px;font-family:var(--prose);font-style:italic;padding:var(--s2) 0}
+
+  /* ---- the composer ---- */
+  .dock{margin:0 0 var(--s5)}
+  .dock .box{background:var(--field);border:1px solid var(--rule);border-radius:var(--r-lg);
+    overflow:hidden;transition:border-color .15s ease}
+  .dock:focus-within .box{border-color:var(--leaf);box-shadow:0 0 0 3px color-mix(in srgb,var(--leaf) 14%,transparent)}
+  .dock .top{display:flex;align-items:center;gap:var(--s2);padding:11px var(--s4);font-size:12.5px;color:var(--dim)}
+  .dock .top .tag{display:inline-flex;align-items:center;gap:6px;color:var(--ink);background:var(--wash);
+    border-radius:var(--r-pill);padding:3px 11px 3px 3px;max-width:52%;overflow:hidden;white-space:nowrap}
+  .dock .top .tag svg{width:20px;height:20px;border-radius:var(--r-pill)}
+  .dock .top .fold{margin-left:auto;border:none;background:none;color:var(--dim);cursor:pointer;
+    font-size:11px;padding:6px;min-width:28px;border-radius:var(--r-pill)}
+  .dock .in{padding:0 var(--s4) var(--s3)}
+  .dock textarea{width:100%;min-height:52px;resize:none;font:inherit;font-size:17px;color:var(--ink);
+    background:none;border:none;padding:0 0 var(--s2);transition:min-height .16s ease}
+  .dock textarea:focus{outline:none}
+  .dock:focus-within textarea,.dock.tall textarea{min-height:104px}
+  .dock .acts{display:flex;align-items:center;gap:var(--s2)}
+  .dock .acts .sp{flex:1}
+  .dock .acts button{border:1px solid var(--rule);background:var(--field);border-radius:var(--r-pill);
+    padding:8px 14px;cursor:pointer;font-size:13px}
+  .dock .acts .save{border-color:var(--leaf);color:var(--leaf)}
+  .dock .acts .save:disabled{opacity:.35;cursor:default}
+  .dock .acts .save.on{background:var(--leaf);color:#fff;border-color:var(--leaf)}
+  .dock.min .in{display:none}
+
+
+  /* ---- narrow: a plant line cannot hold four columns on a phone, so it stacks:
+         name and drawing, then how it is doing, then its year ---- */
+  @container (max-width:760px){
+    .row{flex-wrap:wrap;row-gap:7px;padding:11px var(--s3)}
+    .row .who{flex:1 1 auto;width:auto}
+    .row .now{flex:1 1 100%;order:3;padding-left:50px}
+    .row .bars{flex:1 1 100%;order:4;padding-left:50px}
+    .row.head,.row.axis{padding-top:0;padding-bottom:0}
+    .row.head .art,.row.head .who,.row.head .now,
+    .row.axis .art,.row.axis .who,.row.axis .now{display:none}
+    .row.head .bars,.row.axis .bars{padding-left:50px}
+    .sect{padding:var(--s3)}
+    .wx{padding:var(--s3)}
+  }
+
+  /* ---- the lock ---- */
+  #lock{position:fixed;inset:0;z-index:40;display:none;align-items:center;justify-content:center;
+    padding:var(--s4);background:color-mix(in srgb,var(--paper) 80%,transparent);backdrop-filter:blur(3px)}
+  #lock.on{display:flex}
+  .waiting{width:min(430px,100%);background:var(--field);border-radius:var(--r-lg);
+    padding:var(--s4) var(--s4) var(--s3);box-shadow:0 20px 54px rgba(16,32,22,.24)}
+  .waiting .said{font-family:var(--prose);font-size:17.5px;line-height:1.45;margin:0 0 var(--s3)}
+  .waiting .steps{display:flex;gap:5px;margin-bottom:var(--s2)}
+  .waiting .steps i{flex:1;height:5px;background:var(--paper);border-radius:var(--r-pill);
+    overflow:hidden;position:relative}
+  .waiting .steps i b{position:absolute;inset:0 auto 0 0;background:var(--leaf);border-radius:var(--r-pill)}
+  .waiting .stage{font-size:13px;font-weight:600;color:var(--leaf)}
+  .waiting .eta{font-size:12px;color:var(--dim);margin-top:2px}
+  .waiting .found{margin-top:var(--s3);display:flex;flex-direction:column;gap:5px}
+  .waiting .found .read{display:flex;gap:var(--s2);align-items:flex-start;padding:9px var(--s3);
+    background:var(--wash);border-radius:var(--r-sm)}
+  .waiting .found .art{width:30px;height:30px;flex:none;border-radius:var(--r-sm);overflow:hidden;background:var(--field)}
+  .waiting .found .art svg{width:100%;height:100%;display:block}
+  .waiting .found b{font-size:13.5px;font-weight:600;display:block}
+  .waiting .found span{font-size:14px;line-height:1.4;font-family:var(--prose)}
+  .waiting .out{margin-top:var(--s3);border:none;background:none;color:var(--dim);cursor:pointer;
+    font-size:12.5px;text-decoration:underline;padding:6px 0}
+  body.locked{overflow:hidden}
+  @media(prefers-reduced-motion:reduce){.row.touched{animation:none}}
+
+
+  /* ---- pieces the live site needs on top of the prototype's system ---- */
+  .chip.small{padding:6px 13px}
+  .chip.small .av{display:none}
+  .cshots{display:flex;gap:6px;flex-wrap:wrap;margin-bottom:var(--s2)}
+  .cshot{position:relative}
+  .cshot img{width:74px;height:74px;object-fit:cover;border-radius:var(--r-sm);display:block}
+  .cshot .rm{position:absolute;top:-7px;right:-7px;width:24px;height:24px;border-radius:var(--r-pill);
+    border:1px solid var(--rule);background:var(--field);cursor:pointer;font-size:13px;line-height:1;padding:0}
+  .shots button img{width:100%;height:100%;object-fit:cover;display:block}
+  .entry-acts{display:flex;gap:var(--s3);margin-top:var(--s2)}
+  .lnk{border:none;background:none;color:var(--dim);cursor:pointer;font-size:12.5px;
+    text-decoration:underline;padding:4px 0}
+  .lnk:hover{color:var(--leaf)}
+  .chips-row{display:flex;gap:6px;flex-wrap:wrap;align-items:center;margin-top:var(--s2)}
+  .note textarea{width:100%;min-height:74px;resize:vertical;font:inherit;font-size:15px;color:var(--ink);
+    background:var(--paper);border:1px solid var(--leaf);border-radius:var(--r-sm);padding:10px}
+  .foot{display:flex;align-items:center;gap:var(--s4);flex-wrap:wrap;padding:var(--s4) 2px 0;
+    border-top:1px solid var(--rule);margin-top:var(--s6)}
+  .theme-switch{display:inline-flex;align-items:center;gap:10px;cursor:pointer;font-size:12.5px;color:var(--dim)}
+  .theme-switch input{position:absolute;opacity:0;width:0;height:0}
+  .theme-switch .track2{width:42px;height:24px;border-radius:var(--r-pill);background:var(--rule);
+    position:relative;flex:none;transition:background .15s ease}
+  .theme-switch .knob{position:absolute;top:3px;left:3px;width:18px;height:18px;border-radius:50%;
+    background:var(--field);box-shadow:0 1px 3px rgba(0,0,0,.3);transition:transform .15s ease}
+  .theme-switch input:checked + .track2{background:var(--leaf)}
+  .theme-switch input:checked + .track2 .knob{transform:translateX(18px)}
   .theme-switch .tl.act{color:var(--ink)}
-  #view-gallery{padding-top:20px}
-  .gallery .cap{display:flex;justify-content:space-between;align-items:baseline;gap:10px;margin-bottom:4px}
-  .gallery .cap h2{margin:0;font-family:"Futura","Avenir Next",sans-serif;font-weight:700;
-    letter-spacing:.06em;text-transform:uppercase;font-size:16px;color:var(--pine)}
-  .gallery .cap #gallery-month{font-size:11px;color:var(--dim);letter-spacing:.12em;text-transform:uppercase}
-  .gallery .gp{border-top:1px solid var(--line);padding:24px 0 20px}
-  .gallery .gp:first-child{border-top:none}
-  .gallery .gh{display:flex;align-items:center;gap:13px;margin-bottom:11px}
-  .gallery .gh .av{width:52px;height:52px;border-radius:11px;overflow:hidden;flex:none;border:1px solid var(--line)}
-  .gallery .gh .av svg{width:100%;height:100%;display:block}
-  .gallery .gh h3{font-size:16px;margin:0;font-weight:700}
-  .gallery .gh .cnt{font-size:12px;color:var(--dim);margin-left:auto}
-  .strip{display:flex;flex-wrap:wrap;gap:16px 18px;align-items:flex-start}
-  .dgroup{display:flex;flex-direction:column;gap:7px;min-width:0;max-width:100%}
-  .dhead{display:flex;align-items:center;gap:8px;font-size:11.5px;font-weight:700;color:var(--dim);letter-spacing:.02em}
-  .dhead .dline{flex:1;height:1px;background:color-mix(in srgb,var(--line) 55%,transparent);position:relative}
-  .dhead .dline::before{content:"";position:absolute;left:0;top:50%;width:5px;height:5px;border-radius:50%;background:var(--pine);transform:translateY(-50%)}
-  .dimgs{display:flex;flex-wrap:wrap;gap:8px}
-  .dimgs img{width:84px;height:84px;object-fit:cover;border-radius:10px;border:1px solid var(--line);cursor:pointer;display:block}
-  .gallery .none{color:var(--dim);font-size:13px;font-style:italic;align-self:center;padding:0 4px}
-  /* whole-garden cover */
-  .hero{position:relative;margin-bottom:48px;border-radius:16px;overflow:hidden;border:1px solid var(--line)}
-  .hero.default{min-height:clamp(160px,34vw,260px);background:linear-gradient(135deg,#2E7D52,#93BFA3)}
-  .hero img{display:block;width:100%;height:clamp(160px,34vw,260px);object-fit:cover;cursor:pointer}
-  .hero .hero-cap{position:absolute;left:0;right:0;bottom:0;padding:30px 18px 14px;color:#fff;pointer-events:none;
-    background:linear-gradient(to top,rgba(8,12,9,.72),rgba(8,12,9,.15) 60%,transparent)}
-  .hero .hero-cap b{display:block;font-family:"Futura","Avenir Next",sans-serif;font-weight:800;
-    font-size:clamp(19px,4.4vw,26px);letter-spacing:.02em;line-height:1.05}
-  .hero .hero-cap span{font-size:12px;letter-spacing:.1em;text-transform:uppercase;opacity:.85}
-  .hero .hero-change{position:absolute;top:11px;right:11px;border:none;border-radius:999px;
-    background:rgba(8,12,9,.5);color:#fff;font-size:15px;padding:8px 11px;cursor:pointer;line-height:1;backdrop-filter:blur(3px)}
-  .cp-grid{display:grid;grid-template-columns:repeat(auto-fill,minmax(84px,1fr));gap:9px}
-  .cp-grid button{border:1px solid var(--line);background:var(--paper);border-radius:10px;overflow:hidden;
+  #lockbtn{border:1px solid var(--rule);background:var(--field);color:var(--dim);border-radius:var(--r-pill);
+    padding:7px 14px;font-size:12.5px;cursor:pointer}
+
+  /* ---- overlays kept from the live site, restyled ---- */
+  #viewer{position:fixed;inset:0;background:rgba(10,14,11,.92);display:none;z-index:30;
+    align-items:center;justify-content:center;flex-direction:column;gap:var(--s3);padding:var(--s4)}
+  #viewer.on{display:flex}
+  #viewer img{max-width:94vw;max-height:72vh;border-radius:var(--r-md)}
+  #viewer button{border:1px solid rgba(255,255,255,.25);background:rgba(255,255,255,.1);color:#fff;
+    border-radius:var(--r-pill);padding:10px 16px;font:inherit;font-size:13px;cursor:pointer}
+  #viewer .vnav{position:absolute;top:50%;transform:translateY(-50%);width:46px;height:46px;padding:0;
+    font-size:22px;display:flex;align-items:center;justify-content:center}
+  #viewer #viewer-prev{left:12px} #viewer #viewer-next{right:12px}
+  #viewer .vnav:disabled{opacity:.25;cursor:default}
+  #viewer .vcap{font-size:13px;color:#EAF0EA}
+  .modal{position:fixed;inset:0;background:rgba(10,14,11,.7);display:none;z-index:35;
+    align-items:flex-end;justify-content:center}
+  .modal.open{display:flex}
+  .modal.center{align-items:center}
+  .pk-card{background:var(--field);width:100%;max-width:560px;border-radius:var(--r-lg) var(--r-lg) 0 0;
+    padding:var(--s4);max-height:82vh;overflow-y:auto}
+  .pk-head{display:flex;align-items:center;justify-content:space-between;font-size:17px;font-weight:600;
+    margin-bottom:var(--s3)}
+  .pk-head button{border:none;background:none;color:var(--dim);font-size:23px;cursor:pointer;min-width:38px}
+  .pk-grid,.cp-grid{display:grid;grid-template-columns:repeat(auto-fill,minmax(88px,1fr));gap:var(--s2)}
+  .pk-grid button{border:1px solid var(--rule);background:var(--paper);border-radius:var(--r-md);padding:9px 6px;
+    cursor:pointer;display:flex;flex-direction:column;align-items:center;gap:6px;font-size:12px;text-align:center}
+  .pk-grid button .av{width:40px;height:40px;border-radius:var(--r-sm);overflow:hidden}
+  .pk-grid button .av svg{width:100%;height:100%;display:block}
+  .cp-grid button{border:1px solid var(--rule);background:var(--paper);border-radius:var(--r-md);overflow:hidden;
     cursor:pointer;padding:0;aspect-ratio:1;position:relative}
   .cp-grid .cp-photo img{width:100%;height:100%;object-fit:cover;display:block}
-  .cp-grid .cp-photo.sel{outline:3px solid var(--pine);outline-offset:-3px}
+  .cp-grid .cp-photo.sel{outline:3px solid var(--leaf);outline-offset:-3px}
   .cp-grid .cp-new,.cp-grid .cp-def{display:flex;flex-direction:column;align-items:center;justify-content:center;
-    gap:5px;color:var(--dim);font-size:10px;font-weight:600;text-align:center;line-height:1.2}
-  .cp-grid .cp-new span,.cp-grid .cp-def span.lbl{font-size:10px}
-  .cp-grid .cp-new{font-size:22px}
-  .cp-grid .cp-green{width:34px;height:34px;border-radius:8px;background:linear-gradient(135deg,#2E7D52,#93BFA3)}
-  @media(hover:hover){.cp-grid button:hover{border-color:var(--pine)}}
+    gap:6px;color:var(--dim);font-size:11px}
+  .cp-grid .cp-green{width:34px;height:34px;border-radius:var(--r-sm);background:linear-gradient(135deg,#2E7D52,#93BFA3)}
+  .unlock-card{max-width:400px;border-radius:var(--r-lg);margin:auto var(--s3);padding:var(--s4)}
+  .unlock-card h3{font-size:17px;margin-bottom:var(--s2)}
+  .unlock-card p{margin:0 0 var(--s3);font-size:14px;color:var(--dim);line-height:1.55}
+  .unlock-card input{width:100%;font:inherit;font-size:16px;color:var(--ink);background:var(--paper);
+    border:1px solid var(--rule);border-radius:var(--r-sm);padding:11px 12px}
+  .unlock-card .row2{display:flex;gap:var(--s2);justify-content:flex-end;margin-top:var(--s3)}
+  .unlock-card button{font:inherit;font-size:14px;border:1px solid var(--rule);background:var(--paper);
+    border-radius:var(--r-pill);padding:9px 16px;cursor:pointer}
+  .unlock-card button.go{border-color:var(--leaf);background:var(--leaf);color:#fff;font-weight:600}
+  #toasts{position:fixed;left:0;right:0;bottom:var(--s4);z-index:45;display:flex;flex-direction:column;
+    align-items:center;gap:var(--s2);pointer-events:none;padding:0 var(--s3)}
+  .toast{pointer-events:auto;background:var(--ink);color:var(--paper);border-radius:var(--r-pill);
+    padding:11px 18px;font-size:13.5px;display:flex;align-items:center;gap:var(--s3);max-width:520px;
+    box-shadow:0 6px 22px rgba(0,0,0,.3)}
+  .toast button{border:none;background:none;color:#9FE0BE;font-size:12.5px;cursor:pointer;padding:2px 4px}
 </style>
 </head>
 <body>
-<main>
-  <div id="hero"></div>
 
-  <div id="tb-top" aria-hidden="true"></div>
-  <div id="topbar">
-    <div class="mast">
-      <div>
-        <div class="kuu" id="kuu">Heinäkuu<b>.</b></div>
-        <div class="nav">
-          <button id="prev" aria-label="Previous month">‹</button>
-          <button id="next" aria-label="Next month">›</button>
-          <button id="today" class="todaybtn" hidden>Tänään</button>
-          <span class="sub" id="subtitle"></span>
-        </div>
-      </div>
-      <div class="side">Tampere · <span class="now" id="now-wx">—</span> <span class="now" id="plan-upd" hidden></span></div>
-    </div>
+<div id="root"><div class="page" id="page"></div></div>
+<div id="lock" role="dialog" aria-modal="true" aria-live="polite"></div>
 
-    <div class="tabs">
-      <button id="tab-cal" class="on" onclick="showTab('cal')">Kalenteri</button>
-      <button id="tab-gallery" onclick="showTab('gallery')">Kuvat</button>
-    </div>
-  </div>
-
-  <div id="view-cal">
-  <div class="cal">
-    <div class="dow"><span>Ma</span><span>Ti</span><span>Ke</span><span>To</span><span>Pe</span><span>La</span><span>Su</span></div>
-    <div class="grid" id="grid" role="grid"></div>
-  </div>
-  <div class="calnote" id="calnote"></div>
-
-  <div class="legend">
-    <span><i class="seed water" style="display:inline-block"></i> water</span>
-    <span><i class="seed pollen" style="display:inline-block"></i> pollinate</span>
-    <span><i class="seed care" style="display:inline-block"></i> feed / prune</span>
-    <span style="color:var(--tomato)">▢ red frame = heat, vent!</span>
-    <span style="color:var(--water)">▢ blue frame = cold night, close glazing</span>
-    <span><i class="seed photo" style="display:inline-block"></i> photo</span>
-  </div>
-
-  <section class="season">
-    <div class="cap"><h2>Kausi<span style="color:var(--tomato)">.</span></h2><span>Jun – Oct</span></div>
-    <div class="ticks" id="ticks"></div>
-    <div id="season-rows"></div>
-    <div class="slegend">
-      <span><i style="background:var(--ph-grow)"></i>growing</span>
-      <span><i style="background:var(--ph-flower)"></i>flowering</span>
-      <span><i style="background:var(--ph-fruit)"></i>fruiting</span>
-      <span><i style="background:var(--ph-harvest)"></i>harvest</span>
-      <span>▏today</span>
-    </div>
-    <div class="foot">Tap a plant row for its variety guide.</div>
-  </section>
-  </div><!-- /view-cal -->
-
-  <section id="view-gallery" class="gallery" hidden>
-    <div class="cap"><h2>Kuvat<span style="color:var(--tomato)">.</span></h2><span id="gallery-month"></span></div>
-    <div id="gallery-body"></div>
-  </section>
-
-  <footer class="foot-bar">
-    <label class="theme-switch">
-      <span class="tl" data-for="light">Vaalea</span>
-      <input type="checkbox" id="theme-toggle" role="switch" aria-label="Vaalea tai tumma teema">
-      <span class="track" aria-hidden="true"><span class="knob"></span></span>
-      <span class="tl" data-for="dark">Tumma</span>
-    </label>
-  </footer>
-</main>
-
-<div id="sheet-backdrop"></div>
-<div class="sheet" id="sheet" aria-live="polite">
-  <div class="head">
-    <div class="feat" id="sheet-feat" hidden></div>
-    <div class="tt">
-      <h2 id="sheet-title"></h2>
-      <span class="wx" id="sheet-wx"></span>
-    </div>
-    <button class="close" id="sheet-close" aria-label="Close">×</button>
-  </div>
-  <div id="sheet-tasks"></div>
-  <div class="photos" id="sheet-photos"></div>
+<div id="viewer" role="dialog" aria-modal="true" aria-label="Kuva">
+  <button id="viewer-prev" class="vnav" aria-label="Edellinen kuva">‹</button>
+  <img id="viewer-img" alt="">
+  <button id="viewer-next" class="vnav" aria-label="Seuraava kuva">›</button>
+  <div class="vcap" id="viewer-cap"></div>
+  <div><button id="ph-tag">Muuta</button> <button id="ph-del">Poista</button> <button id="ph-close">Sulje</button></div>
 </div>
 
-<div id="viewer">
-  <button id="viewer-prev" class="vnav" aria-label="Previous photo">‹</button>
-  <img id="viewer-img" alt="plant photo">
-  <button id="viewer-next" class="vnav" aria-label="Next photo">›</button>
-  <div>
-    <button id="ph-tag">Tag plant</button> <button id="ph-del">Delete</button> <button id="ph-close">Close</button></div>
+<div id="picker" class="modal" role="dialog" aria-modal="true" aria-label="Mikä kasvi?">
+  <div class="pk-card"><div class="pk-head"><span id="pk-title">Mikä kasvi?</span>
+    <button id="pk-cancel" aria-label="Sulje">×</button></div>
+    <div class="pk-grid" id="pk-grid"></div></div>
 </div>
-<div id="picker" role="dialog" aria-label="Which plant is this photo of?">
-  <div class="pk-card">
-    <div class="pk-head">Which plant is this?<button id="pk-cancel" aria-label="Cancel">×</button></div>
-    <div class="pk-grid" id="pk-grid"></div>
+
+<div id="coverpick" class="modal" role="dialog" aria-modal="true" aria-label="Kansikuva">
+  <div class="pk-card"><div class="pk-head"><span>Kansikuva</span>
+    <button id="cp-cancel" aria-label="Sulje">×</button></div>
+    <div class="cp-grid" id="cp-grid"></div></div>
+</div>
+
+<div id="unlock" class="modal center" role="dialog" aria-modal="true" aria-labelledby="unlock-h">
+  <div class="pk-card unlock-card">
+    <h3 id="unlock-h">Salasana</h3>
+    <p>Kuka tahansa voi lukea tätä puutarhaa, mutta vain sinä voit muuttaa sitä.
+       Salasana tallentuu vain tähän laitteeseen, joten se kysytään kerran.</p>
+    <input type="password" id="unlock-input" autocomplete="current-password" aria-label="Salasana">
+    <div class="row2"><button id="unlock-cancel">Peruuta</button><button id="unlock-go" class="go">Avaa</button></div>
   </div>
 </div>
-<div id="coverpick" role="dialog" aria-label="Valitse kansikuva">
-  <div class="pk-card">
-    <div class="pk-head">Valitse kansikuva<button id="cp-cancel" aria-label="Cancel">×</button></div>
-    <div class="cp-grid" id="cp-grid"></div>
-  </div>
-</div>
+
+<div id="toasts" role="status" aria-live="polite"></div>
 <input type="file" id="ph-input" accept="image/*" multiple hidden>
 
 <script src="garden-data.js"></script>
-<script>
+<script type="module">
+import { effectiveInterval, weatherAlerts, normalizeHealth } from './care-rules.js';
+
 /* ================= basics ================= */
 const $=s=>document.querySelector(s);
 const store={get:k=>JSON.parse(localStorage.getItem(k)||'null'),set:(k,v)=>localStorage.setItem(k,JSON.stringify(v))};
-let _pushTimer=null,_stateStamp=store.get('stateStamp')||0,_synced=false,_syncAsked=false;   // sync state, declared early: mergeSeed/save() run above the sync block below
+let _pushTimer=null,_stateStamp=store.get('stateStamp')||0,_synced=false;
 const TAMPERE={la:61.4981,lo:23.7610};
 const iso=d=>`${d.getFullYear()}-${String(d.getMonth()+1).padStart(2,'0')}-${String(d.getDate()).padStart(2,'0')}`;
 const todayISO=()=>iso(new Date());
 const addDays=(s,n)=>{const d=new Date(s);d.setDate(d.getDate()+n);return iso(d);};
 const dBetween=(a,b)=>Math.round((new Date(b)-new Date(a))/86400000);
 const KUUT=['Tammikuu','Helmikuu','Maaliskuu','Huhtikuu','Toukokuu','Kesäkuu','Heinäkuu','Elokuu','Syyskuu','Lokakuu','Marraskuu','Joulukuu'];
-const MON=['January','February','March','April','May','June','July','August','September','October','November','December'];
-const esc=s=>(s||'').replace(/[&<>"]/g,c=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;'}[c]));
+const VKO=['Su','Ma','Ti','Ke','To','Pe','La'];
+const esc=s=>(s||'').replace(/[&<>"']/g,c=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[c]));
+const shortDate=s=>{const d=new Date(s);return d.getDate()+'.'+(d.getMonth()+1)+'.';};
 
 /* ================= care knowledge ================= */
 const CARE={
- basilmint:{stages:['growing','harvesting'],care:{
+ basilmint:{care:{
    growing:{water:2,why:'Bed dries fast behind glass',
      weekly:[['care','Pinch basil tips','Above a leaf pair — bushy, no flowers. Trim mint back.'],
              ['care','Feed basil & mint','Liquid feed, every 2nd week is enough.']]},
    harvesting:{water:2,why:'Keep harvest coming',
      weekly:[['care','Harvest basil & mint','Basil from the top, mint outer stems. Pinch any flower buds.']]}}},
- chilli:{stages:['seedling','vegetative','flowering','fruiting'],care:{
+ chilli:{care:{
    seedling:{water:3,why:'Light water only — damping-off kills sprouts',
-     weekly:[['care','Rotate chilli pots','Stops leggy lean toward the glass. Pot up at 4–6 true leaves.']]},
+     weekly:[['care','Rotate pots','Stops leggy lean toward the glass. Pot up at 4–6 true leaves.']]},
    vegetative:{water:2,why:'Steady moisture while bulking up',
-     weekly:[['care','Feed chillies','Half-strength liquid feed weekly.']]},
+     weekly:[['care','Feed','Half-strength liquid feed weekly.']]},
    flowering:{water:2,why:'Even water so flowers hold',
-     daily:[['pollen','Tap chilli flowers','Midday — no bees behind glass.']],
-     weekly:[['care','Feed chillies high-K','Tomato feed works.']]},
+     daily:[['pollen','Tap the flowers','Midday — no bees behind glass.']],
+     weekly:[['care','Feed high-K','Tomato feed works.']]},
    fruiting:{water:1,why:'Dry spells make fruit drop',
-     weekly:[['care','Feed chillies','High-K weekly while fruiting.']]}}},
- tomato:{stages:['seedling','vegetative','flowering','fruiting'],care:{
+     weekly:[['care','Feed','High-K weekly while fruiting.']]}}},
+ tomato:{care:{
    seedling:{water:2,why:'Even moisture',weekly:[]},
    vegetative:{water:2,why:'Big leaves, big thirst',
-     weekly:[['care','Tomato: side shoots + ties','Snap armpit shoots, tie main stem higher.']]},
+     weekly:[['care','Side shoots + ties','Snap armpit shoots, tie main stem higher.']]},
    flowering:{water:1,why:'Uneven water now = blossom end rot later',
-     daily:[['pollen','Shake tomato flower trusses','Midday. No bees, no wind behind glass — no shake, no fruit. Vent hard: pollen sterile over ~32°C.']],
-     weekly:[['care','Tomato feed (high-K)','Weekly from first flowers.'],
-             ['care','Tomato: side shoots + ties','Keep the 1 m stem supported.']]},
+     daily:[['pollen','Shake the flower trusses','Midday. No bees, no wind behind glass — no shake, no fruit. Vent hard: pollen sterile over ~32°C.']],
+     weekly:[['care','Feed high-K','Weekly from first flowers.'],
+             ['care','Side shoots + ties','Keep the 1 m stem supported.']]},
    fruiting:{water:1,why:'Never bone-dry — fruit splits',
-     weekly:[['care','Tomato feed (high-K)','Weekly.'],
+     weekly:[['care','Feed high-K','Weekly.'],
              ['care','Tidy lower leaves','Below lowest truss — airflow against mildew.']]}}},
- chives:{stages:['growing','harvesting'],care:{
+ chives:{care:{
    growing:{water:3,why:'Easy — top 2 cm dry, then water',weekly:[]},
    harvesting:{water:3,why:'Cut & come again',
-     weekly:[['care','Harvest chives','Cut whole leaves 2 cm above soil — regrows fast.']]}}},
- springonion:{stages:['growing','harvesting'],care:{
+     weekly:[['care','Harvest','Cut whole leaves 2 cm above soil — regrows fast.']]}}},
+ springonion:{care:{
    growing:{water:2,why:'Shallow roots, dry fast in glazed heat',
-     weekly:[['care','Re-sow spring onions','A pinch every ~3 weeks keeps supply steady.']]},
+     weekly:[['care','Re-sow','A pinch every ~3 weeks keeps supply steady.']]},
    harvesting:{water:2,why:'Keep moist to the end',
-     weekly:[['care','Pull thickest spring onions','Or cut 3 cm above base to regrow.']]}}},
- parsley:{stages:['growing','harvesting'],care:{
+     weekly:[['care','Pull the thickest','Or cut 3 cm above base to regrow.']]}}},
+ parsley:{care:{
    growing:{water:3,why:'Even moisture; bolts in heat — shade on 30°C days',weekly:[]},
    harvesting:{water:3,why:'Outer stems only',
-     weekly:[['care','Harvest parsley outer stems','Cut at the base, centre keeps producing.']]}}},
- monstera:{stages:['settling','established'],care:{
+     weekly:[['care','Harvest outer stems','Cut at the base, centre keeps producing.']]}}},
+ monstera:{care:{
    settling:{water:7,why:'Newly bought — let top 3–4 cm dry first; no feed or repot yet',
-     weekly:[['care','Monstera check','Bright indirect spot, away from draughts/radiators. Wipe dust off leaves.']]},
+     weekly:[['care','Check the spot','Bright indirect light, away from draughts/radiators. Wipe dust off leaves.']]},
    established:{water:7,why:'Top 3–4 cm dry before watering',
-     weekly:[['care','Feed monstera','Balanced feed monthly in season; give the aerial roots something to climb.']]}}},
- hedera:{stages:['settling','established'],care:{
+     weekly:[['care','Feed','Balanced feed monthly in season; give the aerial roots something to climb.']]}}},
+ hedera:{care:{
    settling:{water:5,why:'Steady (not heavy) water while roots establish; top 2–3 cm dry first',
-     weekly:[['care','Ivy check','Happy in the shady corner. Watch under leaves — spider mites love dry glazed air.']]},
+     weekly:[['care','Check the leaves','Happy in the shady corner. Watch under leaves — spider mites love dry glazed air.']]},
    established:{water:6,why:'Let surface dry between waterings',
-     weekly:[['care','Trim ivy','Cut wandering vines to shape — regrows from any node. Stays out all winter, hardy to −10°C.']]}}},
- raspberry:{stages:['settling','fruiting','dormant'],care:{
+     weekly:[['care','Trim','Cut wandering vines to shape — regrows from any node. Hardy to −10°C.']]}}},
+ raspberry:{care:{
    settling:{water:2,why:'New pot behind glass dries fast — keep evenly moist, top 2–3 cm dry, never waterlogged',
-     weekly:[['care','Tie in raspberry canes','Loosely tie new canes to a support/cane so wind and glass heat don\'t snap them. Steady water while roots take hold.'],
-             ['care','Feed raspberries','Half-strength liquid feed weekly while establishing. Watch leaf undersides for spider mites in dry glazed air.']]},
+     weekly:[['care','Tie in the canes','Loosely tie new canes to a support so wind and glass heat do not snap them.'],
+             ['care','Feed','Half-strength liquid feed weekly while establishing. Watch leaf undersides for spider mites.']]},
    fruiting:{water:1,why:'Even water while berries swell — dry spells shrink fruit',
-     daily:[['pollen','Tap raspberry flowers','Midday — few bees behind glass. Berries drop free when dead-ripe.']],
-     weekly:[['care','Pick raspberries','Pick every 2–3 days — ripe ones spoil fast. High-K feed weekly.']]},
+     daily:[['pollen','Tap the flowers','Midday — few bees behind glass. Berries drop free when dead-ripe.']],
+     weekly:[['care','Pick the berries','Every 2–3 days — ripe ones spoil fast. High-K feed weekly.']]},
    dormant:{water:7,why:'Barely water over winter — hardy, stays out on the balcony',
-     weekly:[['care','Cut fruited raspberry canes','After fruiting, cut spent (2nd-year) canes to the ground; keep this year\'s new canes for next summer.']]}}},
- garlic:{stages:['sprouting','bulbing','ready'],care:{
+     weekly:[['care','Cut the fruited canes','After fruiting, cut spent (2nd-year) canes to the ground; keep this year\'s new canes.']]}}},
+ garlic:{care:{
    sprouting:{water:5,why:'Sparse — wet rots the clove',weekly:[]},
    bulbing:{water:5,why:'Too wet rots the bulb; keep it in the coolest corner',
-     weekly:[['care','Garlic leaf check','Half the leaves yellow → stop watering, nearly ready.']]},
+     weekly:[['care','Check the leaves','Half the leaves yellow → stop watering, nearly ready.']]},
    ready:{water:99,why:'Done drinking',
-     weekly:[['care','Lift the garlic?','Half+ leaves brown → lift, dry 2 weeks somewhere airy.']]}}}
+     weekly:[['care','Lift the bulb?','Half+ leaves brown → lift, dry 2 weeks somewhere airy.']]}}}
 };
 const careOf=p=>(CARE[p.species]?.care[p.stage])||{water:3,why:'',weekly:[],daily:[]};
-const intervalOf=p=>p.intervalOverride||careOf(p).water;
+const baseInterval=p=>p.intervalOverride||careOf(p).water;
 
 /* ================= state ================= */
 let state=store.get('garden2')||{seedVersion:0,plants:[]};
@@ -460,8 +524,8 @@ let state=store.get('garden2')||{seedVersion:0,plants:[]};
   if(seed.version>state.seedVersion){
     seed.plants.forEach(sp=>{
       const ex=state.plants.find(p=>p.id===sp.id);
-      if(ex){ex.name=sp.name;ex.species=sp.species;ex.note=sp.note||ex.note;
-        if(sp.water)ex.last=sp.water;                    // "watered on this day" from the seed
+      if(ex){ex.name=sp.name;ex.species=sp.species;ex.area=sp.area;ex.note=sp.note||ex.note;
+        if(sp.water)ex.last=sp.water;
         if(sp.stage&&sp.stage!==ex.stage){ex.stage=sp.stage;(ex.history=ex.history||[]).push({date:todayISO(),stage:sp.stage});}}
       else{const {water,...rest}=sp;state.plants.push({...rest,last:water||todayISO(),history:[{date:todayISO(),stage:sp.stage}]});}
     });
@@ -469,59 +533,99 @@ let state=store.get('garden2')||{seedVersion:0,plants:[]};
     state.seedVersion=seed.version;save();
   }
 })();
-(function resetTasks(){                    // clear the backlog: mark every plant watered today so nothing shows overdue
+(function resetTasks(){
   const seed=window.GARDEN_SEED;if(!seed||!seed.resetTasksOn)return;
   if(state.resetTasksOn!==seed.resetTasksOn){
     const T=todayISO();
     state.plants.forEach(p=>{p.last=T;});
     state.resetTasksOn=seed.resetTasksOn;
-    store.set('prevWater',{});             // drop stale un-check stashes
-    store.set('doneLog',{});               // clear old done marks
+    store.set('prevWater',{});store.set('doneLog',{});
     save();
   }
 })();
 function save(){store.set('garden2',state);pushState();}
-let doneLog=store.get('doneLog')||{};   // {"2026-07-16":["taskkey",...]}
+let doneLog=store.get('doneLog')||{};
 
-/* ================= server status (plant condition: stage/last/intervalOverride) ================= */
+/* ================= server docs ================= */
 let statusDoc=store.get('statusDoc')||{updatedAt:0,plants:{}};
-async function loadStatus(){
-  try{
-    const r=await fetch('/api/status',{cache:'no-store'});
-    if(r.ok){statusDoc=await r.json();store.set('statusDoc',statusDoc);}
-  }catch(e){/* offline: keep cached */}
-}
 let planDoc=store.get('planDoc')||null;
+let entriesDoc=store.get('entriesDoc')||{updatedAt:0,entries:[]};
+
+async function loadStatus(){
+  try{const r=await fetch('/api/status',{cache:'no-store'});
+    if(r.ok){statusDoc=await r.json();store.set('statusDoc',statusDoc);}}catch(e){}
+}
 async function loadPlan(){
   try{const r=await fetch('/api/plan',{cache:'no-store'});
-    if(r.ok){const d=await r.json();planDoc=(d&&d.plants)?d:null;store.set('planDoc',planDoc);}}
-  catch(e){/* keep cached */}
+    if(r.ok){const d=await r.json();planDoc=(d&&d.plants)?d:null;store.set('planDoc',planDoc);}}catch(e){}
+}
+async function loadEntries(){
+  try{const r=await fetch('/api/entries',{cache:'no-store'});
+    if(r.ok){entriesDoc=await r.json();store.set('entriesDoc',entriesDoc);}}catch(e){}
 }
 function relTime(ms){if(!ms)return'';
   const s=Math.round((Date.now()-ms)/1000);
   if(s<90)return'just now';if(s<3600)return Math.round(s/60)+' min ago';
   if(s<86400)return Math.round(s/3600)+' h ago';return Math.round(s/86400)+' d ago';}
-let _planPoll=null;
-function refreshPlanSoon(){clearTimeout(_planPoll);
-  _planPoll=setTimeout(async()=>{await loadStatus();await loadPlan();render();},4000);}
-async function seedStatus(){                       // upsert seeded plants the server doesn't have yet, once per seed version
+
+/* The distiller takes a few seconds; poll until the entry stops being pending.
+   Redraw the open sheet too — that is where the entry the user just wrote is shown. */
+const typing=()=>{const a=document.activeElement;
+  return !!a&&(a.tagName==='TEXTAREA'||a.tagName==='INPUT');};
+function flashPlant(pid){touched.add(pid);setTimeout(()=>{touched.delete(pid);renderAll();},2600);}
+function refreshUI(){renderAll();}
+let _poll=null,busy='';
+/* Saving kicks off two model calls back to back: the distiller sorts the note,
+   then the planner rebuilds the schedule. Watch for BOTH, or the task list stops
+   refreshing seconds before the new plan actually arrives. */
+function refreshSoon(){
+  clearTimeout(_poll);
+  const planBefore=planDoc&&planDoc.generatedAt;
+  let n=0;
+  setBusy('read');
+  const tick=async()=>{
+    const wasPending=entriesDoc.entries.filter(e=>e.status==='pending').map(e=>e.id);
+    await Promise.all([loadStatus(),loadPlan(),loadEntries()]);
+    refreshUI();
+    const landed=entriesDoc.entries.filter(e=>wasPending.includes(e.id)&&e.status==='sorted');
+    landed.forEach(e=>(e.assigned||[]).forEach(a=>flashPlant(a.plantId)));
+
+    const pending=entriesDoc.entries.some(e=>e.status==='pending');
+    const planFresh=(planDoc&&planDoc.generatedAt)!==planBefore;
+    const stuck=entriesDoc.entries.some(e=>wasPending.includes(e.id)&&e.status==='unsorted');
+    if((!pending&&planFresh)||stuck||++n>=20){setBusy('');renderAll();return;}   // ~60s ceiling
+    setBusy(pending?'read':'plan');
+    _poll=setTimeout(tick,3000);
+  };
+  _poll=setTimeout(tick,2500);
+}
+/* One state for the whole page while the two model calls run: everything on
+   screen is about to be replaced, so nothing may be touched until it is. */
+function setBusy(label){
+  busy=label;
+  if(label&&!busyAt)busyAt=Date.now();
+  if(!label)busyAt=0;
+  renderLock();
+}
+/* Give the server a record for any plant it has never seen. Place is not sent:
+   the Worker reads garden-data.js itself, so it is right without a browser. */
+async function seedStatus(){
   const seed=window.GARDEN_SEED;if(!seed)return;
   if(store.get('statusSeedVersion')===seed.version)return;
+  if(!store.get('uploadPass'))return;                       // visitors never write
   for(const sp of seed.plants){
-    const cur=statusDoc.plants[sp.id];
-    if(cur&&cur.stage)continue;                     // already present
     await api('/api/status/'+encodeURIComponent(sp.id)+'?seed=1',{
-      method:'PUT',
-      headers:{'content-type':'application/json'},
-      body:JSON.stringify({name:sp.name,species:sp.species,stage:sp.stage,lastWatered:sp.water||todayISO()}),
+      method:'PUT',headers:{'content-type':'application/json'},
+      body:JSON.stringify({name:sp.name,species:sp.species,
+        ...(statusDoc.plants[sp.id]?.stage?{}:{stage:sp.stage,lastWatered:sp.water||todayISO()})}),
     });
   }
   store.set('statusSeedVersion',seed.version);
   await loadStatus();
 }
 
-/* ================= weather (Tampere, auto) ================= */
-let forecast=store.get('forecastT3');   // T3: daily records now carry rh (mean humidity)
+/* ================= weather ================= */
+let forecast=store.get('forecastT3');
 async function loadWx(){
   try{
     const u=`https://api.open-meteo.com/v1/forecast?latitude=${TAMPERE.la}&longitude=${TAMPERE.lo}`+
@@ -531,422 +635,84 @@ async function loadWx(){
     forecast={fetched:todayISO(),nowT:d.current.temperature_2m,rh:d.current.relative_humidity_2m,
       days:Object.fromEntries(d.daily.time.map((t,i)=>[t,{tmax:d.daily.temperature_2m_max[i],tmin:d.daily.temperature_2m_min[i],pop:d.daily.precipitation_probability_max[i],rh:d.daily.relative_humidity_2m_mean?.[i]}]))};
     store.set('forecastT3',forecast);
-  }catch(e){/* offline: keep old forecast */}
-  render();
+  }catch(e){}
+  renderAll();
 }
 const wxOf=date=>forecast?.days?.[date];
 const wxIcon=w=>!w?'':w.pop>=60?'🌧️':w.pop>=30?'🌦️':w.tmax>=27?'☀️':w.tmax>=18?'⛅':'☁️';
-const heatFactor=t=>t>=32?0.5:t>=28?0.65:t>=24?0.8:1;
-const weeklyIco=w=>/feed/i.test(w)?'🍽️':/re-sow|sow/i.test(w)?'🌱':/harvest|lift|pull/i.test(w)?'🧺'
-  :/rotate/i.test(w)?'🔄':/check/i.test(w)?'🔍':/pinch|shoot|trim|tidy|prune|leaf/i.test(w)?'✂️':'🌿';
+const weeklyIco=w=>/feed/i.test(w)?'🍽️':/re-sow|sow/i.test(w)?'🌱':/harvest|lift|pull|pick/i.test(w)?'🧺'
+  :/rotate/i.test(w)?'🔄':/check/i.test(w)?'🔍':/pinch|shoot|trim|tidy|prune|leaf|cane/i.test(w)?'✂️':'🌿';
 
-/* ================= task engine ================= */
-function plantsForRender(){                         // plant condition (stage/last/intervalOverride) from statusDoc, falling back to the seed
+/* ================= plants ================= */
+/* Condition comes from the server; identity and place come from the seed. */
+function plants(){
   const seed=window.GARDEN_SEED;if(!seed)return[];
   return seed.plants.map(sp=>{
     const s=statusDoc.plants[sp.id]||{};
-    return{
-      id:sp.id,name:sp.name,species:sp.species,
-      stage:s.stage||sp.stage,
-      last:s.lastWatered||sp.water||todayISO(),
-      intervalOverride:s.intervalOverride,
-    };
+    const p={id:sp.id,name:sp.name,species:sp.species,area:sp.area||'balcony',
+      stage:s.stage||sp.stage,last:s.lastWatered||sp.water||todayISO(),
+      intervalOverride:s.intervalOverride,health:normalizeHealth(s.health),
+      observations:s.observations,notes:s.notes||[]};
+    p.interval=baseInterval(p);
+    return p;
   });
 }
-/* returns Map isoDate -> [{cat,ico,what,why,key,plantId?}] for [today .. horizon] */
+const plantById=id=>plants().find(p=>p.id===id);
+const AREA_LABEL={balcony:'Parvekkeella',indoor:'Sisällä'};
+
+/* ================= task engine ================= */
+/* tasks[date] = { alerts:[…], groups:[{plant, tasks:[…]}] } */
+let tasks={},photoDates=new Set();
 function buildTasks(horizonISO){
-  const map={};const T=todayISO();
-  const push=(date,t)=>{(map[date]=map[date]||[]).push(t);};
-  plantsForRender().forEach(p=>{
+  const byDate={};const T=todayISO();
+  const list=plants();
+  const add=(date,plant,t)=>{
+    const d=byDate[date]=byDate[date]||{alerts:[],groups:[]};
+    let g=d.groups.find(x=>x.plant.id===plant.id);
+    if(!g){g={plant,tasks:[]};d.groups.push(g);}
+    g.tasks.push({...t,pid:plant.id});
+  };
+  list.forEach(p=>{
     const planDays=(planDoc&&planDoc.plants&&planDoc.plants[p.id])||null;
     const through=planDoc&&planDoc.through;
-    const covered=(d)=>!!(planDays&&through&&d<=through&&planDays[d]);
+    const covered=d=>!!(planDays&&through&&d<=through&&planDays[d]);
     let last=p.last;
     for(let d=T;d<=horizonISO;d=addDays(d,1)){
-      if(covered(d)){planDays[d].forEach(t=>push(d,{...t,plantId:p.id}));continue;}
-      const f=wxOf(d)?heatFactor(wxOf(d).tmax):1;
-      const eff=Math.max(1,Math.round(intervalOf(p)*f));
+      if(covered(d)){planDays[d].forEach(t=>add(d,p,t));continue;}
+      const eff=effectiveInterval(p,wxOf(d));
       if(dBetween(last,d)>=eff){
         const over=d===T&&dBetween(last,d)>eff;
-        push(d,{cat:'water',ico:'💧',what:`Water ${p.name}`+(over?' (overdue)':''),
-          why:careOf(p).why,key:'w|'+p.id,plantId:p.id});
+        add(d,p,{cat:'water',ico:'💧',what:'Water'+(over?' (overdue)':''),why:careOf(p).why,key:'w|'+p.id});
         last=d;
       }
     }
-    // if today's watering was already marked done, keep it visible (rendered checked) instead of vanishing
-    if(T<=horizonISO&&(doneLog[T]||[]).includes('w|'+p.id)&&!(map[T]||[]).some(t=>t.key==='w|'+p.id))
-      push(T,{cat:'water',ico:'💧',what:`Water ${p.name}`,why:careOf(p).why,key:'w|'+p.id,plantId:p.id});
+    if(T<=horizonISO&&(doneLog[T]||[]).includes('w|'+p.id)){
+      const g=(byDate[T]||{groups:[]}).groups.find(x=>x.plant.id===p.id);
+      if(!g||!g.tasks.some(t=>t.key==='w|'+p.id))
+        add(T,p,{cat:'water',ico:'💧',what:'Water',why:careOf(p).why,key:'w|'+p.id});
+    }
     const c=careOf(p);
     (c.daily||[]).forEach(([cat,what,why])=>{
       for(let d=T;d<=horizonISO;d=addDays(d,1))
-        if(!covered(d))push(d,{cat,ico:cat==='pollen'?'✋':'🌱',what,why,key:cat+'|'+p.id+'|'+what});
+        if(!covered(d))add(d,p,{cat,ico:cat==='pollen'?'✋':'🌱',what,why,key:cat+'|'+p.id+'|'+what});
     });
     (c.weekly||[]).forEach(([cat,what,why])=>{
       for(let d=T;d<=horizonISO;d=addDays(d,1))
-        if(!covered(d)&&new Date(d).getDay()===0)push(d,{cat,ico:weeklyIco(what),what,why,key:'wk|'+p.id+'|'+what});
+        if(!covered(d)&&new Date(d).getDay()===0)add(d,p,{cat,ico:weeklyIco(what),what,why,key:'wk|'+p.id+'|'+what});
     });
   });
-  // dedupe identical daily tasks (both tomatoes → one line)
-  for(const d in map){
-    const seen={};map[d]=map[d].filter(t=>{if(t.cat==='water')return true;
-      if(seen[t.what])return false;seen[t.what]=1;return true;});
-    const wx=wxOf(d);
-    if(wx&&wx.tmax>=27)map[d].unshift({cat:'alert',ico:'🔥',
-      what:`${Math.round(wx.tmax)}°C — vent by noon`,
-      why:'Glazed balcony bakes. Shade parsley + chilli sprouts; tomato pollen dies over ~32°C.',key:'heat|'+d});
-    if(wx&&wx.tmin<=10)map[d].unshift({cat:'alert',ico:'❄️',
-      what:`Cold night ~${Math.round(wx.tmin)}°C — close the glazing`,
-      why:'Tomato fruit-set stalls near 10°C; chilli sprouts sulk under 12°C. Tuck tender pots against the house wall.',key:'cold|'+d});
-  }
-  return map;
+  for(const d in byDate)byDate[d].alerts=weatherAlerts(d,wxOf(d),list);
+  return byDate;
 }
+const dayOf=date=>tasks[date]||{alerts:[],groups:[]};
+const flatTasks=date=>dayOf(date).groups.flatMap(g=>g.tasks);
 
-/* ================= calendar render ================= */
-let view=(()=>{const n=new Date();return{y:n.getFullYear(),m:n.getMonth()};})();
-let tasks={},photoDates=new Set(),openDate=null;
+/* ================= avatars ================= */
+const KEY_BY_ID={};
+const avatarFor=pid=>ART[KEY_BY_ID[pid]]||'<span aria-hidden="true">🪴</span>';
+const dayLabel=s=>`${VKO[new Date(s).getDay()]} ${shortDate(s)}`;
 
-function render(){
-  const T=todayISO();
-  const first=new Date(view.y,view.m,1);
-  const daysIn=new Date(view.y,view.m+1,0).getDate();
-  const lead=(first.getDay()+6)%7;                     // Monday-first
-  const horizon=iso(new Date(view.y,view.m+1,7));
-  tasks=buildTasks(horizon>addDays(T,60)?addDays(T,60):horizon);
-
-  $('#kuu').innerHTML=`${KUUT[view.m]}<b>.</b>`;
-  $('#subtitle').textContent=`${MON[view.m]} ${view.y}`;
-  const now=new Date();$('#today').hidden=(view.y===now.getFullYear()&&view.m===now.getMonth());   // show only when off the current month
-  const tw=wxOf(todayISO());
-  $('#now-wx').innerHTML=forecast
-    ?`<span title="${tw?`High ${Math.round(tw.tmax)}° / low ${Math.round(tw.tmin)}° · rain ${tw.pop}% today, outside the glass`:'weather'}">${wxIcon(tw)||'🌡️'}</span> ${Math.round(forecast.nowT)}° now · <span title="Relative humidity: how much moisture the air holds, 0 to 100%. High = muggy, slow drying; low = plants dry out fast.">${forecast.rh}% RH</span>`
-    :'loading weather…';
-  const pu=$('#plan-upd');
-  if(planDoc&&planDoc.generatedAt){pu.hidden=false;pu.textContent=`Päivitetty / updated ${relTime(planDoc.generatedAt)}`;}
-  else pu.hidden=true;
-
-  let html='';
-  for(let i=0;i<lead;i++)html+='<div class="cell out" aria-hidden="true"></div>';
-  for(let d=1;d<=daysIn;d++){
-    const date=iso(new Date(view.y,view.m,d));
-    const list=tasks[date]||[];
-    const wx=wxOf(date);
-    const hot=wx&&wx.tmax>=27;
-    const cold=wx&&wx.tmin<=10;
-    const cls=['cell',date===T?'today':'',date<T?'past':'',hot?'hot':cold?'cold':''].join(' ');
-    const seeds=list.filter(t=>t.cat!=='alert').slice(0,6)
-      .map(t=>`<i class="seed ${t.cat==='water'?'water':t.cat==='pollen'?'pollen':'care'}"></i>`).join('')
-      +(list.filter(t=>t.cat!=='alert').length>6?'<i class="seed more">+</i>':'')
-      +(photoDates.has(date)?'<i class="seed photo"></i>':'');
-    const wxTip=wx?`High ${Math.round(wx.tmax)}° / low ${Math.round(wx.tmin)}° · rain ${wx.pop}%`+(wx.rh!=null?` · ${Math.round(wx.rh)}% RH`:'')+` (outside the glass)`:'';
-    html+=`<div class="${cls}" tabindex="0" role="gridcell" data-date="${date}" aria-label="${date}${wx?', '+wxTip:''}">
-      <span class="d">${d}</span>
-      ${wx?`<span class="meta" title="${wxTip}"><span class="wx">${wxIcon(wx)}</span><span class="t ${wx.tmax>=27?'warm':''}">${Math.round(wx.tmax)}°</span></span>`:''}
-      <div class="seeds">${seeds}</div></div>`;
-  }
-  $('#grid').innerHTML=html;
-  $('#grid').querySelectorAll('.cell[data-date]').forEach(c=>{
-    c.onclick=()=>openSheet(c.dataset.date);
-    c.onkeydown=e=>{if(e.key==='Enter'||e.key===' '){e.preventDefault();openSheet(c.dataset.date);}};
-  });
-  const winEnd=addDays(T,60),mStart=iso(new Date(view.y,view.m,1)),mEnd=iso(new Date(view.y,view.m,daysIn));
-  $('#calnote').textContent=(mEnd<T||mStart>winEnd)
-    ?'Day tasks are planned for the next ~8 weeks only — the season chart below spans the whole summer.':'';
-  if(openDate)fillSheet(openDate);
-}
-function refreshView(){render();if(!$('#view-gallery').hidden)renderGallery();}   // month nav drives both the calendar and the photo gallery
-function stepMonth(d){view.m+=d;if(view.m<0){view.m=11;view.y--;}if(view.m>11){view.m=0;view.y++;}refreshView();}
-$('#prev').onclick=()=>stepMonth(-1);
-$('#next').onclick=()=>stepMonth(1);
-$('#today').onclick=()=>{const n=new Date();view.y=n.getFullYear();view.m=n.getMonth();refreshView();};
-
-/* ================= day sheet ================= */
-function showSheet(){$('#sheet').classList.add('open');$('#sheet-backdrop').classList.add('on');document.body.classList.add('noscroll');}
-function hideSheet(){$('#sheet').classList.remove('open');$('#sheet-backdrop').classList.remove('on');document.body.classList.remove('noscroll');openDate=null;openPlantKey=null;$('#sheet').scrollTop=0;}
-function openSheet(date){openDate=date;openPlantKey=null;fillSheet(date);showSheet();}
-$('#sheet-close').onclick=hideSheet;
-$('#sheet-backdrop').onclick=hideSheet;   // tap the dimmed area to close
-function fillSheet(date){
-  const feat=$('#sheet-feat');feat.hidden=true;feat.innerHTML='';feat.onclick=null;
-  const T=todayISO();
-  const d=new Date(date);
-  $('#sheet-title').textContent=(date===T?'Tänään · ':'')+
-    ['Su','Ma','Ti','Ke','To','Pe','La'][d.getDay()]+' '+d.getDate()+'.'+(d.getMonth()+1)+'.';
-  const wx=wxOf(date);
-  $('#sheet-wx').textContent=wx?`${wxIcon(wx)} ${Math.round(wx.tmax)}° / ${Math.round(wx.tmin)}° · rain ${wx.pop}%`+(wx.rh!=null?` · ${Math.round(wx.rh)}% RH`:'')+` (outside the glass)`:'';
-  const list=tasks[date]||[];
-  const done=doneLog[date]||[];
-  $('#sheet-tasks').innerHTML=list.length?list.map(t=>{
-    const isDone=done.includes(t.key);
-    const can=date===T&&t.cat!=='alert';
-    return `<div class="task ${t.cat==='alert'?'alert':''} ${isDone?'checked':''}">
-      <div class="ico">${esc(t.ico)}</div>
-      <div class="body"><div class="what">${esc(t.what)}</div>
-        ${t.why?`<div class="why">${esc(t.why)}</div>`:''}</div>
-      ${can?`<button class="done-btn" onclick="markDone('${date}','${t.key}')">${isDone?'Done ✓':'Done'}</button>`:''}
-    </div>`;}).join(''):
-    `<div class="empty">${date<T?'Past day — photos below.':'Nothing due. Enjoy the balcony ☀️'}</div>`;
-  renderPhotos(date);
-}
-let prevWater=store.get('prevWater')||{};
-window.markDone=(date,key)=>{
-  const l=doneLog[date]=doneLog[date]||[];
-  const isWater=key.startsWith('w|'), id=key.slice(2), stash=date+'|'+id;
-  if(l.includes(key)){                                  // un-check
-    doneLog[date]=l.filter(k=>k!==key);
-    if(isWater){const p=state.plants.find(x=>x.id===id);
-      if(p&&stash in prevWater){p.last=prevWater[stash];delete prevWater[stash];store.set('prevWater',prevWater);save();}}
-  }else{                                                // check
-    l.push(key);
-    if(isWater){const p=state.plants.find(x=>x.id===id);
-      if(p){prevWater[stash]=p.last;store.set('prevWater',prevWater);p.last=date;save();}}
-  }
-  store.set('doneLog',doneLog);pushState();render();   // water paths already save(); this covers doneLog-only toggles
-};
-
-/* ================= photos (shared, via Worker + KV) ================= */
-/* Photos live on the server so everyone with the link sees them.
-   Viewing is public; adding/deleting needs the passphrase (stored once per device). */
-let PHOTOS=[];                                    // cached list: [{id,date,plant,ct,created}]
-const photoURL=id=>'/api/photos/'+id;
-function applyPhotos(){                            // refresh views from the current PHOTOS cache
-  PHOTOS.forEach(p=>{if(p.plant==='takala')p.plant='takala-1';});   // legacy tag
-  photoDates=new Set(PHOTOS.map(x=>x.date));
-  render();renderHero();
-  if(!$('#view-gallery').hidden)renderGallery();
-}
-/* ---- whole-garden cover: a chosen photo, or a green default ---- */
-let coverId='';
-async function loadCover(){
-  try{const r=await fetch('/api/cover');if(r.ok)coverId=(await r.json()).id||'';}catch(e){/* keep */}
-  renderHero();
-}
-function renderHero(){
-  const el=$('#hero');
-  const cap=`<div class="hero-cap"><b>Daran parvekepuutarha</b><span>Tampere · lasitettu parveke</span></div>
-    <button class="hero-change" onclick="openCover()" aria-label="Valitse kansikuva" title="Valitse kansikuva">📷</button>`;
-  const has=coverId&&PHOTOS.some(p=>p.id===coverId);       // deleted/unknown cover → fall back to green
-  if(has){el.className='hero';el.innerHTML=`<img src="${photoURL(coverId)}" alt="Kansikuva" onclick="viewPhoto('${coverId}')">${cap}`;}
-  else{el.className='hero default';el.innerHTML=cap;}
-}
-window.openCover=()=>{
-  const imgs=PHOTOS.slice().sort((a,b)=>(b.created||0)-(a.created||0));
-  $('#cp-grid').innerHTML=
-    `<button class="cp-new" onclick="addCover()">📷<span>Lataa uusi<br>(tämän päivän kuviin)</span></button>`+
-    `<button class="cp-def${coverId?'':' sel'}" onclick="setCover('')"><span class="cp-green"></span><span class="lbl">Vihreä<br>oletus</span></button>`+
-    imgs.map(x=>`<button class="cp-photo${x.id===coverId?' sel':''}" onclick="setCover('${x.id}')" aria-label="cover ${x.date}"><img src="${photoURL(x.id)}" alt="" loading="lazy" decoding="async"></button>`).join('');
-  $('#coverpick').classList.add('open');
-};
-function closeCover(){$('#coverpick').classList.remove('open');coverMode=false;}
-window.setCover=async id=>{
-  const r=await apiWrite('PUT','/api/cover?id='+encodeURIComponent(id||''));
-  if(r&&r.ok){coverId=id;renderHero();}
-  closeCover();
-};
-$('#cp-cancel').onclick=closeCover;
-$('#coverpick').onclick=e=>{if(e.target.id==='coverpick')closeCover();};
-let coverMode=false;
-window.addCover=()=>{coverMode=true;openDate=null;openPlantKey=null;$('#ph-input').click();};   // upload → today's photos + set as cover
-async function loadPhotos(){
-  try{const r=await fetch('/api/photos');if(r.ok)PHOTOS=await r.json();}
-  catch(e){/* offline: keep cache */}
-  applyPhotos();
-}
-async function apiWrite(method,path,body,ct){     // authenticated call; prompts for passphrase once
-  let pass=store.get('uploadPass');
-  if(!pass){pass=prompt('Salasana kuvien muokkaamiseen / passphrase to add or edit photos:');
-    if(!pass)return null;store.set('uploadPass',pass);}
-  const r=await fetch(path,{method,headers:{'authorization':'Bearer '+pass,...(ct?{'content-type':ct}:{})},body});
-  if(r.status===401){store.set('uploadPass',null);alert('Väärä salasana / wrong passphrase.');return null;}
-  return r;
-}
-async function api(path,opts={}){                 // authenticated fetch; silent no-op (no prompt) if this device has no passphrase yet
-  const pass=store.get('uploadPass');
-  if(!pass)return null;
-  const r=await fetch(path,{...opts,headers:{...(opts.headers||{}),authorization:'Bearer '+pass}});
-  if(r.status===401)store.set('uploadPass',null);
-  return r;
-}
-
-/* ================= state sync (task list shared across the owner's devices, via Worker + KV) ================= */
-function pushState(){                       // debounced snapshot -> server (owner only)
-  if(!_synced)return;                       // hold pushes until the first pull, so load-time migration cannot clobber a newer server doc
-  clearTimeout(_pushTimer);
-  _pushTimer=setTimeout(async()=>{
-    let pass=store.get('uploadPass');
-    if(!pass){                              // first change on this device: ask once to turn on cross-device sync
-      if(_syncAsked)return;_syncAsked=true;
-      pass=prompt('Passphrase to sync tasks across your devices (same one as photos):');
-      if(!pass)return;store.set('uploadPass',pass);
-    }
-    _stateStamp=Date.now();store.set('stateStamp',_stateStamp);
-    const doc={updatedAt:_stateStamp,garden2:state,doneLog};
-    try{const r=await fetch('/api/progress',{method:'PUT',
-      headers:{'authorization':'Bearer '+pass,'content-type':'application/json'},
-      body:JSON.stringify(doc)});
-      if(r&&r.status===401){store.set('uploadPass',null);}   // wrong pass, ask again on next change
-    }catch(e){/* offline: retry on next change/focus */}
-  },800);
-}
-async function pullState(){                  // adopt server doc if it is newer; seed it if empty and we can write
-  try{
-    const r=await fetch('/api/progress',{cache:'no-store'});if(!r.ok)return;
-    const doc=await r.json();
-    const fresh=doc&&typeof doc.updatedAt==='number';
-    if(fresh&&doc.updatedAt>_stateStamp){    // server is newer: adopt it
-      if(doc.garden2){Object.keys(state).forEach(k=>delete state[k]);
-        Object.assign(state,doc.garden2);store.set('garden2',state);}
-      if(doc.doneLog){doneLog=doc.doneLog;store.set('doneLog',doneLog);}
-      _stateStamp=doc.updatedAt;store.set('stateStamp',_stateStamp);
-      render();
-    }else if(!fresh&&store.get('uploadPass')){ // server empty and this device can write: seed it now
-      _synced=true;pushState();
-    }
-  }catch(e){/* offline: keep local */}
-  finally{_synced=true;}                      // enable pushes once the first adopt attempt is done (even offline)
-}
-function renderPhotos(date){
-  const box=$('#sheet-photos');
-  const mine=PHOTOS.filter(x=>x.date===date).sort((a,b)=>(b.created||0)-(a.created||0));
-  box.innerHTML=mine.map(x=>`<img src="${photoURL(x.id)}" data-id="${x.id}" onclick="viewPhoto('${x.id}')" alt="photo ${date}" loading="lazy" decoding="async">`).join('')+
-    (date<=todayISO()?`<button class="addph" onclick="addPhoto()" aria-label="Add photo">📷</button>`:'');   // no adding to a future day
-}
-window.addPhoto=()=>{coverMode=false;$('#ph-input').click();};                      // day-sheet add (dated to the open day), then pick the plant
-async function uploadOne(blob,date,plant){         // returns the created record, or null on failure
-  const r=await apiWrite('POST','/api/photos?date='+encodeURIComponent(date)+'&plant='+encodeURIComponent(plant||''),blob,blob.type||'image/jpeg');
-  if(r&&r.ok){const rec=await r.json();PHOTOS.push(rec);applyPhotos();return rec;}   // optimistic: show at once (KV list lags)
-  return null;
-}
-async function savePhotos(blobs,date,plant){       // upload a batch; each shows as soon as it lands
-  for(const blob of blobs){if(!await uploadOne(blob,date,plant))break;}   // stop the batch if auth fails
-}
-let pendingBlobs=null,pendingDate=null;
-$('#ph-input').onchange=async e=>{
-  const files=[...e.target.files];e.target.value='';
-  if(coverMode){coverMode=false;closeCover();          // new cover → save into today's photos (Koko parveke) + set as cover
-    if(files.length){const blob=await shrink(files[0]);const rec=await uploadOne(blob,todayISO(),'');if(rec)await setCover(rec.id);}return;}
-  if(!files.length||(!openDate&&!openPlantKey))return;
-  const blobs=await Promise.all(files.map(shrink));
-  if(openPlantKey){savePhotos(blobs,openDate||todayISO(),openPlantKey);return;}  // already tagged to a plant
-  pendingBlobs=blobs;pendingDate=openDate||todayISO();openPicker();               // day photos → ask which plant (applies to all)
-};
-/* ---- plant picker: tag a day photo to the plant it shows ---- */
-function openPicker(){
-  const g=$('#pk-grid');
-  g.innerHTML=SEASON.filter(r=>PROFILE[r.key]).map(r=>
-    `<button onclick="pickPlant('${r.key}')"><span class="av">${ART[r.key]||''}</span>${esc(r.lbl)}</button>`).join('')
-    +`<button class="gen" onclick="pickPlant('')"><span class="av">🪴</span>Koko parveke<br>(no plant)</button>`;
-  $('#picker').classList.add('open');
-}
-function closePicker(){$('#picker').classList.remove('open');pendingBlobs=null;pendingDate=null;retagKey=null;}
-let retagKey=null;
-window.pickPlant=async key=>{
-  if(retagKey){                                            // re-tag an existing photo
-    const rk=retagKey;
-    const r=await apiWrite('PATCH','/api/photos/'+rk+'?plant='+encodeURIComponent(key||''));
-    if(r&&r.ok){const p=PHOTOS.find(x=>x.id===rk);if(p)p.plant=key;applyPhotos();}
-  }else if(pendingBlobs){const b=pendingBlobs,d=pendingDate;closePicker();await savePhotos(b,d,key);return;}
-  closePicker();
-};
-$('#pk-cancel').onclick=closePicker;
-$('#picker').onclick=e=>{if(e.target.id==='picker')closePicker();};
-function shrink(file){return new Promise(res=>{
-  const img=new Image();img.onload=()=>{
-    const s=Math.min(1,1000/Math.max(img.width,img.height));
-    const cv=document.createElement('canvas');cv.width=img.width*s;cv.height=img.height*s;
-    cv.getContext('2d').drawImage(img,0,0,cv.width,cv.height);
-    cv.toBlob(b=>res(b||file),'image/jpeg',.82);};
-  img.src=URL.createObjectURL(file);});}
-let viewerKey=null,viewerList=[],viewerIdx=-1;
-// navigate in the order the photos are shown: the open day sheet, else the Kuvat gallery
-function currentPhotoList(){
-  const src=$('#sheet').classList.contains('open')?'#sheet-photos':'#gallery-body';
-  const have=new Set(PHOTOS.map(p=>p.id));
-  return [...document.querySelectorAll(src+' img[data-id]')].map(i=>i.dataset.id).filter(id=>have.has(id));
-}
-function showViewerAt(i){
-  if(i<0||i>=viewerList.length)return;
-  viewerIdx=i;viewerKey=viewerList[i];
-  $('#viewer-img').src=photoURL(viewerKey);
-  $('#viewer-prev').disabled=i<=0;
-  $('#viewer-next').disabled=i>=viewerList.length-1;
-}
-function openViewer(){$('#viewer').style.display='flex';document.body.classList.add('noscroll');}
-function closeViewer(){$('#viewer').style.display='none';if(!$('#sheet').classList.contains('open'))document.body.classList.remove('noscroll');}
-window.viewPhoto=id=>{viewerList=currentPhotoList();viewerIdx=viewerList.indexOf(id);viewerKey=id;
-  if(viewerIdx<0){viewerList=[id];viewerIdx=0;}   // one-off (e.g. cover) with no surrounding set
-  showViewerAt(viewerIdx);openViewer();};
-$('#viewer-prev').onclick=()=>showViewerAt(viewerIdx-1);
-$('#viewer-next').onclick=()=>showViewerAt(viewerIdx+1);
-$('#viewer').onclick=e=>{if(e.target.id==='viewer')closeViewer();};   // tap the dark area to close
-$('#ph-close').onclick=closeViewer;
-$('#ph-tag').onclick=()=>{if(!viewerKey)return;retagKey=viewerKey;closeViewer();openPicker();};
-document.addEventListener('keydown',e=>{
-  const vOpen=$('#viewer').style.display==='flex';
-  if(e.key==='Escape'){
-    if($('#coverpick').classList.contains('open'))closeCover();
-    else if($('#picker').classList.contains('open'))closePicker();
-    else if(vOpen)closeViewer();
-    else if($('#sheet').classList.contains('open'))hideSheet();
-  }else if(vOpen){
-    if(e.key==='ArrowLeft')showViewerAt(viewerIdx-1);
-    else if(e.key==='ArrowRight')showViewerAt(viewerIdx+1);
-  }
-});
-$('#ph-del').onclick=async()=>{
-  const dk=viewerKey;
-  const r=await apiWrite('DELETE','/api/photos/'+dk);
-  if(r&&r.ok){
-    PHOTOS=PHOTOS.filter(x=>x.id!==dk);
-    if(dk===coverId)setCover('');            // was the cover → fall back to green default
-    applyPhotos();
-    viewerList=currentPhotoList();
-    if(viewerList.length)showViewerAt(Math.min(viewerIdx,viewerList.length-1));
-    else closeViewer();
-  }
-};
-
-/* ================= tabs + photo gallery ================= */
-window.showTab=t=>{
-  const cal=t==='cal';
-  $('#view-cal').hidden=!cal;$('#view-gallery').hidden=cal;
-  $('#tab-cal').classList.toggle('on',cal);$('#tab-gallery').classList.toggle('on',!cal);
-  if(!cal)renderGallery();
-  store.set('tab',cal?'cal':'gallery');   // remember which tab so a refresh stays put
-};
-const shortDate=isoStr=>{const d=new Date(isoStr);return d.getDate()+'.'+(d.getMonth()+1)+'.';};
-function renderGallery(){
-  const body=$('#gallery-body');
-  const all=PHOTOS.slice().sort((a,b)=>(a.date||'').localeCompare(b.date||'')||(a.created||0)-(b.created||0));   // by photo date, oldest first
-  // each date is a block (date header + line over its own photos); blocks flow inline and share a row when there is space
-  const strip=list=>{
-    const groups=[];
-    list.forEach(x=>{const g=groups[groups.length-1];
-      if(g&&g.date===x.date)g.items.push(x);else groups.push({date:x.date,items:[x]});});
-    return groups.map(g=>`<div class="dgroup">
-      <div class="dhead"><span>${shortDate(g.date)}</span><i class="dline"></i></div>
-      <div class="dimgs">${g.items.map(x=>`<img src="${photoURL(x.id)}" data-id="${x.id}" onclick="viewPhoto('${x.id}')" alt="photo ${x.date}" loading="lazy" decoding="async">`).join('')}</div>
-    </div>`).join('');
-  };
-  // month-scoped: show only the month the shared nav is on. Adding is allowed only in the current month.
-  const mkey=`${view.y}-${String(view.m+1).padStart(2,'0')}`;
-  const month=all.filter(x=>(x.date||'').startsWith(mkey));
-  $('#gallery-month').textContent=`${KUUT[view.m]} ${view.y}`;
-  let html='';
-  SEASON.forEach(r=>{                                        // Kuvat is view-only; add photos from the calendar day
-    const key=r.key,pr=PROFILE[key];if(!pr)return;
-    const mine=month.filter(x=>x.plant===key);
-    html+=`<div class="gp"><div class="gh">
-      <div class="av">${ART[key]||''}</div>
-      <h3>${esc(pr.t)}</h3><span class="cnt">${mine.length?mine.length+' photo'+(mine.length>1?'s':''):''}</span></div>
-      <div class="strip">${mine.length?strip(mine):'<span class="none">Ei kuvia tältä kuulta</span>'}</div></div>`;
-  });
-  const loose=month.filter(x=>!x.plant);
-  if(loose.length)html+=`<div class="gp"><div class="gh"><h3>Koko parveke · day photos</h3><span class="cnt">${loose.length}</span></div>
-    <div class="strip">${strip(loose)}</div></div>`;
-  body.innerHTML=html;
-}
-
-/* ================= season chart + plant profiles ================= */
+/* ================= season chart + profiles ================= */
 const SEASON=[
  {key:'tigerella',lbl:'Tigerella',ph:[['flower','2026-06-29','2026-08-01'],['fruit','2026-08-01','2026-08-20'],['harvest','2026-08-20','2026-10-01']]},
  {key:'noire',lbl:'Noire de Crimée',ph:[['flower','2026-06-29','2026-08-01'],['fruit','2026-08-01','2026-08-15'],['harvest','2026-08-15','2026-10-01']]},
@@ -1022,27 +788,8 @@ const PROFILE={
      'When half the leaves yellow: stop watering. When half are brown: lift the bulb.',
      'Dry lifted bulbs 2 weeks somewhere airy before storing.']},
 };
-function renderSeason(){
-  const S=new Date('2026-06-29'),E=new Date('2026-10-05');
-  const pos=d=>Math.max(0,Math.min(100,(new Date(d)-S)/(E-S)*100));
-  $('#ticks').innerHTML=[['Jul','2026-07-01'],['Aug','2026-08-01'],['Sep','2026-09-01'],['Oct','2026-10-01']]
-    .map(([l,d])=>`<b style="left:${pos(d)}%">${l}</b>`).join('');
-  const t=pos(todayISO());
-  $('#season-rows').innerHTML=SEASON.map(r=>`<div class="srow" data-key="${r.key}" tabindex="0" role="button" aria-label="${r.lbl} guide">
-    <span class="save">${ART[r.key]||''}</span>
-    <span class="lbl">${r.lbl}</span>
-    <div class="track">${r.ph.map(([c,f,to])=>
-      `<div class="bar ${c}" style="left:${pos(f)}%;width:${Math.max(pos(to)-pos(f),1.5)}%" title="${c}"></div>`).join('')}
-      ${t>=0&&t<=100?`<div class="tline" style="left:${t}%"></div>`:''}
-    </div></div>`).join('');
-  document.querySelectorAll('.srow').forEach(r=>{
-    r.onclick=()=>openPlant(r.dataset.key);
-    r.onkeydown=e=>{if(e.key==='Enter'||e.key===' '){e.preventDefault();openPlant(r.dataset.key);}};
-  });
-}
+Object.entries(PROFILE).forEach(([key,pr])=>(pr.ids||[]).forEach(id=>{KEY_BY_ID[id]=key;}));
 
-/* ---- plant profile sheet ---- */
-/* flat botanical art per plant — swapped for your latest photo once one exists */
 const ART={
  basilmint:`<svg viewBox="0 0 80 80" xmlns="http://www.w3.org/2000/svg"><rect width="80" height="80" fill="#93BFA3"/><path d="M30 62C14 50 16 28 30 16c6 10 8 34 0 46z" fill="#1E4D3B"/><path d="M50 64C38 54 40 34 52 22c8 8 10 32-2 42z" fill="#2E7D52"/><path d="M52 22c-2 14-2 28-2 42" stroke="#93BFA3" stroke-width="2" fill="none"/><path d="M30 16c0 16 0 30 0 46" stroke="#93BFA3" stroke-width="2" fill="none"/></svg>`,
  chilli:`<svg viewBox="0 0 80 80" xmlns="http://www.w3.org/2000/svg"><rect width="80" height="80" fill="#F2D8AC"/><path d="M24 18c-2 22 4 40 18 46 6 3 10-2 6-6C36 48 32 34 32 18z" fill="#D9472B"/><path d="M52 26c4 16 0 30-8 36-5 4-10 0-7-4 8-8 10-20 9-32z" fill="#2E7D52"/><path d="M28 12c2 4 4 6 4 6h-8s2-2 4-6z" fill="#1E4D3B"/><path d="M50 20c1 4 2 6 2 6l-7-1s3-2 5-5z" fill="#1E4D3B"/></svg>`,
@@ -1057,7 +804,6 @@ const ART={
  maurin:`<svg viewBox="0 0 80 80" xmlns="http://www.w3.org/2000/svg"><rect width="80" height="80" fill="#EAF0E9"/><path d="M40 40c-8 0-14 4-14 14 0 9 7 14 14 14s14-5 14-14c0-10-6-14-14-14z" fill="#B23A5B"/><g fill="#C9557A"><circle cx="34" cy="52" r="4.4"/><circle cx="46" cy="52" r="4.4"/><circle cx="40" cy="49" r="4.4"/><circle cx="31" cy="60" r="4.4"/><circle cx="49" cy="60" r="4.4"/><circle cx="40" cy="58" r="4.4"/><circle cx="35" cy="66" r="4.2"/><circle cx="45" cy="66" r="4.2"/></g><path d="M40 40l0-8" stroke="#2E7D52" stroke-width="3"/><path d="M40 34c-8-2-14-8-14-8 6 0 12 2 14 6 2-4 8-6 14-6 0 0-6 6-14 8z" fill="#2E7D52"/></svg>`,
 };
 ART['takala-1']=ART['takala-2']=ART.maurin;
-/* real reference photos — Wikimedia Commons, hotlinked (need internet) */
 const REAL={
  basilmint:['https://upload.wikimedia.org/wikipedia/commons/9/97/Ocimum_basilicum_8zz.jpg','Genovese basil · Wikimedia'],
  chilli:['https://upload.wikimedia.org/wikipedia/commons/4/46/Fefferoni.jpg','Italian frying peppers · Wikimedia'],
@@ -1073,146 +819,826 @@ const REAL={
  'takala-1':['https://upload.wikimedia.org/wikipedia/commons/6/67/Raspberries_-_geograph.org.uk_-_506621.jpg','Raspberries on the cane · Wikimedia'],
  'takala-2':['https://upload.wikimedia.org/wikipedia/commons/6/67/Raspberries_-_geograph.org.uk_-_506621.jpg','Raspberries on the cane · Wikimedia'],
 };
-/* ---- per-plant status + notes block (sourced from statusDoc; falls back to state.plants for name/species) ---- */
-function statusBlock(id){
-  const s=statusDoc.plants[id]||{};
-  const fb=state.plants.find(p=>p.id===id)||{};
-  const name=s.name||fb.name||id;
-  const species=s.species||fb.species;
-  const stage=s.stage||fb.stage||'';
-  const lastWatered=s.lastWatered||fb.last||todayISO();
-  const since=dBetween(lastWatered,todayISO());
-  const interval=intervalOf({species,stage,intervalOverride:s.intervalOverride});
-  const h=s.health||{overall:'',issues:[]};
-  const issues=(h.issues||[]).map(i=>
-    `<li>${esc(i.type||'')}: ${esc(i.label||'')} (${esc(String(i.severity??''))})</li>`).join('');
-  const stages=Array.from(new Set([...(CARE[species]?.stages||[]),...(stage?[stage]:[])]));
-  const stageOpts=stages.map(st=>`<option value="${esc(st)}"${st===stage?' selected':''}>${esc(st)}</option>`).join('');
-  const notes=(s.notes||[]).slice().sort((a,b)=>(a.date<b.date?1:a.date>b.date?-1:0))
-    .map(n=>`<li data-note="${esc(n.id)}" data-pid="${esc(id)}">
-      <span class="note-date">${esc(n.date)}</span><span class="note-text">${esc(n.text)}</span>
-      <button class="note-edit" data-id="${esc(n.id)}" data-pid="${esc(id)}" aria-label="edit note">✎</button>
-      <button class="note-del" data-id="${esc(n.id)}" data-pid="${esc(id)}" aria-label="delete note">🗑</button>
-    </li>`).join('');
-  return `
-    <div class="status" data-pid="${esc(id)}">
-      <div class="stat-name">${esc(name)}</div>
-      <div class="stat-row">
-        <label>Vaihe / stage: <select class="stage-sel" data-pid="${esc(id)}">${stageOpts}</select></label>
-        <span>· watered ${since===0?'today':since+'d ago'} · every ~${interval}d</span>
-      </div>
-      <div class="stat-row">
-        <label>Kastettu / watered on: <input type="date" class="water-inp" data-pid="${esc(id)}" value="${esc(lastWatered)}"></label>
-        <span>· Kunto / health: ${esc(h.overall||'—')}</span>
-      </div>
-      ${issues?`<ul class="issues">${issues}</ul>`:''}
-      ${s.observations?`<div class="obs">${esc(s.observations)}</div>`:''}
-      <div class="notes">
-        <b>Muistiinpanot / Notes</b>
-        <div class="note-add"><input class="note-input" data-pid="${esc(id)}" placeholder="Lisää / add note…">
-          <button class="note-save" data-pid="${esc(id)}">Lisää</button></div>
-        <ul class="note-list">${notes||'<li class="none">Ei muistiinpanoja / no notes yet</li>'}</ul>
-      </div>
-    </div>`;
+const S_START=new Date('2026-06-29'),S_END=new Date('2026-10-05');
+const spos=d=>Math.max(0,Math.min(100,(new Date(d)-S_START)/(S_END-S_START)*100));
+function barsHTML(ph,marks){
+  const t=spos(todayISO());
+  return `<div class="track">${ph.map(([c,f,to])=>
+    `<div class="bar ${c}" style="left:${spos(f)}%;width:${Math.max(spos(to)-spos(f),1.5)}%" title="${c}"></div>`).join('')}
+    ${(marks||[]).map(d=>`<div class="pmark" style="left:${spos(d)}%"></div>`).join('')}
+    ${t>=0&&t<=100?`<div class="tline" style="left:${t}%"></div>`:''}</div>`;
 }
-/* single delegated listener on the persistent #sheet container — survives openPlant() re-rendering #sheet-tasks */
-function wireStatusEvents(){
-  const sheet=$('#sheet');
-  const afterWrite=async r=>{                 // r===null: passphrase prompt was cancelled, do nothing
-    if(!r)return;
-    if(!r.ok){alert('Tallennus epäonnistui / save failed.');return;}   // e.g. note write before the plant has a status entry yet
-    await loadStatus();openPlant(openPlantKey);render();refreshPlanSoon();
-  };
-  sheet.addEventListener('change',async e=>{
-    const sel=e.target.closest('.stage-sel');
-    if(sel){await afterWrite(await apiWrite('PUT','/api/status/'+encodeURIComponent(sel.dataset.pid),JSON.stringify({stage:sel.value}),'application/json'));return;}
-    const dt=e.target.closest('.water-inp');
-    if(dt){await afterWrite(await apiWrite('PUT','/api/status/'+encodeURIComponent(dt.dataset.pid),JSON.stringify({lastWatered:dt.value}),'application/json'));return;}
-  });
-  sheet.addEventListener('click',async e=>{
-    const save=e.target.closest('.note-save');
-    if(save){
-      const id=save.dataset.pid;
-      const input=sheet.querySelector(`.note-input[data-pid="${CSS.escape(id)}"]`);
-      const text=(input?.value||'').trim();if(!text)return;
-      await afterWrite(await apiWrite('POST','/api/notes',JSON.stringify({plantId:id,op:'add',date:todayISO(),text}),'application/json'));
-      return;
-    }
-    const del=e.target.closest('.note-del');
-    if(del){
-      await afterWrite(await apiWrite('POST','/api/notes',JSON.stringify({plantId:del.dataset.pid,op:'delete',id:del.dataset.id}),'application/json'));
-      return;
-    }
-    const ed=e.target.closest('.note-edit');
-    if(ed){
-      const li=ed.closest('[data-note]');
-      const cur=li?.querySelector('.note-text')?.textContent||'';
-      const text=prompt('Muokkaa / edit note',cur);if(text==null)return;
-      await afterWrite(await apiWrite('POST','/api/notes',JSON.stringify({plantId:ed.dataset.pid,op:'edit',id:ed.dataset.id,text}),'application/json'));
-      return;
-    }
-  });
+/* The bar says where the season is. The list underneath says what actually happened:
+   every stage change, note and photo this plant has, newest first. */
+function plantHistory(p){
+  const ev={};
+  const at=(d)=>(ev[d]=ev[d]||{stage:null,notes:[],photos:0});
+  ((state.plants.find(x=>x.id===p.id)||{}).history||[]).forEach(h=>{if(h.date&&h.stage)at(h.date).stage=h.stage;});
+  shown(p.notes).forEach(n=>at(n.date).notes.push(n.text));
+  photosFor(p.id).forEach(x=>at(x.date).photos++);
+  return Object.entries(ev).sort((a,b)=>b[0].localeCompare(a[0]));
 }
-wireStatusEvents();
-let openPlantKey=null;
-function openPlant(key){
-  const pr=PROFILE[key];if(!pr)return;
-  openDate=null;openPlantKey=key;                  // sheet now shows a plant, not a day
-  $('#sheet-title').textContent=pr.t;
-  $('#sheet-wx').textContent=pr.src;
-  const status=pr.ids.map(id=>statusBlock(id)).join('');
-  $('#sheet-tasks').innerHTML=status+pr.body.map(b=>
-    `<div class="task"><div class="ico">›</div><div class="body"><div class="why" style="font-size:13.5px;color:var(--ink)">${esc(b)}</div></div></div>`).join('');
-  const feat=$('#sheet-feat');
-  feat.hidden=false;feat.innerHTML=ART[key]||'';feat.onclick=null;
-  const real=REAL[key];
-  $('#sheet-photos').innerHTML=real?`<figure class="realfig">
-    <img class="realph" src="${real[0]}" alt="${esc(real[1])}" loading="lazy"
-      onerror="this.parentElement.style.display='none'">
-    <figcaption>${esc(real[1])}</figcaption></figure>`:'';
-  showSheet();
+function plantSeasonHTML_unused(key,p){
+  const r=SEASON.find(x=>x.key===key);
+  const marks=p?photosFor(p.id).map(x=>x.date):[];
+  const bar=r?`<div class="ticks" style="margin-left:0">${[['Kesä','2026-07-01'],['Elo','2026-08-01'],['Syys','2026-09-01'],['Loka','2026-10-01']]
+    .map(([l,d])=>`<b style="left:${spos(d)}%">${l}</b>`).join('')}</div>${barsHTML(r.ph,marks)}`:'';
+  if(!p)return bar||'<div class="none">—</div>';
+  const hist=plantHistory(p);
+  const list=hist.length?`<ul class="hist">${hist.map(([date,e])=>`<li>
+      <span class="hd">${esc(VKO[new Date(date).getDay()])} ${esc(shortDate(date))}</span>
+      <span class="hb2">
+        ${e.stage?`<span class="stagechip">🪴 ${esc(e.stage)}</span>`:''}
+        ${e.notes.map(t=>`<span class="hnote">${esc(t)}</span>`).join('')}
+        ${e.photos?`<span class="hphoto">📷 ${e.photos}</span>`:''}
+      </span></li>`).join('')}</ul>`
+    :'<div class="none">Ei historiaa</div>';
+  return bar+list;
 }
 
-/* ================= theme toggle ================= */
+/* ================= photos ================= */
+let PHOTOS=[];
+const photoURL=id=>'/api/photos/'+id;
+const shown=list=>list.filter(x=>!_hidden.has(x.id));
+function photosFor(pid){
+  const key=KEY_BY_ID[pid];
+  const ids=(PROFILE[key]&&PROFILE[key].ids)||[];
+  // legacy photos were tagged by variety key, newer ones by plant id
+  return shown(PHOTOS.filter(x=>x.plant===pid||(x.plant===key&&ids.length<=1)))
+    .sort((a,b)=>(b.date||'').localeCompare(a.date||'')||(b.created||0)-(a.created||0));
+}
+function applyPhotos(){
+  PHOTOS.forEach(p=>{if(p.plant==='takala')p.plant='takala-1';});
+  photoDates=new Set(shown(PHOTOS).map(x=>x.date));
+  renderAll();
+}
+async function loadPhotos(){
+  try{const r=await fetch('/api/photos');if(r.ok)PHOTOS=await r.json();}catch(e){}
+  applyPhotos();
+}
+async function uploadOne(blob,date,plant){
+  const r=await apiWrite('POST','/api/photos?date='+encodeURIComponent(date)+'&plant='+encodeURIComponent(plant||''),blob,blob.type||'image/jpeg');
+  if(r&&r.ok){const rec=await r.json();PHOTOS.push(rec);photoDates=new Set(PHOTOS.map(x=>x.date));return rec;}
+  toast('Could not upload that photo.');
+  return null;
+}
+function shrink(file){return new Promise(res=>{
+  const img=new Image();img.onload=()=>{
+    const s=Math.min(1,1000/Math.max(img.width,img.height));
+    const cv=document.createElement('canvas');cv.width=img.width*s;cv.height=img.height*s;
+    cv.getContext('2d').drawImage(img,0,0,cv.width,cv.height);
+    cv.toBlob(b=>res(b||file),'image/jpeg',.82);};
+  img.src=URL.createObjectURL(file);});}
+
+/* ---- viewer ---- */
+let viewerList=[],viewerIdx=-1,viewerKey=null,viewerFocus=null;
+function currentPhotoList(){
+  const have=new Set(PHOTOS.map(p=>p.id));
+  return [...document.querySelectorAll('#page [data-act="view"]')].map(i=>i.dataset.val).filter(id=>have.has(id));
+}
+function showViewerAt(i){
+  if(i<0||i>=viewerList.length)return;
+  viewerIdx=i;viewerKey=viewerList[i];
+  const rec=PHOTOS.find(p=>p.id===viewerKey);
+  $('#viewer-img').src=photoURL(viewerKey);
+  const p=rec&&rec.plant?plantById(rec.plant):null;
+  $('#viewer-cap').textContent=rec?`${p?p.name:'Koko parveke'} · ${shortDate(rec.date)}`:'';
+  $('#viewer-prev').disabled=i<=0;
+  $('#viewer-next').disabled=i>=viewerList.length-1;
+}
+function viewPhoto(id){
+  viewerFocus=document.activeElement;
+  viewerList=currentPhotoList();viewerIdx=viewerList.indexOf(id);
+  if(viewerIdx<0){viewerList=[id];viewerIdx=0;}
+  showViewerAt(viewerIdx);
+  $('#viewer').classList.add('on');document.body.classList.add('noscroll');
+  $('#ph-close').focus();
+}
+function closeViewer(){
+  $('#viewer').classList.remove('on');
+  document.body.classList.remove('noscroll');
+  if(viewerFocus&&viewerFocus.isConnected)viewerFocus.focus();
+}
+$('#viewer-prev').onclick=()=>showViewerAt(viewerIdx-1);
+$('#viewer-next').onclick=()=>showViewerAt(viewerIdx+1);
+$('#viewer').onclick=e=>{if(e.target.id==='viewer')closeViewer();};
+$('#ph-close').onclick=closeViewer;
+$('#ph-tag').onclick=async()=>{
+  if(!viewerKey)return;
+  const id=viewerKey;
+  const pid=await pickPlant('Which plant is this photo of?');
+  if(pid===null)return;
+  const r=await apiWrite('PATCH','/api/photos/'+id+'?plant='+encodeURIComponent(pid));
+  if(r&&r.ok){const p=PHOTOS.find(x=>x.id===id);if(p)p.plant=pid;applyPhotos();fillSheet();}
+};
+$('#ph-del').onclick=()=>{
+  const id=viewerKey;
+  closeViewer();
+  hold('Photo deleted',async()=>{
+    const r=await apiWrite('DELETE','/api/photos/'+id);
+    if(r&&(r.ok||r.status===204)){
+      PHOTOS=PHOTOS.filter(x=>x.id!==id);
+      if(id===coverId)setCover('');
+      applyPhotos();fillSheet();
+    }
+  },()=>{_hidden.delete(id);applyPhotos();fillSheet();});
+  _hidden.add(id);applyPhotos();fillSheet();
+};
+
+/* ---- plant picker (a promise, so callers just await it) ---- */
+let _pickResolve=null,_pickFocus=null;
+function pickPlant(title){
+  _pickFocus=document.activeElement;
+  $('#pk-title').textContent=title||'Which plant?';
+  $('#pk-grid').innerHTML=plants().map(p=>
+    `<button data-pick="${esc(p.id)}"><span class="av">${avatarFor(p.id)}</span>${esc(p.name)}</button>`).join('')
+    +`<button class="gen" data-pick=""><span class="av">🪴</span>Koko parveke</button>`;
+  $('#picker').classList.add('open');
+  setTimeout(()=>$('#pk-grid button')?.focus(),40);
+  return new Promise(res=>{_pickResolve=res;});
+}
+function closePicker(v){
+  $('#picker').classList.remove('open');
+  const r=_pickResolve;_pickResolve=null;
+  if(_pickFocus&&_pickFocus.isConnected)_pickFocus.focus();
+  if(r)r(v);
+}
+$('#pk-grid').addEventListener('click',e=>{
+  const b=e.target.closest('[data-pick]');if(!b)return;
+  closePicker(b.dataset.pick);
+});
+$('#pk-cancel').onclick=()=>closePicker(null);
+$('#picker').addEventListener('click',e=>{if(e.target.id==='picker')closePicker(null);});
+
+/* ---- cover ---- */
+let coverId='';
+async function loadCover(){
+  try{const r=await fetch('/api/cover');if(r.ok)coverId=(await r.json()).id||'';}catch(e){}
+}
+function openCover(){
+  const imgs=PHOTOS.slice().sort((a,b)=>(b.created||0)-(a.created||0));
+  $('#cp-grid').innerHTML=
+    `<button class="cp-new" id="cp-new">📷<span>Lisää</span></button>`+
+    `<button class="cp-def${coverId?'':' sel'}" data-cover=""><span class="cp-green"></span><span>Vihreä</span></button>`+
+    imgs.map(x=>`<button class="cp-photo${x.id===coverId?' sel':''}" data-cover="${esc(x.id)}" aria-label="${esc(shortDate(x.date))}"><img src="${photoURL(x.id)}" alt="" loading="lazy" decoding="async"></button>`).join('');
+  $('#coverpick').classList.add('open');
+  $('#cp-new').onclick=()=>{fileMode='cover';$('#ph-input').click();};
+}
+function closeCover(){$('#coverpick').classList.remove('open');}
+async function setCover(id){
+  const r=await apiWrite('PUT','/api/cover?id='+encodeURIComponent(id||''));
+  if(r&&r.ok){coverId=id;}
+  closeCover();
+}
+$('#cp-grid').addEventListener('click',e=>{
+  const b=e.target.closest('[data-cover]');if(b)setCover(b.dataset.cover);
+});
+$('#cp-cancel').onclick=closeCover;
+$('#coverpick').addEventListener('click',e=>{if(e.target.id==='coverpick')closeCover();});
+
+let prevWater=store.get('prevWater')||{};
+function markDone(date,key){
+  const l=doneLog[date]=doneLog[date]||[];
+  const isWater=key.startsWith('w|'),id=key.slice(2),stash=date+'|'+id;
+  if(l.includes(key)){
+    doneLog[date]=l.filter(k=>k!==key);
+    if(isWater){const p=state.plants.find(x=>x.id===id);
+      if(p&&stash in prevWater){p.last=prevWater[stash];delete prevWater[stash];store.set('prevWater',prevWater);save();}}
+  }else{
+    l.push(key);
+    if(isWater){const p=state.plants.find(x=>x.id===id);
+      if(p){prevWater[stash]=p.last;store.set('prevWater',prevWater);p.last=date;save();}}
+  }
+  store.set('doneLog',doneLog);pushState();renderAll();fillSheet();
+}
+function deleteEntry(id){
+  hold('Entry deleted',async()=>{
+    const r=await apiWrite('DELETE','/api/entries/'+encodeURIComponent(id));
+    if(r&&(r.ok||r.status===204)){await loadEntries();await loadStatus();renderAll();fillSheet();}
+  },()=>{_hidden.delete(id);renderAll();fillSheet();});
+  _hidden.add(id);renderAll();fillSheet();
+}
+function deleteNote(pid,noteId){
+  hold('Entry deleted',async()=>{
+    const r=await apiWrite('POST','/api/notes',JSON.stringify({plantId:pid,op:'delete',id:noteId}),'application/json');
+    if(r&&r.ok){await loadStatus();renderAll();fillSheet();}
+  },()=>{_hidden.delete(noteId);renderAll();fillSheet();});
+  _hidden.add(noteId);renderAll();fillSheet();
+}
+function focusEdit(){const t=$('#etext');if(t){t.focus();t.setSelectionRange(t.value.length,t.value.length);}}
+async function saveEdit(kind,id,plantId){
+  const text=($('#etext')?.value||'').trim();
+  if(!text){editing=null;fillSheet();return;}
+  const r=kind==='note'
+    ? await apiWrite('POST','/api/notes',JSON.stringify({plantId,op:'edit',id,text}),'application/json')
+    : await apiWrite('PATCH','/api/entries/'+encodeURIComponent(id),JSON.stringify({text}),'application/json');
+  if(!r||!r.ok){toast('Could not save. Try again.');return;}
+  editing=null;
+  await Promise.all([loadStatus(),loadEntries()]);
+  refreshUI();
+  if(kind==='entry')refreshSoon();          // the reworded entry is sorted again
+}
+/* Re-sorting is just the entry sent back unchanged: the server re-runs the distiller. */
+async function retryEntry(id){
+  const e=entriesDoc.entries.find(x=>x.id===id);if(!e)return;
+  const r=await apiWrite('PATCH','/api/entries/'+encodeURIComponent(id),
+    JSON.stringify({text:e.text}),'application/json');
+  if(!r||!r.ok){toast('Could not save. Try again.');return;}
+  await loadEntries();refreshUI();refreshSoon();
+}
+async function assignEntry(id,plantIds,el){
+  if(el){el.disabled=true;el.textContent='Filing…';}
+  setBusy('Filing your note…');
+  const r=await apiWrite('PATCH','/api/entries/'+encodeURIComponent(id),JSON.stringify({plantIds}),'application/json');
+  if(!r||!r.ok){setBusy('');if(el){el.disabled=false;}toast('Could not save. Try again.');return;}
+  await Promise.all([loadEntries(),loadStatus()]);
+  refreshUI();
+  refreshSoon();          // the plan rebuilds behind this; keep watching until it lands
+}
+
+/* ================= toasts + undo hold ================= */
+const _hidden=new Set();     // ids removed from view while their undo window runs
+function toast(msg,undoLabel,onUndo){
+  const el=document.createElement('div');
+  el.className='toast';
+  el.innerHTML=`<span>${esc(msg)}</span>`;
+  if(onUndo){
+    const b=document.createElement('button');b.textContent=undoLabel;b.onclick=()=>{onUndo();el.remove();};
+    el.appendChild(b);
+  }
+  $('#toasts').appendChild(el);
+  setTimeout(()=>el.remove(),onUndo?5200:3200);
+  return el;
+}
+/* Destructive acts wait 5s before they actually fire, so one mis-tap costs nothing. */
+function hold(msg,commit,undo){
+  let cancelled=false;
+  const el=toast(msg,'Undo',()=>{cancelled=true;undo();});
+  setTimeout(()=>{if(!cancelled){el.remove();commit();}},5000);
+}
+
+/* ================= auth ================= */
+let _unlockResolve=null;
+function askPass(){
+  return new Promise(res=>{
+    _unlockResolve=res;
+    $('#unlock').classList.add('open');
+    $('#unlock-input').value='';
+    setTimeout(()=>$('#unlock-input').focus(),40);
+  });
+}
+function closeUnlock(v){
+  $('#unlock').classList.remove('open');
+  const r=_unlockResolve;_unlockResolve=null;
+  if(r)r(v);
+}
+$('#unlock-go').onclick=()=>closeUnlock($('#unlock-input').value.trim()||null);
+$('#unlock-cancel').onclick=()=>closeUnlock(null);
+$('#unlock-input').addEventListener('keydown',e=>{if(e.key==='Enter')closeUnlock($('#unlock-input').value.trim()||null);});
+$('#unlock').addEventListener('click',e=>{if(e.target.id==='unlock')closeUnlock(null);});
+
+async function apiWrite(method,path,body,ct){
+  let pass=store.get('uploadPass');
+  if(!pass){pass=await askPass();if(!pass)return null;store.set('uploadPass',pass);syncLock();}
+  const r=await fetch(path,{method,headers:{'authorization':'Bearer '+pass,...(ct?{'content-type':ct}:{})},body});
+  if(r.status===401){store.set('uploadPass',null);syncLock();toast('Wrong passphrase. Try again.');return null;}
+  return r;
+}
+async function api(path,opts={}){          // silent: used where a visitor must not be prompted
+  const pass=store.get('uploadPass');
+  if(!pass)return null;
+  const r=await fetch(path,{...opts,headers:{...(opts.headers||{}),authorization:'Bearer '+pass}});
+  if(r.status===401){store.set('uploadPass',null);syncLock();}
+  return r;
+}
+function syncLock(){
+  const b=$('#lockbtn');if(!b)return;
+  const on=!!store.get('uploadPass');
+  b.hidden=!on;b.textContent='🔓 Lukitse';
+}
+
+/* ================= state sync ================= */
+function pushState(){
+  if(!_synced)return;
+  clearTimeout(_pushTimer);
+  _pushTimer=setTimeout(async()=>{
+    const pass=store.get('uploadPass');
+    if(!pass)return;                                  // a visitor's local ticks stay local
+    _stateStamp=Date.now();store.set('stateStamp',_stateStamp);
+    try{const r=await fetch('/api/progress',{method:'PUT',
+      headers:{'authorization':'Bearer '+pass,'content-type':'application/json'},
+      body:JSON.stringify({updatedAt:_stateStamp,garden2:state,doneLog})});
+      if(r&&r.status===401){store.set('uploadPass',null);syncLock();}
+    }catch(e){}
+  },800);
+}
+async function pullState(){
+  try{
+    const r=await fetch('/api/progress',{cache:'no-store'});if(!r.ok)return;
+    const doc=await r.json();
+    const fresh=doc&&typeof doc.updatedAt==='number';
+    if(fresh&&doc.updatedAt>_stateStamp){
+      if(doc.garden2){Object.keys(state).forEach(k=>delete state[k]);
+        Object.assign(state,doc.garden2);store.set('garden2',state);}
+      if(doc.doneLog){doneLog=doc.doneLog;store.set('doneLog',doneLog);}
+      _stateStamp=doc.updatedAt;store.set('stateStamp',_stateStamp);
+      renderAll();
+    }else if(!fresh&&store.get('uploadPass')){_synced=true;pushState();}
+  }catch(e){}
+  finally{_synced=true;}
+}
+
+/* ================= theme ================= */
 const effectiveTheme=()=>document.documentElement.dataset.theme||(matchMedia('(prefers-color-scheme:dark)').matches?'dark':'light');
 function syncThemeBtn(){
   const dark=effectiveTheme()==='dark';
-  $('#theme-toggle').checked=dark;
+  const t=$('#theme-toggle');if(!t)return;
+  t.checked=dark;
   document.querySelectorAll('.theme-switch .tl').forEach(l=>l.classList.toggle('act',l.dataset.for===(dark?'dark':'light')));
 }
-function applyTheme(next){
-  document.documentElement.dataset.theme=next;store.set('theme',next);
-  const tc=document.querySelector('meta[name=theme-color]');if(tc)tc.setAttribute('content',next==='dark'?'#141A16':'#1E4D3B');
-  syncThemeBtn();
+
+
+/* ================= the view =================
+   Nav above everything, the note under it, then the chart and one content
+   region: the whole balcony, or the plant the nav has selected. */
+let V={plant:null,day:null,mode:store.get('mode')||'today',dockMin:false,feedFilter:''};
+let touched=new Set(),busyAt=0;
+/* The one entry or note open in the inline editor, as {kind,id,plantId}. */
+let editing=null;
+const view={y:new Date().getFullYear(),m:new Date().getMonth()};
+
+const TINT={};
+Object.entries(ART).forEach(([k,svg])=>{const m=svg.match(/<rect[^>]*fill="(#[0-9A-Fa-f]{6})"/);if(m)TINT[k]=m[1];});
+const tintOf=pid=>TINT[KEY_BY_ID[pid]]||'#9BC7AA';
+const shortName=n=>{const w=n.split(' ')[0].replace(/[(),]/g,''),d=n.match(/\d$/);return w+(d?' '+d[0]:'');};
+const PHASE_WORD={grow:'kasvaa',flower:'kukkii',fruit:'raakile',harvest:'sato'};
+function phaseNow(pid){
+  const key=KEY_BY_ID[pid],row=SEASON.find(r=>r.key===key);
+  const hit=row&&row.ph.find(([,f,t])=>todayISO()>=f&&todayISO()<=t);
+  return hit?PHASE_WORD[hit[0]]:'—';
 }
-$('#theme-toggle').onchange=e=>applyTheme(e.target.checked?'dark':'light');
-syncThemeBtn();
+/* What a line says about a plant now: the model's read if there is one, else the
+   fact that matters — a pot that is late is the only thing worth interrupting for. */
+function stateOf(p){
+  const since=dBetween(p.last,todayISO());
+  const meta=since<=0?'kasteltu tänään':`kasteltu ${since} pv sitten`;
+  const h=p.health,iss=((h&&h.issues)||[]).map(i=>i.label||i.type).filter(Boolean)[0];
+  if(h&&h.tone==='bad')return {mk:'⚠️',tone:'bad',text:iss||h.label,meta};
+  if(h&&h.tone==='watch')return {mk:'👀',tone:'watch',text:iss||h.label,meta};
+  if(since>effectiveInterval(p,wxOf(todayISO())))return {mk:'💧',tone:'watch',text:'maa kuivunut',meta};
+  if(h)return {mk:'🌿',tone:'good',text:h.label,meta};
+  return {mk:'🌿',tone:'good',text:p.stage,meta};
+}
+
+function navBar(){
+  return `<nav class="nav" aria-label="Kasvit"><div class="strip">
+    <button class="chip all" data-act="all" aria-pressed="${!V.plant}">Koko parveke</button>
+    ${plants().map(p=>`<button class="chip" data-act="plant" data-val="${esc(p.id)}"
+      aria-pressed="${V.plant===p.id}" title="${esc(p.name)}">
+      <span class="av">${avatarFor(p.id)}</span>${esc(shortName(p.name))}</button>`).join('')}
+  </div></nav>`;
+}
+
+/* ---- the note ---- */
+function dockHTML(){
+  const p=V.plant?plantById(V.plant):null;
+  const can=!!draft.trim()||staged.top.length>0;
+  return `<div class="dock ${V.dockMin?'min':''} ${draft.trim()?'tall':''}">
+    <div class="box">
+      <div class="top"><span>Uusi merkintä · ${shortDate(todayISO())}</span>
+        ${p?`<span class="tag">${avatarFor(p.id)} ${esc(shortName(p.name))}</span>`:''}
+        <button class="fold" data-act="fold" aria-expanded="${!V.dockMin}"
+          aria-label="${V.dockMin?'Avaa kirjoituskenttä':'Pienennä kirjoituskenttä'}">${V.dockMin?'▲':'▼'}</button>
+      </div>
+      <div class="in">
+        <label class="vhid" for="ctext">Uusi merkintä</label>
+        <textarea id="ctext" data-ta="1"
+          placeholder="${p?`Mitä ${esc(shortName(p.name))} tekee?`:'Mitä parvekkeella tapahtuu?'}">${esc(draft)}</textarea>
+        ${staged.top.length?`<div class="cshots">${staged.top.map((s,i)=>`<div class="cshot">
+          <img src="${s.url}" alt="">
+          <button class="rm" data-act="unstage" data-val="${i}" aria-label="Poista kuva">×</button>
+        </div>`).join('')}</div>`:''}
+        <div class="acts">
+          <button data-act="attach" aria-label="Lisää kuva">📷</button>
+          <span class="sp"></span>
+          <button class="save ${can?'on':''}" data-act="save" ${can?'':'disabled'}>Tallenna</button>
+        </div>
+      </div>
+    </div></div>`;
+}
+
+/* ---- the chart ---- */
+function chartRow(p){
+  const s=stateOf(p),key=KEY_BY_ID[p.id],row=SEASON.find(r=>r.key===key);
+  return `<div class="row ${touched.has(p.id)?'touched':''}">
+    <span class="art">${avatarFor(p.id)}</span>
+    <span class="who"><b>${esc(p.name)}</b><em>${esc(phaseNow(p.id))}</em></span>
+    <span class="bars"><span class="track">${(row?row.ph:[]).map(([c,f,t])=>
+      `<i class="bar ${c}" style="left:${spos(f)}%;width:${Math.max(spos(t)-spos(f),1.5)}%"></i>`).join('')}</span></span>
+    <span class="now ${s.tone}"><span class="mk">${s.mk}</span>
+      <span class="txt">${esc(s.text)}<em>${esc(s.meta)}</em></span></span>
+  </div>`;
+}
+function chartHTML(){
+  const list=plants();
+  const scaleRow=(inner,cls)=>`<div class="row ${cls}"><span class="art"></span><span class="who"></span>
+    <span class="bars"><span class="scale">${inner}</span></span><span class="now"></span></div>`;
+  const need=list.filter(p=>p.health&&p.health.tone!=='good').length;
+  return `<section class="sect">
+    <div class="hd"><h2>Kasvit</h2>
+      <span class="meta">${need?`<b>${need} vaatii huomiota</b> · `:''}${list.length} kasvia</span></div>
+    ${scaleRow([['Kesä','2026-07-01'],['Elo','2026-08-01'],['Syys','2026-09-01'],['Loka','2026-10-01']]
+      .map(([l,d])=>`<b style="left:${spos(d)}%">${l}</b>`).join(''),'head')}
+    ${list.map(chartRow).join('')}
+    ${scaleRow(`<b class="today" style="left:${spos(todayISO())}%">▏tänään</b>`,'axis')}
+    <div class="legend">
+      <span><i style="background:var(--ph-grow)"></i>kasvaa</span>
+      <span><i style="background:var(--ph-flower)"></i>kukkii</span>
+      <span><i style="background:var(--ph-fruit)"></i>raakile</span>
+      <span><i style="background:var(--ph-harvest)"></i>sato</span></div>
+  </section>`;
+}
+
+/* ---- tasks and weather ---- */
+function taskRowHTML(date,t){
+  const done=(doneLog[date]||[]).includes(t.key);
+  const T=todayISO();
+  return `<div class="task ${done?'done':''}">
+    <span class="mk">${esc(t.ico)}</span>
+    <span class="body"><span class="what">${esc(t.what)}</span>
+      <span class="whose">${esc((plantById(t.pid)||{}).name||'')}</span>
+      ${t.why?`<span class="why">${esc(t.why)}</span>`:''}</span>
+    ${date===T?`<button class="tick" data-act="done" data-date="${date}" data-key="${esc(t.key)}"
+      aria-pressed="${done}">Tehty${done?' ✓':''}</button>`:''}
+  </div>`;
+}
+function wxHTML(date){
+  const w=wxOf(date);if(!w)return'';
+  const al=dayOf(date).alerts;
+  return `<div class="wx">
+    <div class="read">
+      <span class="deg ${w.tmax>=27?'hot':''}">${wxIcon(w)} ${Math.round(w.tmax)}°</span>
+      <span>yö <span class="${w.tmin<=10?'cold':''}">${Math.round(w.tmin)}°</span></span>
+      <span>sade ${w.pop}%</span>
+      <span>${date===todayISO()?'tänään':dayLabel(date)}</span>
+    </div>
+    ${al.map(a=>`<div class="warn ${a.key.startsWith('cold')?'cold':''}">
+      <b>${esc(a.ico)} ${esc(a.what)}</b><span>${esc(a.why)}</span></div>`).join('')}
+  </div>`;
+}
+function dayListHTML(date){
+  const T=todayISO();
+  if(date<T)return '<div class="none">Mennyt päivä.</div>';
+  const list=flatTasks(date);
+  return list.length?`<div class="list">${list.map(t=>taskRowHTML(date,t)).join('')}</div>`
+    :'<div class="none">Ei tehtäviä</div>';
+}
+function monthHTML(){
+  const T=todayISO();
+  const first=new Date(view.y,view.m,1),daysIn=new Date(view.y,view.m+1,0).getDate(),lead=(first.getDay()+6)%7;
+  const nd=new Set(shown(entriesDoc.entries).map(e=>e.date));
+  let h=`<div class="navrow">
+    <button data-act="month" data-val="-1" aria-label="Edellinen kuukausi">‹</button>
+    <span class="lab">${KUUT[view.m]} ${view.y}</span>
+    <button data-act="month" data-val="1" aria-label="Seuraava kuukausi">›</button></div>
+    <div class="dow"><span>Ma</span><span>Ti</span><span>Ke</span><span>To</span><span>Pe</span><span>La</span><span>Su</span></div><div class="grid">`;
+  for(let i=0;i<lead;i++)h+='<div class="cell out"></div>';
+  for(let d=1;d<=daysIn;d++){
+    const date=iso(new Date(view.y,view.m,d)),w=wxOf(date),list=flatTasks(date),al=dayOf(date).alerts;
+    h+=`<button class="cell ${date===T?'today':''} ${date<T?'past':''} ${
+      al.some(a=>a.key.startsWith('heat'))?'hot':al.some(a=>a.key.startsWith('cold'))?'cold':''}"
+      data-act="day" data-val="${date}" aria-label="${dayLabel(date)}, ${list.length} tehtävää">
+      <span class="d">${d}</span>${w?`<span class="t ${w.tmax>=27?'warm':''}">${Math.round(w.tmax)}°</span>`:''}
+      <span class="dots">${list.slice(0,5).map(t=>
+        `<i class="dot ${t.cat==='water'?'water':t.cat==='pollen'?'pollen':'care'}"></i>`).join('')}${
+        nd.has(date)?'<i class="dot note"></i>':''}${photoDates.has(date)?'<i class="dot photo"></i>':''}</span></button>`;
+  }
+  return h+'</div>';
+}
+
+/* ---- what you wrote, and what the model made of it ---- */
+function entryHTML(e){
+  const who=(e.assigned||[]).map(a=>plantById(a.plantId)).filter(Boolean);
+  const shots=shown(PHOTOS.filter(x=>(e.photoIds||[]).includes(x.id)));
+  return `<article class="entry ${e.status==='pending'?'live':''}">
+    <p class="said">${esc(e.text)}</p>
+    ${e.status==='pending'?'<div class="none">AI lukee merkintää…</div>':''}
+    ${who.map(p=>{
+      const note=(p.notes||[]).find(n=>(e.assigned||[]).some(a=>a.noteId===n.id));
+      return `<div class="read"><span class="art">${avatarFor(p.id)}</span>
+        <span><b>${esc(p.name)}</b><span>${esc(note?note.text:'')}</span></span></div>`;}).join('')}
+    ${e.status==='unsorted'?`<div class="chips-row">
+      <span class="none">AI ei tunnistanut kasvia.</span>
+      ${(e.suggestions||[]).map(pid=>{const p=plantById(pid);return p?
+        `<button class="tick" data-act="assign" data-val="${esc(e.id)}" data-plant="${esc(pid)}">${esc(p.name)}</button>`:'';}).join('')}
+      <button class="tick" data-act="assign-pick" data-val="${esc(e.id)}">Valitse kasvi…</button></div>`:''}
+    ${shots.length?`<div class="shots">${shots.map(x=>`<button data-act="view" data-val="${esc(x.id)}">
+      <img src="${photoURL(x.id)}" alt="" loading="lazy"></button>`).join('')}</div>`:''}
+    <div class="entry-acts">
+      <button class="lnk" data-act="entry-edit" data-val="${esc(e.id)}">Muokkaa</button>
+      <button class="lnk" data-act="entry-del" data-val="${esc(e.id)}">Poista</button>
+    </div>
+  </article>`;
+}
+function journalHTML(){
+  const list=shown(entriesDoc.entries).slice().sort((a,b)=>
+    (b.date||'').localeCompare(a.date||'')||(b.createdAt||0)-(a.createdAt||0));
+  if(!list.length)return '<div class="none">Ei merkintöjä</div>';
+  let last='';
+  return list.map(e=>{
+    const hd=e.date!==last?`<div class="day"><span>${dayLabel(e.date)}</span><i></i>
+      ${e.date===todayISO()?'<span style="color:var(--leaf)">tänään</span>':''}</div>`:'';
+    last=e.date;
+    return hd+(editing&&editing.kind==='entry'&&editing.id===e.id?editBoxHTML('entry',e.id,'',e.text):entryHTML(e));
+  }).join('');
+}
+function photoFeedHTML(){
+  const list=(V.feedFilter?photosFor(V.feedFilter):shown(PHOTOS)).slice()
+    .sort((a,b)=>(b.date||'').localeCompare(a.date||'')||(b.created||0)-(a.created||0));
+  const chips=[`<button class="chip small" data-act="filter" data-val="" aria-pressed="${!V.feedFilter}">Kaikki</button>`]
+    .concat(plants().filter(p=>photosFor(p.id).length).map(p=>
+      `<button class="chip small" data-act="filter" data-val="${esc(p.id)}" aria-pressed="${V.feedFilter===p.id}">${esc(shortName(p.name))}</button>`));
+  if(!list.length)return `<div class="strip">${chips.join('')}</div><div class="none">Ei kuvia</div>`;
+  const groups=[];
+  list.forEach(x=>{const g=groups[groups.length-1];
+    if(g&&g.date===x.date)g.items.push(x);else groups.push({date:x.date,items:[x]});});
+  return `<div class="strip">${chips.join('')}</div>`+groups.map(g=>`
+    <div class="sub"><span>${dayLabel(g.date)}</span><span class="n">${g.items.length}</span></div>
+    <div class="shots">${g.items.map(x=>`<button data-act="view" data-val="${esc(x.id)}">
+      <img src="${photoURL(x.id)}" alt="" loading="lazy"></button>`).join('')}</div>`).join('');
+}
+
+function balconyHTML(){
+  const seg=(k,l)=>`<button data-act="mode" data-val="${k}" aria-selected="${V.mode===k}">${l}</button>`;
+  const T=todayISO();
+  if(V.day){
+    return `<section class="sect">
+      <div class="hd"><h2>${dayLabel(V.day)}</h2>
+        <span class="meta"><button class="lnk" data-act="mode" data-val="month">‹ ${KUUT[view.m]}</button></span></div>
+      ${wxHTML(V.day)}${dayListHTML(V.day)}
+      <div class="sub"><span>Päiväkirja</span></div>
+      ${shown(entriesDoc.entries).filter(e=>e.date===V.day).map(entryHTML).join('')||'<div class="none">Ei merkintöjä</div>'}
+    </section>`;
+  }
+  const body=V.mode==='today'?wxHTML(T)+dayListHTML(T)
+    :V.mode==='month'?monthHTML()
+    :V.mode==='photos'?photoFeedHTML()
+    :journalHTML();
+  const meta=V.mode==='today'?`${flatTasks(T).length} tehtävää`
+    :V.mode==='journal'?`${shown(entriesDoc.entries).length} merkintää`
+    :V.mode==='photos'?`${shown(PHOTOS).length} kuvaa`:'';
+  return `<section class="sect">
+    <div class="hd"><h2>Koko parveke</h2>
+      <div class="segs">${seg('today','Tänään')}${seg('month','Kuukausi')}${seg('journal','Päiväkirja')}${seg('photos','Kuvat')}</div>
+      <span class="meta">${meta}</span></div>
+    ${body}</section>`;
+}
+
+/* ---- one plant, in full ---- */
+function plantHTML(p){
+  const key=KEY_BY_ID[p.id],pr=PROFILE[key]||{t:p.name,body:[],src:''};
+  const s=stateOf(p),row=SEASON.find(r=>r.key===key);
+  const mine=photosFor(p.id);
+  const notes=shown(p.notes).slice().sort((a,b)=>(b.date||'').localeCompare(a.date||''));
+  const hist=plantHistory(p);
+  const T=todayISO();
+  const mine_today=flatTasks(T).filter(t=>t.pid===p.id);
+  return `<section class="sect">
+    <div class="hd"><h2>${esc(pr.t||p.name)}</h2>
+      <span class="meta">${AREA_LABEL[p.area]} · ${esc(p.stage)}</span></div>
+    <p class="lede ${s.tone}"><span class="mk">${s.mk}</span>${esc(s.text)}<em>${esc(s.meta)}</em></p>
+    ${p.observations?`<p class="prose dimmed">${esc(p.observations)}</p>`:''}
+    ${mine_today.length?`<div class="list">${mine_today.map(t=>taskRowHTML(T,t)).join('')}</div>`:''}
+
+    <div class="sub"><span>Kausi</span><span class="n">${esc(phaseNow(p.id))}</span></div>
+    <div class="seasonstrip">
+      <span class="scale">${[['Kesä','2026-07-01'],['Elo','2026-08-01'],['Syys','2026-09-01'],['Loka','2026-10-01']]
+        .map(([l,d])=>`<b style="left:${spos(d)}%">${l}</b>`).join('')}</span>
+      <span class="track">${(row?row.ph:[]).map(([c,f,t])=>
+        `<i class="bar ${c}" style="left:${spos(f)}%;width:${Math.max(spos(t)-spos(f),1.5)}%"></i>`).join('')}</span>
+      <span class="scale"><b class="today" style="left:${spos(T)}%">▏tänään</b></span>
+    </div>
+    <ul class="life">${hist.map(([date,e])=>`<li>
+      <span class="when">${dayLabel(date)}</span>
+      <span class="what">${e.stage?`🪴 ${esc(e.stage)} `:''}${e.notes.map(t=>'✨ '+esc(t)).join(' ')}${
+        e.photos?` 📷 ${e.photos}`:''}</span></li>`).join('')||'<li><span class="what">Ei historiaa</span></li>'}</ul>
+
+    <div class="sub"><span>Päiväkirja</span><span class="n">${notes.length}</span></div>
+    ${notes.length?notes.map(n=>editing&&editing.kind==='note'&&editing.id===n.id
+      ? editBoxHTML('note',n.id,p.id,n.text)
+      : `<div class="note">
+          <div class="data">${dayLabel(n.date)}${n.ai?' ✨':''}</div>
+          <p class="prose">${esc(n.text)}</p>
+          ${n.quote?`<p class="prose quote">“${esc(n.quote)}”</p>`:''}
+          <div class="entry-acts">
+            <button class="lnk" data-act="note-edit" data-val="${esc(n.id)}" data-plant="${esc(p.id)}">Muokkaa</button>
+            <button class="lnk" data-act="note-del" data-val="${esc(p.id)}" data-note="${esc(n.id)}">Poista</button>
+          </div></div>`).join('')
+      :'<div class="none">Ei merkintöjä</div>'}
+
+    ${mine.length?`<div class="sub"><span>Kuvat</span><span class="n">${mine.length} kuvaa</span></div>
+      <div class="shots">${mine.map(x=>`<button data-act="view" data-val="${esc(x.id)}">
+        <img src="${photoURL(x.id)}" alt="" loading="lazy"></button>`).join('')}</div>`:''}
+
+    <div class="sub"><span>Hoito</span><span class="n">${esc(pr.src||'')}</span></div>
+    ${(pr.body||[]).map(b=>`<p class="prose">${esc(b)}</p>`).join('')}
+    ${REAL[key]?`<figure class="ref"><img src="${REAL[key][0]}" alt="${esc(REAL[key][1])}" loading="lazy"
+      onerror="this.parentElement.style.display='none'"><figcaption>${esc(REAL[key][1])}</figcaption></figure>`:''}
+  </section>`;
+}
+function editBoxHTML(kind,id,plantId,text){
+  return `<div class="note"><textarea id="etext">${esc(text)}</textarea>
+    <div class="entry-acts">
+      <button class="lnk" data-act="edit-cancel">Peruuta</button>
+      <button class="tick" data-act="edit-save" data-val="${esc(id)}" data-plant="${esc(plantId||'')}"
+        data-kind="${kind}">Tallenna</button>
+    </div></div>`;
+}
+
+/* ---- the lock ---- */
+function renderLock(){
+  const el=$('#lock');
+  if(!busy){el.className='';el.innerHTML='';document.body.classList.remove('locked');return;}
+  const secs=Math.round((Date.now()-busyAt)/1000);
+  const e=shown(entriesDoc.entries).slice().sort((a,b)=>(a.createdAt||0)-(b.createdAt||0)).at(-1)||{text:''};
+  const who=(e.assigned||[]).map(a=>plantById(a.plantId)).filter(Boolean);
+  el.className='on';document.body.classList.add('locked');
+  el.innerHTML=`<div class="waiting">
+    <p class="said">${esc(e.text)}</p>
+    <div class="steps"><i><b style="width:${busy==='read'?Math.min(95,secs*9):100}%"></b></i>
+      <i><b style="width:${busy==='plan'?Math.min(95,(secs-10)*5):0}%"></b></i></div>
+    <div class="stage">${busy==='read'?'1/2 · Luetaan merkintääsi':'2/2 · Rakennetaan suunnitelmaa'}</div>
+    <div class="eta">${secs} s · muu käyttöliittymä odottaa</div>
+    ${who.length?`<div class="found">${who.map(p=>{
+      const note=(p.notes||[]).find(n=>(e.assigned||[]).some(a=>a.noteId===n.id));
+      return `<div class="read"><span class="art">${avatarFor(p.id)}</span>
+        <span><b>${esc(p.name)}</b><span>${esc(note?note.text:'')}</span></span></div>`;}).join('')}</div>`:''}
+    ${secs>45?'<button class="out" data-act="escape">Päästä minut takaisin</button>':''}
+  </div>`;
+}
+
+/* ---- put the page together ---- */
+function renderAll(){
+  const T=todayISO();
+  const horizon=iso(new Date(view.y,view.m+1,7));
+  tasks=buildTasks(horizon>addDays(T,60)?addDays(T,60):horizon);
+  const a=document.activeElement,keep=a&&a.dataset&&a.dataset.ta?a.selectionStart:null;
+  $('#page').innerHTML=
+    `<header class="mast">
+      <h1>Daran parvekepuutarha</h1>
+      <span class="where">Tampere · lasitettu parveke</span>
+      <span class="fresh">${planDoc&&planDoc.generatedAt?'Suunnitelma '+relTime(planDoc.generatedAt):'Suunnitelma —'}</span>
+     </header>
+     ${navBar()}
+     ${dockHTML()}
+     ${V.plant?plantHTML(plantById(V.plant)||plants()[0]):chartHTML()+balconyHTML()}
+     <footer class="foot">
+       <label class="theme-switch">
+         <span class="tl" data-for="light">Vaalea</span>
+         <input type="checkbox" id="theme-toggle" role="switch" aria-label="Vaalea tai tumma teema">
+         <span class="track2" aria-hidden="true"><span class="knob"></span></span>
+         <span class="tl" data-for="dark">Tumma</span>
+       </label>
+       <button id="lockbtn" hidden></button>
+       <button class="lnk" data-act="cover">Kansikuva</button>
+     </footer>`;
+  wireFooter();
+  renderLock();
+  if(keep!=null){const t=$('#ctext');if(t){t.focus();t.setSelectionRange(keep,keep);}}
+}
+const fillSheet=()=>{};       /* the plant is a page now, not a sheet */
+function wireFooter(){
+  syncThemeBtn();syncLock();
+  const t=$('#theme-toggle');
+  if(t)t.onchange=e=>{
+    const next=e.target.checked?'dark':'light';
+    document.documentElement.dataset.theme=next;store.set('theme',next);
+    const tc=document.querySelector('meta[name=theme-color]');
+    if(tc)tc.setAttribute('content',next==='dark'?'#0F140F':'#1E4D3B');
+    syncThemeBtn();
+  };
+  const l=$('#lockbtn');
+  if(l)l.onclick=()=>{store.set('uploadPass',null);syncLock();toast('Lukittu. Voit lukea, mutta et muokata.');};
+}
+
+
+/* ================= the note ================= */
+/* One composer, at the top of the page. A note carries the plant the nav has
+   selected, so the distiller is told the subject instead of guessing it. */
+const staged={top:[]};
+let draft='';
+let lastEntryId=null;
+function clearDraft(){staged.top.forEach(s=>URL.revokeObjectURL(s.url));staged.top=[];draft='';}
+async function saveEntry(){
+  const text=draft.trim();
+  if(!text&&!staged.top.length)return;
+  const date=todayISO(),plantId=V.plant||null;
+  const btn=document.querySelector('[data-act="save"]');if(btn)btn.disabled=true;
+  const photoIds=[];
+  for(const s of staged.top){
+    const rec=await uploadOne(s.blob,date,s.plantId||plantId||'');
+    if(!rec){if(btn)btn.disabled=false;return;}
+    photoIds.push(rec.id);
+  }
+  const r=await apiWrite('POST','/api/entries',
+    JSON.stringify({date,text,photoIds,...(plantId?{plantId}:{})}),'application/json');
+  if(!r||!r.ok){toast('Tallennus ei onnistunut. Yritä uudelleen.');if(btn)btn.disabled=false;return;}
+  const entry=await r.json();
+  entriesDoc={...entriesDoc,entries:[...entriesDoc.entries,entry]};
+  store.set('entriesDoc',entriesDoc);
+  lastEntryId=entry.id;
+  clearDraft();renderAll();refreshSoon();
+}
+
+/* ================= actions ================= */
+let fileMode=null;
+const ACTIONS={
+  plant:pid=>{V.plant=pid;V.day=null;renderAll();window.scrollTo({top:0,behavior:'smooth'});},
+  all:()=>{V.plant=null;renderAll();},
+  mode:v=>{V.mode=v;V.day=null;store.set('mode',v);renderAll();},
+  day:v=>{V.day=v;V.plant=null;renderAll();},
+  month:v=>{view.m+=+v;
+    if(view.m<0){view.m=11;view.y--;} if(view.m>11){view.m=0;view.y++;}
+    renderAll();},
+  fold:()=>{V.dockMin=!V.dockMin;renderAll();if(!V.dockMin)setTimeout(()=>$('#ctext')?.focus(),30);},
+  save:()=>saveEntry(),
+  attach:()=>{$('#ph-input').click();},
+  unstage:i=>{URL.revokeObjectURL(staged.top[i].url);staged.top.splice(i,1);renderAll();},
+  filter:v=>{V.feedFilter=v;renderAll();},
+  view:id=>viewPhoto(id),
+  done:(_,el)=>markDone(el.dataset.date,el.dataset.key),
+  'entry-del':id=>deleteEntry(id),
+  'entry-edit':id=>{editing={kind:'entry',id};renderAll();focusEdit();},
+  'note-del':(pid,el)=>deleteNote(pid,el.dataset.note),
+  'note-edit':(id,el)=>{editing={kind:'note',id,plantId:el.dataset.plant};renderAll();focusEdit();},
+  'edit-cancel':()=>{editing=null;renderAll();},
+  'edit-save':(id,el)=>saveEdit(el.dataset.kind,id,el.dataset.plant),
+  assign:(id,el)=>assignEntry(id,[el.dataset.plant],el),
+  'assign-pick':async id=>{const pid=await pickPlant('Mistä kasvista merkintä kertoo?');if(pid)assignEntry(id,[pid]);},
+  'entry-retry':id=>retryEntry(id),
+  cover:()=>openCover(),
+  escape:()=>{setBusy('');renderAll();},
+};
+document.addEventListener('click',e=>{
+  const el=e.target.closest('[data-act]');if(!el)return;
+  if(busy&&el.dataset.act!=='escape')return;      /* the lock answers, nothing else */
+  const fn=ACTIONS[el.dataset.act];if(!fn)return;
+  e.preventDefault();fn(el.dataset.val,el,e);
+});
+document.addEventListener('input',e=>{
+  if(!e.target.dataset.ta)return;
+  draft=e.target.value;
+  const b=document.querySelector('[data-act="save"]');
+  if(b){b.disabled=!draft.trim()&&!staged.top.length;b.classList.toggle('on',!!draft.trim());}
+  const d=document.querySelector('.dock');if(d)d.classList.toggle('tall',!!draft.trim());
+});
+document.addEventListener('keydown',e=>{
+  if(e.key==='Escape'){
+    if($('#unlock').classList.contains('open'))closeUnlock(null);
+    else if($('#coverpick').classList.contains('open'))closeCover();
+    else if($('#picker').classList.contains('open'))closePicker(null);
+    else if($('#viewer').classList.contains('on'))closeViewer();
+    else if(!busy&&V.plant){V.plant=null;renderAll();}
+    return;
+  }
+  if((e.metaKey||e.ctrlKey)&&e.key==='Enter'&&!busy)saveEntry();
+  if($('#viewer').classList.contains('on')){
+    if(e.key==='ArrowLeft')showViewerAt(viewerIdx-1);
+    else if(e.key==='ArrowRight')showViewerAt(viewerIdx+1);
+  }
+});
+$('#ph-input').onchange=async e=>{
+  const files=[...e.target.files];e.target.value='';
+  if(!files.length)return;
+  if(fileMode==='cover'){
+    fileMode=null;closeCover();
+    const blob=await shrink(files[0]);
+    const rec=await uploadOne(blob,todayISO(),'');
+    if(rec){applyPhotos();await setCover(rec.id);}
+    return;
+  }
+  for(const f of files){
+    const blob=await shrink(f);
+    staged.top.push({blob,url:URL.createObjectURL(blob),plantId:V.plant||''});
+  }
+  renderAll();
+};
 
 /* ================= go ================= */
-const _topbar=$('#topbar'), _tbtop=$('#tb-top');
-// Compact when the bar pins to the top. Two thresholds (hysteresis) plus a
-// state guard so subpixel scroll wobble at the pin line (or a scroll clamp when
-// the shrunk header changes page height) can't flip the compact class on and off
-// in a loop. Shrink once the sentinel is 8px above the top, restore only after it
-// drops 24px back down. rAF keeps it to at most one check per frame.
-let _stuck=false, _tbTick=false;
-function syncTopbar(){
-  _tbTick=false;
-  const top=_tbtop.getBoundingClientRect().top;
-  if(!_stuck && top<-8){_stuck=true;_topbar.classList.add('stuck');}
-  else if(_stuck && top>24){_stuck=false;_topbar.classList.remove('stuck');}
-}
-addEventListener('scroll',()=>{if(!_tbTick){_tbTick=true;requestAnimationFrame(syncTopbar);}},{passive:true});
-syncTopbar();
-renderSeason();
-render();renderHero();
-showTab(store.get('tab')||'cal');            // restore the tab the user last had open
-if(!forecast||forecast.fetched!==todayISO())loadWx();   // loadWx() re-renders when it resolves
-loadStatus().then(async()=>{await seedStatus();render();});   // seed server status once (no-ops without a passphrase), then re-render
-loadPlan().then(render);                                      // overlay the AI plan onto the calendar when it lands
+renderAll();
+if(!forecast||forecast.fetched!==todayISO())loadWx();
+loadStatus().then(async()=>{await seedStatus();renderAll();});
+loadPlan().then(renderAll);
+loadEntries().then(renderAll);
 loadPhotos();loadCover();
-pullState();                                             // adopt newer server state (task list synced across devices)
-addEventListener('visibilitychange',()=>{if(!document.hidden)pullState();});
+pullState();
+addEventListener('visibilitychange',()=>{
+  if(document.hidden)return;
+  pullState();
+  Promise.all([loadEntries(),loadStatus()]).then(refreshUI);
+});
+setInterval(()=>{if(busy)renderLock();},1000);
+
 </script>
 </body>
 </html>

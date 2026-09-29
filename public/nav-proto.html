@@ -1,0 +1,635 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Navigation proposal — Parvekepuutarha 3D</title>
+<style>
+  /* Throwaway mockup of the proposed navigation. Same tokens and type as
+     scene.html so the judgement is about structure, not styling. No 3D, no
+     network: the "scene" is a flat stand-in you can click. */
+  :root{
+    --paper:#F6F7F3; --cell:#FFFFFF; --line:#DDE3DA; --ink:#1B2420; --dim:#6B7A70;
+    --pine:#1E4D3B; --tomato:#D9472B; --water:#3E86B0; --pollen:#DE9E2E; --sage:#EAF0E9;
+    --glass:rgba(255,255,255,.86); --glass-line:rgba(27,36,32,.10);
+    --shadow:0 12px 40px -12px rgba(20,35,26,.34);
+    --display:"Futura","Avenir Next Condensed","Avenir Next","Helvetica Neue",sans-serif;
+    --body:"Avenir Next","Segoe UI",system-ui,sans-serif;
+    --mono:ui-monospace,"SF Mono","JetBrains Mono",Menlo,monospace;
+    --r-box:22px; --r-card:16px; --r-pill:999px;
+  }
+  *{box-sizing:border-box}
+  [hidden]{display:none!important}
+  html,body{margin:0;height:100%;overflow:hidden}
+  body{font:15px/1.5 var(--body);background:var(--paper);color:var(--ink)}
+  h1,h2,h3{font-family:var(--display);font-weight:700;letter-spacing:.06em;text-transform:uppercase;margin:0}
+  button{font:inherit;color:inherit;cursor:pointer}
+  :focus-visible{outline:2px solid var(--pine);outline-offset:2px}
+
+  /* --- stand-in for the 3D scene --- */
+  #scene{position:fixed;inset:0;background:linear-gradient(160deg,#E8EDE6,#DCE4DC)}
+  .room{position:absolute;left:36%;top:10%;right:5%;bottom:12%;
+    background:linear-gradient(180deg,#D4763C,#C0692F);border-radius:8px;
+    box-shadow:inset 0 0 80px rgba(0,0,0,.18)}
+  .deck{position:absolute;left:0;right:0;bottom:0;height:34%;background:linear-gradient(180deg,#8B5730,#6E4425);
+    border-radius:0 0 8px 8px}
+  .row{position:absolute;left:5%;bottom:6%;display:flex;gap:12px;align-items:flex-end;z-index:2}
+  .shelfbox{position:absolute;right:5%;bottom:6%;display:grid;grid-template-columns:repeat(4,1fr);
+    gap:7px;background:#2E6E73;padding:9px;border-radius:10px;z-index:2}
+  .pot{background:none;border:0;padding:0;display:flex;flex-direction:column;align-items:center;gap:3px;
+    filter:drop-shadow(0 6px 10px rgba(0,0,0,.28))}
+  .pot svg{display:block}
+  .pot .base{width:52px;height:26px;background:#24282A;border-radius:4px 4px 12px 12px}
+  .shelfbox .pot .base{width:26px;height:14px}
+  .pot:hover{transform:translateY(-3px)}
+  .pot.sel .base{outline:3px solid #F6F7F3;outline-offset:2px}
+  .hint{position:absolute;left:22px;top:86px;max-width:15rem;font-family:var(--mono);font-size:11px;
+    letter-spacing:.05em;color:var(--dim);line-height:1.7}
+  .hint b{display:block;font-family:var(--display);font-size:12px;letter-spacing:.1em;color:var(--ink);margin-bottom:6px}
+
+  /* --- the one sheet --- */
+  /* Stacking: ambient pills < the sheet you are reading < the bar, which must
+     stay reachable so you can switch view without closing first. */
+  #sheet{position:fixed;z-index:18;left:14px;bottom:calc(76px);width:min(430px,42vw);max-height:calc(100vh - 200px);
+    background:var(--glass);backdrop-filter:blur(18px);border:1px solid var(--glass-line);
+    box-shadow:var(--shadow);border-radius:var(--r-box);display:flex;flex-direction:column;
+    transform:translateY(8px);opacity:0;pointer-events:none;transition:opacity .2s,transform .2s}
+  #sheet.open{transform:none;opacity:1;pointer-events:auto}
+  .head{display:flex;align-items:flex-start;gap:20px;padding:11px 16px 10px;border-bottom:1px solid var(--glass-line)}
+  /* Match the close button's box so the two line up on a plain tab sheet, where
+     the title is the only thing beside it. */
+  /* Title box and close button share a height so they centre on one line. */
+  .head h2{font-size:16px;line-height:1.15;min-height:28px;display:flex;align-items:center}
+  .head .tt{flex:1;min-width:0}
+  /* A real target, not a line of text: bare 10px type gave a ~14px tall tap area. */
+  .back{display:inline-flex;align-items:center;gap:5px;min-height:30px;padding:5px 11px 5px 8px;
+    margin:0 0 12px -2px;background:var(--sage);border:1px solid var(--line);border-radius:var(--r-pill);
+    font-family:var(--mono);font-size:10px;letter-spacing:.06em;text-transform:uppercase;color:var(--pine)}
+  .back:hover{border-color:var(--pine)}
+  .back span{font-size:13px;line-height:1}
+  @media (max-width:900px){ .back{min-height:34px;padding:6px 13px 6px 10px;font-size:10.5px;margin-bottom:13px} }
+  .close{background:none;border:1px solid var(--glass-line);border-radius:var(--r-pill);
+    width:28px;height:28px;font-size:17px;line-height:1;display:grid;place-items:center;color:var(--dim);flex:none}
+  .meta{display:flex;flex-wrap:wrap;gap:6px;align-items:center;margin-top:4px;
+    font-family:var(--mono);font-size:10.5px;letter-spacing:.05em;color:var(--dim)}
+  .body{flex:1;overflow-y:auto;padding:14px 16px 18px}
+
+  .seg{display:flex;gap:2px;background:var(--sage);border-radius:var(--r-pill);padding:3px;margin-bottom:12px;width:fit-content}
+  .seg button{background:none;border:0;border-radius:var(--r-pill);padding:5px 13px;
+    font-family:var(--mono);font-size:10.5px;letter-spacing:.07em;text-transform:uppercase;color:var(--dim)}
+  .seg button[aria-selected="true"]{background:var(--cell);color:var(--ink);box-shadow:0 1px 3px rgba(0,0,0,.1)}
+
+  .areahd{display:flex;align-items:center;gap:9px;margin:14px 0 8px;
+    font-family:var(--mono);font-size:10px;letter-spacing:.11em;text-transform:uppercase;color:var(--dim)}
+  .areahd:first-child{margin-top:0}
+  .areahd i{flex:1;height:1px;background:var(--line)}
+  .rack{display:flex;flex-direction:column;gap:7px}
+  .plabel{display:flex;gap:11px;align-items:center;text-align:left;width:100%;
+    background:var(--cell);border:1px solid var(--line);border-radius:var(--r-card);padding:9px}
+  .plabel:hover{border-color:var(--pine)}
+  .plabel .art{width:44px;height:44px;flex:none;border-radius:11px;overflow:hidden;background:var(--sage);padding:3px}
+  .plabel .art svg{width:100%;height:100%;display:block}
+  .pb{flex:1;min-width:0;display:flex;flex-wrap:wrap;gap:5px;align-items:center}
+  .pname{font-family:var(--display);font-weight:700;letter-spacing:.03em;text-transform:uppercase;font-size:12px;width:100%}
+  .pstage{font-family:var(--mono);font-size:9.5px;letter-spacing:.09em;text-transform:uppercase;color:var(--dim)}
+  .pfoot{font-family:var(--mono);font-size:9.5px;color:var(--dim);width:100%}
+  .hb{font-family:var(--mono);font-size:9.5px;letter-spacing:.08em;text-transform:uppercase;
+    padding:2.5px 8px;border-radius:var(--r-pill)}
+  .hb.good{background:rgba(94,155,107,.22);color:#3E7A50}
+  .hb.watch{background:rgba(222,158,46,.24);color:#9A6E12}
+
+  .card{background:var(--cell);border:1px solid var(--line);border-radius:var(--r-card);padding:13px;margin-bottom:12px}
+  .sec{font-family:var(--display);font-weight:700;font-size:11px;letter-spacing:.13em;text-transform:uppercase;
+    color:var(--dim);margin-bottom:9px}
+  .trow{display:flex;gap:10px;align-items:flex-start;padding:8px 0;border-top:1px solid var(--line)}
+  .trow:first-of-type{border-top:0}
+  .trow .tb{flex:1}
+  .what{font-size:13.5px;font-weight:600}
+  .why{font-size:12px;color:var(--dim)}
+  .done{border:1px solid var(--line);background:none;border-radius:var(--r-pill);padding:4px 10px;
+    font-family:var(--mono);font-size:10px;letter-spacing:.07em;text-transform:uppercase;color:var(--dim)}
+  .fold{border-top:1px solid var(--line)}
+  .fold summary{padding:11px 0;font-family:var(--display);font-weight:700;letter-spacing:.09em;
+    text-transform:uppercase;font-size:11px;cursor:pointer;color:var(--dim)}
+  .fold p{font-size:13.5px;margin:0 0 8px}
+  .grid4{display:grid;grid-template-columns:repeat(auto-fill,minmax(84px,1fr));gap:6px}
+  .ph{aspect-ratio:1;border-radius:11px;background:linear-gradient(140deg,#93BFA3,#2E7D52);border:1px solid var(--line)}
+  .ph.wide{background:linear-gradient(140deg,#D4763C,#8B5730)}
+  .none{color:var(--dim);font-size:13px;font-style:italic}
+
+  /* season chart */
+  .ticks{position:relative;height:13px;margin:0 0 4px 58px}   /* 1 border + 11 pad + 36 art + 10 gap */
+  .ticks b{position:absolute;transform:translateX(-50%);font-family:var(--mono);font-size:9px;
+    letter-spacing:.07em;text-transform:uppercase;color:var(--dim);font-weight:400}
+  .srow{display:flex;align-items:center;gap:8px;width:100%;background:none;border:0;
+    border-top:1px solid var(--line);padding:7px 0;text-align:left}
+  .srow .lbl{width:88px;flex:none;font-family:var(--mono);font-size:9.5px;color:var(--dim);
+    overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
+  .track{position:relative;flex:1;height:13px;background:var(--sage);border-radius:var(--r-pill);overflow:hidden}
+  /* Square-edged segments: each one pill-shaped meant two rounded caps met at
+     every phase boundary and pinched. The track clips, so the outer ends of the
+     run still come out rounded. */
+  .bar{position:absolute;top:2px;bottom:2px;border-radius:0}
+  .bar.grow{background:var(--pine);opacity:.5} .bar.flower{background:var(--pollen)}
+  .bar.fruit{background:var(--tomato);opacity:.72} .bar.harvest{background:var(--pine)}
+  .tline{position:absolute;top:-3px;bottom:-3px;width:2px;background:var(--ink);border-radius:1px;z-index:2}
+  .tlab{position:absolute;top:-15px;transform:translateX(-50%);font-family:var(--mono);font-size:8.5px;
+    letter-spacing:.08em;text-transform:uppercase;color:var(--ink)}
+  .legend{display:flex;flex-wrap:wrap;gap:10px;margin:10px 0 2px;font-family:var(--mono);font-size:9.5px;color:var(--dim)}
+  .legend span{display:flex;align-items:center;gap:5px}
+  .legend i{width:14px;height:7px;border-radius:99px;display:block}
+  /* one row = one plant: identity on the left, its year on the right */
+  /* name, then how it is doing, then its year. The stage is not repeated in
+     words: the bar already says where in the year the plant is. */
+  .prow{display:grid;grid-template-columns:36px 1fr;column-gap:10px;row-gap:4px;align-items:center;
+    width:100%;background:var(--cell);border:1px solid var(--line);border-radius:var(--r-card);
+    padding:9px 11px;margin-bottom:6px;text-align:left}
+  .prow:hover{border-color:var(--pine)}
+  .prow .art{grid-row:1/4;align-self:start;width:36px;height:36px;border-radius:9px;
+    overflow:hidden;background:var(--sage);padding:2px}
+  .prow .art svg{width:100%;height:100%;display:block}
+  .prow .top{display:flex;gap:8px;align-items:baseline;flex-wrap:wrap;min-width:0}
+  .prow .nm{font-family:var(--display);font-weight:700;letter-spacing:.02em;text-transform:uppercase;
+    font-size:11.5px;line-height:1.2}
+  .prow .cond{font-size:11.5px;line-height:1.3;color:var(--dim)}
+  .prow .cond.watch{color:#9A6E12}
+  .prow .cond.bad{color:var(--tomato)}
+  .prow .track{height:15px;margin-top:3px}
+  .dueflag{font-family:var(--mono);font-size:8.5px;color:var(--tomato);white-space:nowrap}
+  .dayblock{background:var(--cell);border:1px solid var(--line);border-radius:var(--r-card);padding:12px;margin-bottom:10px}
+  .dayblock.isnow{border-color:var(--pine)}
+  .dhd{display:flex;gap:9px;align-items:baseline;flex-wrap:wrap;margin-bottom:8px}
+  .dwd{font-family:var(--display);font-weight:700;letter-spacing:.06em;text-transform:uppercase;font-size:12.5px}
+  .dtoday{font-family:var(--mono);font-size:9px;letter-spacing:.1em;text-transform:uppercase;
+    background:var(--pine);color:var(--paper);padding:2px 7px;border-radius:var(--r-pill)}
+  .dwx{font-family:var(--mono);font-size:10.5px;color:var(--dim);margin-left:auto}
+  .alert{display:flex;gap:9px;padding:8px;border-radius:10px;background:rgba(222,158,46,.16);margin-bottom:8px;font-size:12.5px}
+  .tsec{margin-top:11px;padding-top:10px;border-top:1px solid var(--line)}
+  .jent{display:flex;gap:9px;padding:9px 0;border-top:1px solid var(--line)}
+  .jent:first-of-type{border-top:0}
+  .jthumb{width:34px;height:34px;flex:none;border-radius:9px;background:var(--sage);display:grid;place-items:center}
+  .jname{font-family:var(--mono);font-size:9.5px;color:var(--dim)}
+  .jtext{font-size:13px}
+  /* a photo belongs to the entry it was posted with, so it sits in that entry */
+  .jshots{display:flex;gap:5px;margin-top:7px;flex-wrap:wrap}
+  .jshots i{width:76px;height:76px;border-radius:10px;border:1px solid var(--line);display:block;
+    background:linear-gradient(140deg,#93BFA3,#2E7D52)}
+  .jshots i.b{background:linear-gradient(140deg,#D4763C,#8B5730)}
+  .jwho{background:none;border:0;padding:0;font-family:var(--mono);font-size:9.5px;color:var(--pine);
+    text-decoration:underline;text-underline-offset:2px}
+  .loose{display:flex;gap:6px;flex-wrap:wrap;margin-top:8px}
+  .loose i{width:62px;height:62px;border-radius:10px;border:1px solid var(--line);display:block;
+    background:linear-gradient(140deg,#93BFA3,#2E7D52)}
+
+  /* calendar */
+  .dow{display:grid;grid-template-columns:repeat(7,1fr);gap:4px;margin-bottom:5px}
+  .dow span{font-family:var(--mono);font-size:9.5px;color:var(--dim);text-align:center}
+  .cal{display:grid;grid-template-columns:repeat(7,1fr);gap:4px}
+  .cell{aspect-ratio:1;background:var(--cell);border:1px solid var(--line);border-radius:10px;padding:4px;
+    display:flex;flex-direction:column;font-family:var(--mono);font-size:11px}
+  .cell.today{border-color:var(--pine);border-width:2px}
+  .seeds{display:flex;gap:2px;margin-top:auto}
+  .seed{width:5px;height:5px;border-radius:50%}
+  .seed.water{background:var(--water)} .seed.care{background:var(--pine)} .seed.pollen{background:var(--pollen)}
+
+  .chipbtn{border:1px solid var(--line);background:var(--paper);border-radius:var(--r-pill);padding:5px 11px;
+    font-family:var(--mono);font-size:10px;letter-spacing:.05em;color:var(--dim);white-space:nowrap}
+  .chipbtn.set{background:var(--pine);border-color:var(--pine);color:var(--paper)}
+  .picker{border:1px solid var(--line);border-radius:11px;background:var(--paper);margin-top:8px;
+    max-height:172px;overflow:auto}
+  .picker button{display:block;width:100%;text-align:left;background:none;border:0;padding:7px 11px;font-size:12.5px}
+  .picker button:hover{background:var(--sage)}
+  .navs{display:flex;gap:5px;margin-left:auto}
+  .navs button{background:none;border:1px solid var(--line);border-radius:var(--r-pill);
+    width:29px;height:29px;display:grid;place-items:center;color:var(--dim)}
+  .navs .todaybtn{width:auto;padding:0 11px;font-family:var(--mono);font-size:10px;letter-spacing:.07em;text-transform:uppercase}
+  .cell{cursor:pointer}
+  .cell:hover{border-color:var(--pine)}
+  textarea{width:100%;min-height:74px;border:1px solid var(--line);border-radius:11px;padding:10px;
+    font:inherit;resize:vertical;background:var(--cell)}
+  .cbar{display:flex;gap:8px;align-items:center;margin-top:8px}
+  .cbar .grow2{flex:1}
+  .save{background:var(--pine);border:0;color:var(--paper);border-radius:var(--r-pill);padding:8px 17px;
+    font-family:var(--display);font-weight:700;letter-spacing:.08em;text-transform:uppercase;font-size:11px}
+
+  /* --- bottom bar --- */
+  #tabbar{position:fixed;left:14px;bottom:14px;z-index:22;display:flex;gap:2px;padding:5px;
+    background:var(--glass);backdrop-filter:blur(14px);border:1px solid var(--glass-line);
+    border-radius:var(--r-pill);box-shadow:var(--shadow)}
+  #tabbar button{background:none;border:0;border-radius:var(--r-pill);padding:9px 15px;
+    font-family:var(--display);font-weight:700;letter-spacing:.08em;text-transform:uppercase;font-size:11.5px;color:var(--dim)}
+  /* State is quiet, action is loud. Both being solid pine made the active tab and
+     the one button you press look like the same thing. */
+  #tabbar button[aria-pressed="true"]{background:var(--cell);color:var(--ink);
+    box-shadow:0 1px 3px rgba(20,35,26,.16)}
+  /* a rule, so the action is visibly not a fourth tab */
+  #tabbar .note{background:var(--pine);color:var(--paper);margin-left:10px;position:relative}
+  #tabbar .note::before{content:"";position:absolute;left:-6px;top:6px;bottom:6px;width:1px;background:var(--glass-line)}
+  #tabbar .note[aria-pressed="true"]{background:var(--pine);color:var(--paper);
+    box-shadow:inset 0 0 0 2px var(--paper),0 1px 3px rgba(20,35,26,.2)}
+  .topbar{position:fixed;top:14px;left:14px;right:14px;display:flex;gap:10px;align-items:center;z-index:10}
+  .chip{background:var(--glass);backdrop-filter:blur(12px);border:1px solid var(--glass-line);
+    border-radius:var(--r-pill);padding:8px 13px;box-shadow:var(--shadow);
+    font-family:var(--mono);font-size:11px;letter-spacing:.05em}
+  .brand{font-family:var(--display);font-weight:800;letter-spacing:.03em;text-transform:uppercase;font-size:15px}
+  .brand b{color:var(--pine)}
+
+  /* ---------- narrow screens ----------
+     The sheet stops being a side column and becomes a bottom sheet, clearing the
+     bar rather than sharing a row with it. */
+  @media (max-width: 900px){
+    .topbar{flex-wrap:wrap;gap:6px;top:10px;left:10px;right:10px}
+    .chip{padding:6px 10px;font-size:10px}
+    .brand{font-size:13px}
+    .hint{display:none}
+    .room{left:4%;right:4%;top:16%;bottom:26%}
+    #sheet{left:8px;right:8px;width:auto;bottom:calc(72px + env(safe-area-inset-bottom));
+      max-height:calc(100vh - 190px);border-radius:var(--r-box)}
+    #tabbar{left:8px;right:8px;transform:none;justify-content:space-between;
+      bottom:calc(10px + env(safe-area-inset-bottom))}
+    #tabbar button{padding:9px 11px;font-size:10.5px;letter-spacing:.04em}
+    #tabbar .note{margin-left:2px}
+    .prow{grid-template-columns:32px 1fr;column-gap:9px;padding:9px}
+    .prow .art{width:32px;height:32px}
+    .ticks{margin-left:51px}                 /* 1 border + 9 pad + 32 art + 9 gap */
+    .cbar{flex-wrap:wrap}
+    .navs{margin-left:0}
+    .jshots i{width:64px;height:64px}
+  }
+</style>
+</head>
+<body>
+
+<div id="scene">
+  <div class="room">
+    <div class="deck"></div>
+    <div class="row" id="row"></div>
+    <div class="shelfbox" id="shelfbox"></div>
+  </div>
+  <div class="hint"><b>Mockup</b>
+    Click a plant in the “scene”, or use the bar below.
+    Nothing here is 3D and nothing saves — this is only the navigation.</div>
+</div>
+
+<div class="topbar">
+  <span class="chip brand">Parveke<b>.</b></span>
+  <span class="chip">Tampere · ⛅ 11° · plan 50 min ago</span>
+  <span class="chip" style="color:var(--tomato)">6 tasks today</span>
+</div>
+
+<section id="sheet" aria-live="polite">
+  <div class="head">
+    <div class="tt">
+      <button class="back" id="back" hidden><span aria-hidden="true">‹</span> All plants</button>
+      <h2 id="title"></h2>
+      <div class="meta" id="meta"></div>
+    </div>
+    <button class="close" id="close" aria-label="Close">×</button>
+  </div>
+  <div class="body" id="body"></div>
+</section>
+
+<nav id="tabbar">
+  <button data-tab="plants" aria-pressed="false">Plants</button>
+  <button data-tab="calendar" aria-pressed="false">Calendar</button>
+  <button data-tab="photos" aria-pressed="false">Photos</button>
+  <button data-tab="note" class="note" aria-pressed="false">✎ Update</button>
+</nav>
+
+<script src="garden-data.js"></script>
+<script type="module">
+import { billboardFor } from './scene/art.js';
+
+const $ = (s) => document.querySelector(s);
+const PLANTS = window.GARDEN_SEED.plants;
+const art = (p) => billboardFor(p.species, p.stage).svg;
+
+/* a little fake status so the list has something to show */
+const FAKE = {
+  'tomato-1': { health: ['watch', 'recovering snap'], water: '2 d ago', tasks: 2 },
+  'tomato-2': { health: ['good', 'fruiting well'], water: 'today', tasks: 1 },
+  'rasp-maurin': { health: ['good', 'berry heavy'], water: 'today', tasks: 1 },
+  'rasp-takala-1': { health: ['good', 'rooting branch'], water: 'today', tasks: 0 },
+  'rasp-takala-2': { health: ['good', 'settling in'], water: '1 d ago', tasks: 0 },
+};
+const TODAY_PCT = 45;   // 12 Aug on a 29 Jun – 5 Oct axis
+const BARS = {
+  'tomato-1': [['flower',0,32],['fruit',32,50],['harvest',50,100]],
+  'tomato-2': [['flower',0,32],['fruit',32,46],['harvest',46,100]],
+  'rasp-maurin': [['fruit',21,44],['harvest',44,72]],
+  'rasp-takala-1': [['grow',21,100]],
+  'rasp-takala-2': [['grow',21,100]],
+  'parsley': [['grow',0,56],['harvest',56,100]],
+  'chilli-1': [['grow',10,37],['flower',37,52],['fruit',52,68],['harvest',68,92]],
+  'chilli-2': [['grow',10,37],['flower',37,52],['fruit',52,68],['harvest',68,92]],
+  'basil-mint': [['grow',0,37],['harvest',37,92]],
+  'chives': [['grow',0,47],['harvest',47,100]],
+  'spring-onion': [['grow',0,52],['harvest',52,100]],
+  'garlic': [['grow',0,40],['harvest',40,78]],
+  'monstera': [['grow',0,100]],
+  'hedera': [['grow',0,100]],
+};
+const SEASON = [
+  ['Tigerella', [['flower', 0, 32], ['fruit', 32, 50], ['harvest', 50, 100]]],
+  ['Noire de Crimée', [['flower', 0, 32], ['fruit', 32, 46], ['harvest', 46, 100]]],
+  ['Maurin Makea', [['fruit', 21, 44], ['harvest', 44, 72]]],
+  ['Takalan Herkku 1', [['grow', 21, 100]]],
+  ['Takalan Herkku 2', [['grow', 21, 100]]],
+  ['Parsley', [['grow', 0, 56], ['harvest', 56, 100]]],
+  ['Lombardo ×2', [['grow', 10, 37], ['flower', 37, 52], ['fruit', 52, 68], ['harvest', 68, 92]]],
+  ['Basil & mint', [['grow', 0, 37], ['harvest', 37, 92]]],
+  ['Chives', [['grow', 0, 47], ['harvest', 47, 100]]],
+  ['Spring onion', [['grow', 0, 52], ['harvest', 52, 100]]],
+  ['Garlic', [['grow', 0, 40], ['harvest', 40, 78]]],
+];
+
+/* ---------- the fake scene ---------- */
+const FLOOR = ['tomato-1', 'tomato-2', 'rasp-maurin', 'rasp-takala-1', 'rasp-takala-2'];
+const SHELF = ['parsley', 'chives', 'spring-onion', 'basil-mint', 'garlic', 'chilli-1', 'chilli-2', 'hedera'];
+const potBtn = (p, big) => {
+  const b = document.createElement('button');
+  b.className = 'pot';
+  b.dataset.id = p.id;
+  b.title = p.name;
+  b.innerHTML = `<span style="width:${big ? 58 : 30}px;height:${big ? 84 : 40}px;display:block">${art(p)}</span><span class="base"></span>`;
+  b.querySelector('svg').setAttribute('style', 'width:100%;height:100%');
+  b.onclick = () => openPlant(p.id);
+  return b;
+};
+FLOOR.forEach((id) => { const p = PLANTS.find((x) => x.id === id); if (p) $('#row').append(potBtn(p, true)); });
+SHELF.forEach((id) => { const p = PLANTS.find((x) => x.id === id); if (p) $('#shelfbox').append(potBtn(p, false)); });
+
+/* ---------- the one composer ----------
+   Same component everywhere; context only pre-fills it. Both the plant and the
+   date stay editable, so "note about this plant", "note for the 8th" and "just
+   tell the AI" are one flow rather than three. */
+let comp = { plant: null, date: '2026-08-12', picking: false, fromPhoto: null };
+function composerHTML(opts = {}) {
+  const lockPlant = opts.lockPlant || null;         // plant detail: fixed subject
+  const pid = lockPlant || comp.plant;
+  const p = pid === '__all' ? { name: 'Whole balcony' } : (pid ? PLANTS.find((x) => x.id === pid) : null);   // a tag, not a page
+  const open = opts.bare ? '<div>' : '<div class="card">';
+  return `${open}
+    <textarea placeholder="What's happening?"></textarea>
+    <div class="cbar">
+      <button class="done" data-attach>📷</button>
+      ${lockPlant
+        ? `<span class="chipbtn set">${p.name}</span>`
+        : `<button class="chipbtn${p ? ' set' : ''}" data-pick>${p ? p.name : 'Which plant?'}</button>`}
+      <input type="date" value="${comp.date}" data-date
+        style="border:1px solid var(--line);border-radius:999px;padding:5px 10px;
+        font-family:var(--mono);font-size:10px;color:var(--dim);background:var(--paper)">
+      <span class="grow2"></span><button class="save">Save</button>
+    </div>
+    ${comp.picking && !lockPlant ? `<div class="picker">
+      <button data-set="">✨ Let the AI decide</button>
+      <button data-set="__all">🪴 Whole balcony</button>
+      ${PLANTS.map((x) => `<button data-set="${x.id}">${x.name}</button>`).join('')}
+    </div>` : ''}
+    ${comp.fromPhoto ? `<p style="color:var(--dim);font-size:11.5px;font-style:italic;margin:9px 0 0">
+      Date taken from the photo (${comp.fromPhoto}).</p>` : ''}
+    ${!lockPlant && !p ? `<p style="color:var(--dim);font-size:11.5px;font-style:italic;margin:9px 0 0">
+      Leave the plant unset and the AI files it for you — that is the point of it.</p>` : ''}
+  </div>`;
+}
+function wireComposer() {
+  const b = $('#body');
+  b.querySelectorAll('[data-pick]').forEach((el) => {
+    el.onclick = () => { comp.picking = !comp.picking; render(); };
+  });
+  b.querySelectorAll('[data-set]').forEach((el) => {
+    el.onclick = () => { comp.plant = el.dataset.set || null; comp.picking = false; render(); };
+  });
+  b.querySelectorAll('[data-date]').forEach((el) => {
+    el.onchange = () => { comp.date = el.value; comp.fromPhoto = null; };
+  });
+  /* Stand-in for the real thing: a photo carries the day it was taken, so
+     attaching one dates the entry rather than the day you happen to be looking at. */
+  b.querySelectorAll('[data-attach]').forEach((el) => {
+    el.onclick = () => { comp.date = '2026-08-10'; comp.fromPhoto = '10.8.'; render(); };
+  });
+}
+
+/* ---------- state ---------- */
+let tab = null;          // 'plants' | 'calendar' | 'photos' | 'note'
+let plantId = null;      // set when drilled into a plant
+let plantsMode = 'list'; // 'list' | 'season'
+
+function setTab(t) {
+  if (tab === t && !(t === 'plants' && plantId)) return close();
+  tab = t; if (t !== 'plants') plantId = null;
+  render();
+}
+function openPlant(id) { tab = 'plants'; plantId = id; render(); }
+function close() { tab = null; plantId = null; render(); }
+
+$('#close').onclick = close;
+$('#back').onclick = () => { plantId = null; render(); };
+document.querySelectorAll('#tabbar button').forEach((b) => { b.onclick = () => setTab(b.dataset.tab); });
+
+/* ---------- render ---------- */
+function render() {
+  document.querySelectorAll('#tabbar button').forEach((b) =>
+    b.setAttribute('aria-pressed', String(b.dataset.tab === tab)));
+  document.querySelectorAll('.pot').forEach((el) => el.classList.toggle('sel', el.dataset.id === plantId));
+  $('#sheet').classList.toggle('open', !!tab);
+  if (!tab) return;
+  $('#back').hidden = !(tab === 'plants' && plantId);
+
+  if (tab === 'plants' && plantId) {
+    renderPlant(); wireComposer();
+    $('#body').querySelectorAll('[data-goday]').forEach((b) => { b.onclick = () => {
+      calDay = Number(b.dataset.goday); calMode = 'day'; tab = 'calendar'; plantId = null; render(); }; });
+    return;
+  }
+  $('#meta').innerHTML = '';
+  if (tab === 'plants') { $('#title').textContent = 'Plants'; $('#body').innerHTML = plantsHTML(); wirePlants(); }
+  if (tab === 'calendar') { $('#title').textContent = 'Calendar'; $('#body').innerHTML = calHTML();
+    const B = $('#body');
+    B.querySelectorAll('[data-cal]').forEach((b) => { b.onclick = () => { calMode = b.dataset.cal; render(); }; });
+    B.querySelectorAll('[data-step]').forEach((b) => { b.onclick = () => {
+      calDay += Number(b.dataset.step) * (calMode === '5 days' ? 5 : 1); render(); }; });
+    B.querySelectorAll('[data-today]').forEach((b) => { b.onclick = () => { calDay = 12; render(); }; });
+    B.querySelectorAll('[data-day]').forEach((b) => { b.onclick = () => {
+      calDay = Number(b.dataset.day); calMode = 'day'; render(); }; });
+    B.querySelectorAll('[data-goplant]').forEach((b) => { b.onclick = () => openPlant(b.dataset.goplant); });
+    wireComposer(); }
+  if (tab === 'photos') { $('#title').textContent = 'Photos'; $('#body').innerHTML = photosHTML(); }
+  if (tab === 'note') { $('#title').textContent = 'New update'; $('#body').innerHTML = noteHTML(); wireComposer(); }
+}
+
+function plantsHTML() {
+  /* The chart IS the list: one row per plant, identity on the left and its year
+     on the right, so status and season are read in a single pass. */
+  const legend = `<div class="legend">
+    <span><i style="background:var(--pine);opacity:.5"></i> growing</span>
+    <span><i style="background:var(--pollen)"></i> flowering</span>
+    <span><i style="background:var(--tomato);opacity:.72"></i> fruiting</span>
+    <span><i style="background:var(--pine)"></i> harvest</span>
+    <span><i style="background:var(--ink);width:2px;height:11px"></i> today</span></div>`;
+  let h = legend;
+  for (const area of ['balcony', 'indoor']) {
+    const mine = PLANTS.filter((p) => (p.area || 'balcony') === area);
+    h += `<div class="areahd"><span>${area === 'balcony' ? 'On the balcony' : 'Indoors'}</span><i></i><span>${mine.length}</span></div>`;
+    h += mine.map((p) => {
+      const f = FAKE[p.id] || { health: null, water: 'today', tasks: 0 };
+      const ph = BARS[p.id] || [['grow', 0, 100]];
+      return `<button class="prow" data-plant="${p.id}">
+        <span class="art">${art(p)}</span>
+        <span class="top"><span class="nm">${p.name}</span></span>
+        <!-- health is written for every plant on each re-plan, so this line is
+             effectively always filled; the dash only covers a plant added since
+             the last run. -->
+        <span class="cond ${f.health ? f.health[0] : ''}">${f.health ? f.health[1] : '—'}</span>
+        <span class="track">${ph.map(([c, a, b]) => `<i class="bar ${c}" style="left:${a}%;width:${b - a}%"></i>`).join('')}
+          <i class="tline" style="left:${TODAY_PCT}%"></i></span>
+      </button>`;
+    }).join('');
+  }
+  return h;
+}
+function wirePlants() {
+  $('#body').querySelectorAll('[data-plant]').forEach((b) => {
+    b.onclick = () => openPlant(b.dataset.plant);
+  });
+}
+
+function renderPlant() {
+  const p = PLANTS.find((x) => x.id === plantId);
+  const f = FAKE[p.id] || { health: null, water: 'today', tasks: 0 };
+  $('#title').textContent = p.name;
+  $('#meta').innerHTML = `<span>${(p.area || 'balcony') === 'indoor' ? 'Indoors' : 'On the balcony'}</span>`
+    + `<span>· 🪴 ${p.stage}</span>${f.health ? `<span class="hb ${f.health[0]}">${f.health[1]}</span>` : ''}`
+    + `<span>· watered ${f.water}</span>`;
+  $('#body').innerHTML = `
+    ${f.tasks ? `<div class="card"><div class="sec">Needs doing</div>
+      <div class="trow"><span>💧</span><span class="tb"><span class="what">Water</span>
+        <span class="why">Keep fruiting canes well hydrated</span></span><button class="done">Done</button></div>
+      ${f.tasks > 1 ? `<div class="trow"><span>✋</span><span class="tb">
+        <span class="what">Water <span style="color:var(--tomato);font-weight:400">· overdue since 10.8.</span></span>
+        <span class="why">Two days past due</span></span><button class="done">Done</button></div>` : ''}
+    </div>` : ''}
+    <div class="card"><div class="sec">Condition</div>
+      ${f.health ? `<span class="hb ${f.health[0]}">${f.health[1]}</span>
+        <p style="font-size:13px;color:var(--dim);margin:8px 0 12px">AI's read — worth an eye on it.</p>` : ''}
+      <div class="ticks" style="margin-left:0"><b style="left:5%">Jul</b><b style="left:37%">Aug</b>
+        <b style="left:68%">Sep</b><b style="left:97%">Oct</b></div>
+      <span class="track" style="display:block">
+        ${(BARS[p.id] || [['grow', 0, 100]]).map(([c, a, b]) =>
+          `<i class="bar ${c}" style="left:${a}%;width:${b - a}%"></i>`).join('')}
+        <i class="tline" style="left:${TODAY_PCT}%"></i></span>
+      <div class="legend"><span><i style="background:var(--pine);opacity:.5"></i> growing</span>
+        <span><i style="background:var(--pollen)"></i> flowering</span>
+        <span><i style="background:var(--tomato);opacity:.72"></i> fruiting</span>
+        <span><i style="background:var(--pine)"></i> harvest</span></div></div>
+    <div class="card"><div class="sec">Journal</div>
+      ${composerHTML({ lockPlant: p.id, bare: true })}
+      <div style="margin-top:12px;border-top:1px solid var(--line)">
+        <div class="jent"><span class="jthumb">📷</span><div style="flex:1">
+          <div class="jname">10.8. ✨</div>
+          <div class="jtext">Taped the snapped stem, seems to be holding.</div>
+          <div class="jshots"><i></i><i class="b"></i></div></div></div>
+        <div class="jent"><span class="jthumb">🪴</span><div style="flex:1">
+          <div class="jname">7.8. ✨</div>
+          <div class="jtext">Lower leaves yellowing a bit, watered deeply.</div></div></div>
+      </div></div>
+
+    <details class="fold"><summary>Care</summary><p>Variety notes and the care guide live here.</p></details>
+`;
+}
+
+let calMode = 'day';
+let calDay = 12;          // which date the day view is showing
+function calHTML() {
+  const seg = `<div style="display:flex;align-items:center;gap:8px;margin-bottom:12px">
+    <div class="seg" style="margin:0">${['day', '5 days', 'month'].map((m) =>
+      `<button data-cal="${m}" aria-selected="${calMode === m}">${m[0].toUpperCase() + m.slice(1)}</button>`).join('')}</div>
+    <div class="navs">
+      <button data-step="-1" aria-label="Previous">‹</button>
+      <button data-step="1" aria-label="Next">›</button>
+      <button class="todaybtn" data-today${calDay === 12 ? ' style="visibility:hidden"' : ''}>Today</button>
+    </div></div>`;
+  if (calMode === 'month') return seg + monthHTML();
+  const days = calMode === 'day' ? [0] : [0, 1, 2, 3, 4];
+  return seg + days.map((i) => dayHTML(i)).join('');
+}
+const WX = [['⛅', 17, 11, 20], ['🌦️', 18, 12, 45], ['⛅', 22, 13, 15], ['☀️', 24, 14, 5], ['🌧️', 19, 13, 70]];
+const DOW = ['Mon', 'Tue', 'Wed', 'Thu', 'Fri', 'Sat', 'Sun'];
+function dayHTML(i) {
+  const date = calDay + i;
+  const [ico, hi, lo, pop] = WX[Math.abs(date) % WX.length];
+  const isNow = date === 12;
+  const past = date < 12;
+  /* Nothing happened on a day that has not happened, so a future day shows the
+     plan and the forecast only: no journal, no composer. */
+  const future = date > 12;
+  return `<div class="dayblock${isNow ? ' isnow' : ''}">
+    <div class="dhd"><span class="dwd">${DOW[(date + 4) % 7]} ${date}.8.</span>
+      ${isNow ? '<span class="dtoday">today</span>' : ''}
+      <span class="dwx">${ico} ${hi}° / ${lo}° · rain ${pop}%</span></div>
+    ${date === 16 ? '<div class="alert"><span>❄️</span><div><b>Cold night ~4°</b><br><span style="color:var(--dim)">Close the glazing. Tomato fruit-set stalls near 10°C.</span></div></div>' : ''}
+    <div class="trow"><span>💧</span><span class="tb"><span class="what">Water · Tigerella tomato</span>
+      <span class="why">Uneven water now = blossom end rot later</span></span>${isNow ? '<button class="done">Done</button>' : ''}</div>
+    <div class="trow"><span>✋</span><span class="tb"><span class="what">Shake the flower trusses · both tomatoes</span>
+      <span class="why">Midday — no bees behind glass</span></span>${isNow ? '<button class="done">Done</button>' : ''}</div>
+    ${isNow ? `<div class="trow"><span>🧺</span><span class="tb"><span class="what">Pick the berries · Maurin Makea</span>
+      <span class="why">Every 2–3 days — ripe ones spoil fast</span></span><button class="done">Done</button></div>` : ''}
+
+    ${calMode === 'day' && !future ? `
+    <div class="tsec"><div class="sec">What happened</div>
+      <div class="jent"><span class="jthumb">🪴</span><div style="flex:1">
+        <div class="jname"><button class="jwho" data-goplant="tomato-1">Tigerella tomato</button> ✨</div>
+        <div class="jtext">Taped the snapped stem, seems to be holding.</div></div></div>
+      <div class="jent"><span class="jthumb">📷</span><div style="flex:1">
+        <div class="jname"><button class="jwho" data-goplant="rasp-maurin">Maurin Makea raspberry</button> ✨</div>
+        <div class="jtext">First proper handful of berries today.</div>
+        <div class="jshots"><i></i><i class="b"></i></div></div></div>
+      <div class="jent"><span class="jthumb">📷</span><div style="flex:1">
+        <div class="jname">Whole balcony</div>
+        <div class="jtext">Swept the deck and moved the chairs out of the sun.</div>
+        <div class="jshots"><i class="b"></i><i></i></div></div></div>
+    </div>
+    <div class="tsec"><div class="sec">Add an update for ${isNow ? 'today' : date + '.8.'}</div>
+      ${composerHTML()}</div>
+` : ''}
+  </div>`;
+}
+const monthHTML = () => `<div style="font-family:var(--display);font-weight:800;letter-spacing:.04em;text-transform:uppercase;font-size:17px;margin-bottom:10px">August<b style="color:var(--pine)">.</b> <span style="font-family:var(--mono);font-size:11px;color:var(--dim)">2026</span></div>
+  <div class="dow"><span>Mon</span><span>Tue</span><span>Wed</span><span>Thu</span><span>Fri</span><span>Sat</span><span>Sun</span></div>
+  <div class="cal">${Array.from({ length: 35 }, (_, i) => {
+    const d = i - 4;
+    if (d < 1 || d > 31) return '<div></div>';
+    const seeds = d % 3 === 0 ? '<i class="seed water"></i><i class="seed care"></i>' : d % 4 === 0 ? '<i class="seed pollen"></i>' : '<i class="seed water"></i>';
+    const wx = ['⛅', '🌦️', '☀️', '🌧️'][d % 4];
+    return `<div class="cell${d === 12 ? ' today' : ''}" data-day="${d}"><span>${d}</span>
+      <span style="font-size:8.5px;color:var(--dim)">${wx} ${16 + (d % 7)}°</span>
+      <span class="seeds">${seeds}</span></div>`;
+  }).join('')}</div>
+  <div class="legend"><span><i class="seed water" style="width:5px;height:5px"></i> water</span>
+    <span><i class="seed pollen" style="width:5px;height:5px"></i> pollinate</span>
+    <span><i class="seed care" style="width:5px;height:5px"></i> care</span></div>`;
+
+/* The browse-by-image view. Everywhere else a photo shows up attached to the
+   entry it was posted with; this is the one place they are seen as pictures,
+   filtered by subject. No cover photo: the scene is the hero now. */
+const photosHTML = () => `
+  <div style="display:flex;gap:6px;flex-wrap:wrap;margin-bottom:14px">
+    <button class="chipbtn set">All</button>
+    <button class="chipbtn">Tigerella tomato</button>
+    <button class="chipbtn">Maurin Makea</button>
+    <button class="chipbtn">Whole balcony</button></div>
+  <div class="areahd"><span>Wed 12.8.</span><i></i><span>3</span></div>
+  <div class="grid4"><i class="ph"></i><i class="ph wide"></i><i class="ph"></i></div>
+  <div class="areahd"><span>Mon 10.8.</span><i></i><span>2</span></div>
+  <div class="grid4"><i class="ph wide"></i><i class="ph"></i></div>
+  <div class="areahd"><span>Fri 7.8.</span><i></i><span>4</span></div>
+  <div class="grid4"><i class="ph"></i><i class="ph"></i><i class="ph wide"></i><i class="ph"></i></div>`;
+
+const noteHTML = () => `<p style="color:var(--dim);font-size:13.5px;margin:0 0 12px">
+    Tell the garden what changed. Pick a plant if you know it, or leave it to the AI.</p>
+  ${composerHTML()}`;
+
+render();
+</script>
+</body>
+</html>

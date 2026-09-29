@@ -4,7 +4,7 @@ A garden care calendar with an AI plant journal.
 
 **Live:** https://balcony-garden.dara-uxdesign.workers.dev
 
-The app takes a small plant list and turns it into a running care schedule (what to water, pollinate, feed and prune, and when), adjusted to the local weather and to what I actually write down about each plant. It also keeps a photo diary of the plants as they grow. It's a personal tool, customized for my needs.
+A care calendar for the plants on my balcony. An AI planner reads four inputs: the notes I write about each plant, the photos I take of them, the Tampere weather forecast, and each plant's current status (stage, last watered). From those it produces the next 14 days of tasks per plant, covering watering, pollination, feeding and pruning, and the calendar shows that plan. The photos are also kept as a growth diary.
 
 The UI is a mix of Finnish and English on purpose. I'm learning Finnish at a very basic level, so some labels are in Finnish to help me memorize better.
 
@@ -56,7 +56,7 @@ Done checkmarks sync across my devices through a `GET/PUT /api/progress` endpoin
 - **Front end:** one static page. [`public/index.html`](public/index.html) is the entire UI (HTML, CSS and one vanilla-JS `<script>`). No framework, no build step. It reads `status:garden` and `plan:garden`, overlays the AI plan on the calendar, and renders the notes/status editor and photo log.
 - **Data:** [`public/garden-data.js`](public/garden-data.js) defines the plant inventory as `window.GARDEN_SEED`, used to seed a plant's first `status:garden` entry.
 - **Worker:** [`src/index.js`](src/index.js) serves the static site (the `ASSETS` binding) plus the APIs below, all backed by one KV namespace (`PHOTOS`, which despite the name now holds photos, status, plan and progress — see `src/garden.js`).
-- **Planner:** [`src/planner.js`](src/planner.js) — the Gemini re-plan logic, isolated from the routing in `src/index.js`.
+- **Planner:** [`src/planner.js`](src/planner.js) — the Gemini re-plan logic, isolated from the routing in `src/index.js`. One `generateContent` REST call to `gemini-flash-latest` on the free tier, authorised by the `GEMINI_API_KEY` Worker secret. On that tier Google may use the submitted note text and photos to improve their models: fine for a hobby balcony, worth knowing before pointing it at anything sensitive. Without the secret, re-plan fails quietly and the calendar runs on the deterministic engine.
 - **Store helpers:** [`src/garden.js`](src/garden.js) — the three KV keys and the read/write/merge helpers.
 - **Config:** [`wrangler.jsonc`](wrangler.jsonc) sets `main = src/index.js`, the `public/` assets dir, the `PHOTOS` KV namespace, and the daily cron trigger (`triggers.crons`).
 - **Weather:** Open-Meteo forecast API — called from the browser for the calendar's display, and again server-side inside `replan()` for the AI's planning context. No key required either way.

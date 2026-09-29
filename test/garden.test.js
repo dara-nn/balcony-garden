@@ -1,6 +1,6 @@
 import { test } from 'node:test';
 import assert from 'node:assert/strict';
-import { readStatus, KEYS, upsertPlant, applyNoteOp } from '../src/garden.js';
+import { readStatus, KEYS, upsertPlant, applyNoteOp, dropDerivedNotes } from '../src/garden.js';
 
 // minimal in-memory KV stub matching the Workers KV surface we use
 function fakeKV(initial = {}) {
@@ -56,6 +56,38 @@ test('applyNoteOp edit and delete', () => {
   assert.equal(doc.plants.a.notes[0].text, 'y');
   doc = applyNoteOp(doc, { plantId: 'a', op: 'delete', id: 'n1' }, 3);
   assert.equal(doc.plants.a.notes.length, 0);
+});
+
+test('editing an AI note makes it the gardener\'s own', () => {
+  let doc = { updatedAt: 0, plants: { a: { id: 'a', notes: [
+    { id: 'n1', date: '2026-08-07', text: 'First stripes showing.', ai: true, quote: 'tigerella has stripes' },
+  ] } } };
+  doc = applyNoteOp(doc, { plantId: 'a', op: 'edit', id: 'n1', text: 'First stripes, low down only' }, 5);
+  assert.equal(doc.plants.a.notes[0].text, 'First stripes, low down only');
+  assert.equal(doc.plants.a.notes[0].ai, false);
+  assert.equal(doc.plants.a.notes[0].quote, 'tigerella has stripes');   // what you wrote is still yours
+});
+
+test('re-sorting an entry drops the notes it produced', () => {
+  const doc = { updatedAt: 0, plants: { a: { id: 'a', notes: [
+    { id: 'n1', text: 'from the model', ai: true },
+    { id: 'keep', text: 'unrelated note' },
+  ] } } };
+  const out = dropDerivedNotes(doc, [{ plantId: 'a', noteId: 'n1' }], 9);
+  assert.deepEqual(out.plants.a.notes.map((n) => n.id), ['keep']);
+});
+
+test('re-sorting keeps a note the gardener has reworded', () => {
+  const doc = { updatedAt: 0, plants: { a: { id: 'a', notes: [
+    { id: 'n1', text: 'my own words', ai: false },
+  ] } } };
+  const out = dropDerivedNotes(doc, [{ plantId: 'a', noteId: 'n1' }], 9);
+  assert.deepEqual(out.plants.a.notes.map((n) => n.id), ['n1']);
+});
+
+test('dropDerivedNotes ignores plants that are gone', () => {
+  const doc = { updatedAt: 0, plants: {} };
+  assert.deepEqual(dropDerivedNotes(doc, [{ plantId: 'ghost', noteId: 'x' }], 9).plants, {});
 });
 
 test('applyNoteOp throws for unknown plant', () => {

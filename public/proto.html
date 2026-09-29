@@ -1,0 +1,1179 @@
+<!doctype html>
+<html lang="fi">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Daran parvekepuutarha — prototyyppi</title>
+<link rel="icon" href="data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 64 64'%3E%3Crect width='64' height='64' rx='14' fill='%231E4D3B'/%3E%3Cpath d='M32 52V30' stroke='%23EAF0E9' stroke-width='5' stroke-linecap='round'/%3E%3Cpath d='M32 36c-11 0-17-6-17-15 10 0 17 6 17 15z' fill='%237FBFA0'/%3E%3Cpath d='M32 32c0-10 6-17 16-17 0 10-6 17-16 17z' fill='%23EAF0E9'/%3E%3C/svg%3E">
+<meta name="theme-color" content="#1E4D3B">
+<script>try{var _t=JSON.parse(localStorage.getItem('theme')||'null');if(_t)document.documentElement.dataset.theme=_t;}catch(e){}</script>
+<style>
+  /* ============================================================
+     Daran parvekepuutarha — the chart direction.
+
+     Soft, rounded, and organised by colour rather than by rules. Every plant
+     owns the background colour of its own illustration, and that colour washes
+     the whole row, chip and tile that belong to it, so the page is legible as a
+     garden before it is read as an interface. Nothing shouts in capitals.
+
+     UI     Avenir Next  — the site's own voice
+     Prose  Charter      — what the model writes, in something you read
+     ============================================================ */
+  :root{
+    --paper:#EFF2EA; --field:#FFFFFF; --ink:#17211B; --dim:#6C7A70; --rule:#E1E7DA;
+    --pine:#1E4D3B; --leaf:#3E7D5C; --tomato:#C4462C; --water:#2F6E8F; --pollen:#B0810F;
+    --ph-grow:#9BC7AA; --ph-flower:#DDA0B4; --ph-fruit:#E79A4E; --ph-harvest:#CC5438;
+    --ui:"Avenir Next","Avenir","Segoe UI",system-ui,sans-serif;
+    --prose:"Charter","Iowan Old Style","Georgia",serif;
+    --s1:4px; --s2:8px; --s3:12px; --s4:18px; --s5:28px; --s6:44px;
+    --r-lg:20px; --r-md:14px; --r-sm:10px; --r-pill:999px;
+    --tint:#9BC7AA;
+    --wash:color-mix(in srgb,var(--tint) 16%,var(--field));
+    --shadow:0 2px 10px rgba(22,40,28,.05);
+  }
+  @media (prefers-color-scheme:dark){
+    :root:not([data-theme="light"]){
+      --paper:#0F140F; --field:#19201A; --ink:#E7EEE4; --dim:#8B9A8C; --rule:#27302A;
+      --pine:#8FCBA9; --leaf:#7FBFA0; --tomato:#EF7355; --water:#7BB9DB; --pollen:#DDB059;
+      --shadow:0 2px 12px rgba(0,0,0,.3);
+      --wash:color-mix(in srgb,var(--tint) 20%,var(--field));
+    }
+  }
+  :root[data-theme="dark"]{
+    --paper:#0F140F; --field:#19201A; --ink:#E7EEE4; --dim:#8B9A8C; --rule:#27302A;
+    --pine:#8FCBA9; --leaf:#7FBFA0; --tomato:#EF7355; --water:#7BB9DB; --pollen:#DDB059;
+    --shadow:0 2px 12px rgba(0,0,0,.3);
+    --wash:color-mix(in srgb,var(--tint) 20%,var(--field));
+  }
+
+  *{box-sizing:border-box}
+  [hidden]{display:none!important}
+  html,body{margin:0}
+  body{background:var(--paper);color:var(--ink);font:15px/1.5 var(--ui);-webkit-text-size-adjust:100%}
+  button{font:inherit;color:inherit}
+  :focus-visible{outline:2px solid var(--leaf);outline-offset:2px}
+  .vhid{position:absolute;width:1px;height:1px;overflow:hidden;clip:rect(0 0 0 0)}
+  h1,h2,h3{margin:0;font-weight:600;letter-spacing:-.01em}
+
+  #root{container-type:inline-size;position:relative;margin:0 auto;background:var(--paper)}
+  #root.phone{max-width:392px;box-shadow:0 0 0 1px var(--rule)}
+  .page{max-width:1120px;margin:0 auto;padding:var(--s4) var(--s4) var(--s5)}
+  @container (max-width:899px){ .page{padding:var(--s3) var(--s3) var(--s4)} }
+
+  /* ---- masthead ---- */
+  .mast{display:flex;align-items:baseline;gap:var(--s2);flex-wrap:wrap;margin-bottom:var(--s4)}
+  .mast h1{font-size:clamp(20px,3vw,25px);font-weight:600}
+  .mast .where{font-size:13px;color:var(--dim)}
+  .mast .fresh{margin-left:auto;font-size:12px;color:var(--dim);background:var(--field);
+    border-radius:var(--r-pill);padding:5px 11px;border:1px solid var(--rule)}
+
+  /* ---- a section is a card ---- */
+  .sect{background:var(--field);border:1px solid var(--rule);border-radius:var(--r-lg);
+    padding:var(--s4) var(--s4) var(--s5);margin-bottom:var(--s6);box-shadow:var(--shadow)}
+  .sect:last-child{margin-bottom:0}
+  .sect > .hd{display:flex;align-items:baseline;gap:var(--s2);flex-wrap:wrap;
+    padding-bottom:var(--s3);margin-bottom:var(--s4);border-bottom:2px solid var(--ink)}
+  .sect > .hd h2{font-size:21px;letter-spacing:-.02em}
+  .sect > .hd .meta{margin-left:auto;font-size:13px;color:var(--dim)}
+  .sect > .hd .meta b{font-weight:600;color:var(--tomato)}
+  /* a sub-heading inside a section: smaller, its own rule, its own air */
+  .sub{display:flex;align-items:baseline;gap:var(--s2);margin:var(--s5) 0 var(--s2);font-size:15px;
+    font-weight:600;color:var(--ink);padding-bottom:6px;border-bottom:1px solid var(--rule)}
+  .sub:first-of-type{margin-top:var(--s4)}
+  .sub .n{margin-left:auto;font-weight:400;font-size:12.5px;color:var(--dim)}
+
+  /* ---- the nav: it governs the whole page, so it sits above the whole page ---- */
+  .nav{position:sticky;top:0;z-index:15;background:var(--paper);margin:0 0 var(--s4);
+    padding:var(--s2) 0;border-bottom:1px solid var(--rule)}
+  .strip{display:flex;gap:6px;overflow-x:auto;padding:2px;scrollbar-width:thin}
+  .chip{display:inline-flex;align-items:center;gap:8px;flex:none;border:1px solid var(--rule);
+    background:var(--field);border-radius:var(--r-pill);padding:5px 15px 5px 5px;cursor:pointer;
+    font-size:14px;white-space:nowrap}
+  .chip .av{width:30px;height:30px;flex:none;overflow:hidden;border-radius:var(--r-pill)}
+  .chip .av svg{width:100%;height:100%;display:block}
+  .chip:hover{border-color:var(--leaf)}
+  .chip[aria-pressed="true"]{background:var(--ink);color:var(--paper);border-color:var(--ink);font-weight:600}
+  .chip.all{padding:5px 17px}
+
+  /* ---- the chart: one soft row per plant ---- */
+  .row{display:flex;align-items:center;gap:var(--s3);padding:11px 2px;width:100%;text-align:left;
+    border-top:1px solid var(--rule)}
+  .row.head,.row.axis{border-top:none;padding:2px}
+  .row.axis{border-top:1px solid var(--rule);padding-top:8px}
+  .row .art{width:40px;height:40px;flex:none;overflow:hidden;border-radius:var(--r-sm)}
+  .row .art svg{width:100%;height:100%;display:block}
+  .row .who{width:136px;flex:none;min-width:0}
+  .row .who b{display:block;font-size:14px;font-weight:600;white-space:nowrap;overflow:hidden;
+    text-overflow:ellipsis;letter-spacing:-.01em}
+  .row .who em{display:block;font-style:normal;font-size:12px;color:var(--dim);margin-top:2px}
+  .row .bars{flex:1 1 auto;min-width:88px}
+  .row .now{flex:0 0 clamp(168px,26%,280px);min-width:0;display:flex;gap:7px;align-items:flex-start}
+  .row .now .mk{flex:none;font-size:13px;line-height:1.35}
+  .row .now .txt{min-width:0;font-size:14px;line-height:1.35}
+  .row .now .txt em{display:block;font-style:normal;font-size:11.5px;color:var(--dim);margin-top:1px}
+  .row .now.bad .txt{color:var(--tomato);font-weight:600}
+  .row .now.watch .txt{color:var(--water)}
+  @keyframes settle{0%{transform:scale(1.01)}100%{transform:none}}
+  .row.touched{animation:settle .7s ease-out;background:color-mix(in srgb,var(--leaf) 10%,transparent)}
+
+  .track{position:relative;display:block;height:10px;background:color-mix(in srgb,var(--ink) 8%,transparent);
+    border-radius:var(--r-pill);overflow:hidden}
+  .bar{position:absolute;top:0;height:100%}
+  .bar.grow{background:var(--ph-grow)} .bar.flower{background:var(--ph-flower)}
+  .bar.fruit{background:var(--ph-fruit)} .bar.harvest{background:var(--ph-harvest)}
+  .scale{position:relative;display:block;height:14px;font-size:11px;color:var(--dim)}
+  .scale b{position:absolute;transform:translateX(-50%);font-weight:400}
+  .scale b.today{color:var(--leaf);font-weight:600;transform:translateX(-4px)}
+  .legend{display:flex;gap:var(--s3);flex-wrap:wrap;margin-top:var(--s3);font-size:12px;color:var(--dim)}
+  .legend i{display:inline-block;width:18px;height:8px;border-radius:var(--r-pill);margin-right:6px;vertical-align:0}
+
+  /* ---- prose the model wrote ---- */
+  .lede{font-family:var(--prose);font-size:21px;line-height:1.35;margin:0 0 var(--s3);font-weight:400}
+  .lede .mk{margin-right:7px}
+  .lede.bad{color:var(--tomato)} .lede.watch{color:var(--water)}
+  p.prose{font-family:var(--prose);font-size:15.5px;line-height:1.6;margin:0 0 var(--s3);max-width:62ch}
+  .quote{font-style:italic;color:var(--dim);font-size:14.5px;line-height:1.5}
+  .data{font-size:12px;color:var(--dim)}
+
+  /* ---- lists you act on ---- */
+  .list{display:flex;flex-direction:column}
+  .task{display:flex;gap:var(--s2);align-items:flex-start;padding:13px 2px;
+    border-top:1px solid var(--rule)}
+  .task:first-child{border-top:none}
+  .task .mk{width:22px;flex:none;text-align:center;font-size:15px}
+  .task .body{flex:1;min-width:0}
+  .task .what{font-size:14.5px;font-weight:600}
+  .task .whose{font-size:12px;color:var(--dim);display:block;margin-top:1px}
+  .task .why{display:block;font-size:13.5px;color:var(--dim);line-height:1.45;margin-top:4px;
+    font-family:var(--prose)}
+  .task.done{opacity:.45}
+  .task.added{background:color-mix(in srgb,var(--leaf) 9%,transparent);border-radius:var(--r-sm)}
+  .task.changed{background:color-mix(in srgb,var(--pollen) 12%,transparent);border-radius:var(--r-sm)}
+  .task.cut{opacity:.55}
+  .task.cut .what{text-decoration:line-through;text-decoration-color:var(--tomato)}
+  .flag{font-size:13px;font-weight:700;width:12px;flex:none;padding-top:1px}
+  .flag.add{color:var(--leaf)} .flag.chg{color:var(--pollen)} .flag.cut{color:var(--tomato)}
+  .tick{border:1px solid var(--leaf);color:var(--leaf);background:var(--field);border-radius:var(--r-pill);
+    font-size:12.5px;padding:7px 13px;cursor:pointer;white-space:nowrap;flex:none}
+  .task.done .tick{background:var(--leaf);color:var(--field);border-color:var(--leaf)}
+
+  /* ---- weather ---- */
+  .wx{padding:0 0 var(--s3);margin-bottom:var(--s3);border-bottom:1px solid var(--rule)}
+  .wx .read{display:flex;gap:var(--s3);align-items:baseline;flex-wrap:wrap;font-size:13px;color:var(--dim)}
+  .wx .read .deg{font-size:28px;font-weight:600;color:var(--ink);letter-spacing:-.02em}
+  .wx .read .deg.hot{color:var(--tomato)} .wx .read .cold{color:var(--water)}
+  .wx .warn{margin-top:var(--s2);background:color-mix(in srgb,var(--tomato) 10%,transparent);
+    border-radius:var(--r-sm);padding:10px var(--s3)}
+  .wx .warn.cold{background:color-mix(in srgb,var(--water) 12%,transparent)}
+  .wx .warn b{display:block;font-size:14px;font-weight:600;color:var(--tomato);margin-bottom:2px}
+  .wx .warn.cold b{color:var(--water)}
+  .wx .warn span{font-size:13.5px;color:var(--dim);line-height:1.45;font-family:var(--prose)}
+
+  /* ---- segmented control ---- */
+  .segs{display:flex;gap:3px;background:var(--paper);border-radius:var(--r-pill);padding:3px}
+  .segs button{border:none;background:none;color:var(--dim);font-size:13px;border-radius:var(--r-pill);
+    padding:6px 14px;cursor:pointer;min-height:32px}
+  .segs button[aria-selected="true"]{background:var(--field);color:var(--ink);font-weight:600;
+    box-shadow:var(--shadow)}
+
+  /* ---- month ---- */
+  .navrow{display:flex;align-items:center;gap:var(--s1);margin-bottom:var(--s3)}
+  .navrow button{border:1px solid var(--rule);background:var(--field);border-radius:var(--r-pill);
+    min-width:34px;height:34px;cursor:pointer;font-size:15px}
+  .navrow .lab{min-width:160px;text-align:center;font-size:15px;font-weight:600}
+  .dow{display:grid;grid-template-columns:repeat(7,1fr);font-size:11.5px;color:var(--dim);
+    text-align:center;padding-bottom:6px}
+  .grid{display:grid;grid-template-columns:repeat(7,1fr);gap:4px}
+  .cell{min-height:58px;background:var(--paper);border:1px solid transparent;border-radius:var(--r-sm);
+    padding:5px 6px;cursor:pointer;position:relative;text-align:left}
+  .cell:hover{border-color:var(--leaf)}
+  .cell.out{background:none;cursor:default}
+  .cell.past{opacity:.45}
+  .cell.today{background:color-mix(in srgb,var(--leaf) 14%,transparent);border-color:var(--leaf)}
+  .cell.hot{border-color:color-mix(in srgb,var(--tomato) 55%,transparent)}
+  .cell.cold{border-color:color-mix(in srgb,var(--water) 55%,transparent)}
+  .cell .d{font-size:12.5px;font-weight:600}
+  .cell .t{position:absolute;top:5px;right:6px;font-size:10.5px;color:var(--dim)}
+  .cell .t.warm{color:var(--tomato)}
+  .dots{display:flex;flex-wrap:wrap;gap:3px;margin-top:6px}
+  .dot{width:6px;height:6px;border-radius:var(--r-pill);display:inline-block}
+  .dot.water{background:var(--water)} .dot.pollen{background:var(--pollen)} .dot.care{background:var(--leaf)}
+  .dot.note{background:var(--ink)}
+  .dot.photo{background:none;box-shadow:inset 0 0 0 1.5px var(--dim)}
+
+  /* ---- journal ---- */
+  .day{display:flex;align-items:center;gap:var(--s2);margin:var(--s4) 0 var(--s2);font-size:13px;
+    font-weight:600;color:var(--dim)}
+  .day i{flex:1;height:1px;background:var(--rule)}
+  .day span:last-child{font-weight:400;font-size:12px}
+  .entry{padding:var(--s3) 0;border-top:1px solid var(--rule)}
+  .entry .said{font-family:var(--prose);font-size:16.5px;line-height:1.45;margin:0 0 var(--s2)}
+  .entry .read{display:flex;gap:var(--s2);align-items:flex-start;padding:8px 0 0;margin-top:6px}
+  .entry .read .art{width:32px;height:32px;flex:none;border-radius:var(--r-sm);overflow:hidden;background:var(--field)}
+  .entry .read .art svg{width:100%;height:100%;display:block}
+  .entry .read b{font-size:13.5px;font-weight:600;display:block}
+  .entry .read span{font-size:14px;line-height:1.45;font-family:var(--prose)}
+  .entry.live{border-left:3px solid var(--leaf);padding-left:var(--s3)}
+
+  /* ---- photos ---- */
+  .shots{display:grid;grid-template-columns:repeat(auto-fill,minmax(84px,1fr));gap:6px}
+  .shots button{padding:0;border:none;border-radius:var(--r-md);overflow:hidden;background:var(--wash);
+    cursor:pointer;aspect-ratio:1;position:relative;display:block}
+  .shots svg{width:100%;height:100%;display:block}
+  .shots .when{position:absolute;left:0;right:0;bottom:0;background:linear-gradient(to top,rgba(8,14,10,.62),transparent);
+    color:#fff;font-size:11px;padding:14px 5px 5px;text-align:center}
+  figure.ref{margin:var(--s3) 0 0}
+  figure.ref img{width:100%;max-height:210px;object-fit:cover;border-radius:var(--r-md);display:block}
+  figure.ref figcaption{font-size:12px;color:var(--dim);margin-top:6px}
+
+  /* ---- life ---- */
+  ul.life{list-style:none;margin:0;padding:0}
+  ul.life li{display:flex;gap:var(--s3);padding:9px 2px;border-top:1px solid var(--rule)}
+  ul.life li:first-child{border-top:none}
+  ul.life .when{flex:none;width:76px;font-size:12px;color:var(--dim);padding-top:2px}
+  ul.life .what{flex:1;min-width:0;font-size:14.5px;line-height:1.45}
+
+  .seasonstrip{padding:var(--s1) 0 var(--s3)}
+  .seasonstrip .track{margin:5px 0}
+  .note{padding:var(--s3) 0;border-top:1px solid var(--rule)}
+  .note .prose{margin-bottom:6px}
+  .note .prose:last-child{margin-bottom:0}
+  .dimmed{color:var(--dim)}
+  .lede em{display:block;font-style:normal;font-family:var(--ui);font-size:13px;color:var(--dim);margin-top:5px}
+  .none{color:var(--dim);font-size:14.5px;font-family:var(--prose);font-style:italic;padding:var(--s2) 0}
+
+  /* ---- the composer ---- */
+  .dock{margin:0 0 var(--s5)}
+  .dock .box{background:var(--field);border:1px solid var(--rule);border-radius:var(--r-lg);
+    overflow:hidden;transition:border-color .15s ease}
+  .dock:focus-within .box{border-color:var(--leaf);box-shadow:0 0 0 3px color-mix(in srgb,var(--leaf) 14%,transparent)}
+  .dock .top{display:flex;align-items:center;gap:var(--s2);padding:11px var(--s4);font-size:12.5px;color:var(--dim)}
+  .dock .top .tag{display:inline-flex;align-items:center;gap:6px;color:var(--ink);background:var(--wash);
+    border-radius:var(--r-pill);padding:3px 11px 3px 3px;max-width:52%;overflow:hidden;white-space:nowrap}
+  .dock .top .tag svg{width:20px;height:20px;border-radius:var(--r-pill)}
+  .dock .top .fold{margin-left:auto;border:none;background:none;color:var(--dim);cursor:pointer;
+    font-size:11px;padding:6px;min-width:28px;border-radius:var(--r-pill)}
+  .dock .in{padding:0 var(--s4) var(--s3)}
+  .dock textarea{width:100%;min-height:52px;resize:none;font:inherit;font-size:17px;color:var(--ink);
+    background:none;border:none;padding:0 0 var(--s2);transition:min-height .16s ease}
+  .dock textarea:focus{outline:none}
+  .dock:focus-within textarea,.dock.tall textarea{min-height:104px}
+  .dock .acts{display:flex;align-items:center;gap:var(--s2)}
+  .dock .acts .sp{flex:1}
+  .dock .acts button{border:1px solid var(--rule);background:var(--field);border-radius:var(--r-pill);
+    padding:8px 14px;cursor:pointer;font-size:13px}
+  .dock .acts .save{border-color:var(--leaf);color:var(--leaf)}
+  .dock .acts .save:disabled{opacity:.35;cursor:default}
+  .dock .acts .save.on{background:var(--leaf);color:#fff;border-color:var(--leaf)}
+  .dock.min .in{display:none}
+
+
+  /* ---- narrow: a plant line cannot hold four columns on a phone, so it stacks:
+         name and drawing, then how it is doing, then its year ---- */
+  @container (max-width:760px){
+    .row{flex-wrap:wrap;row-gap:7px;padding:11px var(--s3)}
+    .row .who{flex:1 1 auto;width:auto}
+    .row .now{flex:1 1 100%;order:3;padding-left:50px}
+    .row .bars{flex:1 1 100%;order:4;padding-left:50px}
+    .row.head,.row.axis{padding-top:0;padding-bottom:0}
+    .row.head .art,.row.head .who,.row.head .now,
+    .row.axis .art,.row.axis .who,.row.axis .now{display:none}
+    .row.head .bars,.row.axis .bars{padding-left:50px}
+    .sect{padding:var(--s3)}
+    .wx{padding:var(--s3)}
+  }
+
+  /* ---- the lock ---- */
+  #lock{position:fixed;inset:0;z-index:40;display:none;align-items:center;justify-content:center;
+    padding:var(--s4);background:color-mix(in srgb,var(--paper) 80%,transparent);backdrop-filter:blur(3px)}
+  #lock.on{display:flex}
+  .waiting{width:min(430px,100%);background:var(--field);border-radius:var(--r-lg);
+    padding:var(--s4) var(--s4) var(--s3);box-shadow:0 20px 54px rgba(16,32,22,.24)}
+  .waiting .said{font-family:var(--prose);font-size:17.5px;line-height:1.45;margin:0 0 var(--s3)}
+  .waiting .steps{display:flex;gap:5px;margin-bottom:var(--s2)}
+  .waiting .steps i{flex:1;height:5px;background:var(--paper);border-radius:var(--r-pill);
+    overflow:hidden;position:relative}
+  .waiting .steps i b{position:absolute;inset:0 auto 0 0;background:var(--leaf);border-radius:var(--r-pill)}
+  .waiting .stage{font-size:13px;font-weight:600;color:var(--leaf)}
+  .waiting .eta{font-size:12px;color:var(--dim);margin-top:2px}
+  .waiting .found{margin-top:var(--s3);display:flex;flex-direction:column;gap:5px}
+  .waiting .found .read{display:flex;gap:var(--s2);align-items:flex-start;padding:9px var(--s3);
+    background:var(--wash);border-radius:var(--r-sm)}
+  .waiting .found .art{width:30px;height:30px;flex:none;border-radius:var(--r-sm);overflow:hidden;background:var(--field)}
+  .waiting .found .art svg{width:100%;height:100%;display:block}
+  .waiting .found b{font-size:13.5px;font-weight:600;display:block}
+  .waiting .found span{font-size:14px;line-height:1.4;font-family:var(--prose)}
+  .waiting .out{margin-top:var(--s3);border:none;background:none;color:var(--dim);cursor:pointer;
+    font-size:12.5px;text-decoration:underline;padding:6px 0}
+  body.locked{overflow:hidden}
+  @media(prefers-reduced-motion:reduce){.row.touched{animation:none}}
+
+  /* ---- prototype controls ---- */
+  #dev{max-width:1120px;margin:0 auto;padding:var(--s4);display:flex;gap:var(--s2);align-items:center;
+    flex-wrap:wrap;font-size:12px;color:var(--dim)}
+  #dev .grp{display:flex;gap:3px;background:var(--field);border-radius:var(--r-pill);padding:3px;
+    border:1px solid var(--rule)}
+  #dev .grp button{border:none;background:none;color:var(--dim);padding:5px 11px;cursor:pointer;
+    font:inherit;border-radius:var(--r-pill)}
+  #dev .grp button[aria-pressed="true"]{background:var(--ink);color:var(--paper)}
+  #dev .act{border:1px solid var(--rule);background:var(--field);border-radius:var(--r-pill);
+    padding:6px 13px;cursor:pointer;font:inherit}
+</style>
+</head>
+<body>
+
+<div id="root"><div class="page" id="page"></div></div>
+<div id="lock" role="dialog" aria-modal="true" aria-live="polite"></div>
+
+<footer id="dev">
+  <span>Prototyyppi</span>
+  <div class="grp" id="frames"><button data-frame="phone">📱 392</button><button data-frame="desk">🖥 leveä</button></div>
+  <div class="grp" id="speeds"><button data-speed="1">1× · 30 s</button><button data-speed="6">6× · 5 s</button></div>
+  <button class="act" id="demo">Demo-merkintä</button>
+  <button class="act" id="reset">Nollaa</button>
+</footer>
+
+<script type="module">
+/* ================= helpers ================= */
+const $=s=>document.querySelector(s);
+const esc=s=>(s||'').replace(/[&<>"']/g,c=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[c]));
+const iso=d=>`${d.getFullYear()}-${String(d.getMonth()+1).padStart(2,'0')}-${String(d.getDate()).padStart(2,'0')}`;
+const todayISO=()=>iso(new Date());
+const addDays=(s,n)=>{const d=new Date(s);d.setDate(d.getDate()+n);return iso(d);};
+const dBetween=(a,b)=>Math.round((new Date(b)-new Date(a))/86400000);
+const VKO=['Su','Ma','Ti','Ke','To','Pe','La'];
+const KUUT=['Tammikuu','Helmikuu','Maaliskuu','Huhtikuu','Toukokuu','Kesäkuu',
+  'Heinäkuu','Elokuu','Syyskuu','Lokakuu','Marraskuu','Joulukuu'];
+const shortDate=s=>{const d=new Date(s);return d.getDate()+'.'+(d.getMonth()+1)+'.';};
+const dayLabel=s=>`${VKO[new Date(s).getDay()]} ${shortDate(s)}`;
+const T=todayISO();
+const LS={get:k=>{try{return localStorage.getItem(k)}catch(e){return null}},
+          set:(k,v)=>{try{localStorage.setItem(k,v)}catch(e){}}};
+const relTime=ms=>{const s=Math.round((Date.now()-ms)/1000);
+  return s<90?'juuri nyt':s<3600?Math.round(s/60)+' min sitten'
+    :s<86400?Math.round(s/3600)+' h sitten':Math.round(s/86400)+' pv sitten';};
+
+/* ================= the site's own content =================
+   CARE, PROFILE and REAL are lifted from public/index.html unchanged, and the
+   plants from public/garden-data.js. None of this copy is written for the mockup. */
+const CARE={
+ basilmint:{care:{
+   growing:{water:2,why:'Bed dries fast behind glass',
+     weekly:[['care','Pinch basil tips','Above a leaf pair — bushy, no flowers. Trim mint back.'],
+             ['care','Feed basil & mint','Liquid feed, every 2nd week is enough.']]},
+   harvesting:{water:2,why:'Keep harvest coming',
+     weekly:[['care','Harvest basil & mint','Basil from the top, mint outer stems. Pinch any flower buds.']]}}},
+ chilli:{care:{
+   seedling:{water:3,why:'Light water only — damping-off kills sprouts',
+     weekly:[['care','Rotate pots','Stops leggy lean toward the glass. Pot up at 4–6 true leaves.']]},
+   vegetative:{water:2,why:'Steady moisture while bulking up',
+     weekly:[['care','Feed','Half-strength liquid feed weekly.']]},
+   flowering:{water:2,why:'Even water so flowers hold',
+     daily:[['pollen','Tap the flowers','Midday — no bees behind glass.']],
+     weekly:[['care','Feed high-K','Tomato feed works.']]},
+   fruiting:{water:1,why:'Dry spells make fruit drop',
+     weekly:[['care','Feed','High-K weekly while fruiting.']]}}},
+ tomato:{care:{
+   seedling:{water:2,why:'Even moisture',weekly:[]},
+   vegetative:{water:2,why:'Big leaves, big thirst',
+     weekly:[['care','Side shoots + ties','Snap armpit shoots, tie main stem higher.']]},
+   flowering:{water:1,why:'Uneven water now = blossom end rot later',
+     daily:[['pollen','Shake the flower trusses','Midday. No bees, no wind behind glass — no shake, no fruit. Vent hard: pollen sterile over ~32°C.']],
+     weekly:[['care','Feed high-K','Weekly from first flowers.'],
+             ['care','Side shoots + ties','Keep the 1 m stem supported.']]},
+   fruiting:{water:1,why:'Never bone-dry — fruit splits',
+     weekly:[['care','Feed high-K','Weekly.'],
+             ['care','Tidy lower leaves','Below lowest truss — airflow against mildew.']]}}},
+ chives:{care:{
+   growing:{water:3,why:'Easy — top 2 cm dry, then water',weekly:[]},
+   harvesting:{water:3,why:'Cut & come again',
+     weekly:[['care','Harvest','Cut whole leaves 2 cm above soil — regrows fast.']]}}},
+ springonion:{care:{
+   growing:{water:2,why:'Shallow roots, dry fast in glazed heat',
+     weekly:[['care','Re-sow','A pinch every ~3 weeks keeps supply steady.']]},
+   harvesting:{water:2,why:'Keep moist to the end',
+     weekly:[['care','Pull the thickest','Or cut 3 cm above base to regrow.']]}}},
+ parsley:{care:{
+   growing:{water:3,why:'Even moisture; bolts in heat — shade on 30°C days',weekly:[]},
+   harvesting:{water:3,why:'Outer stems only',
+     weekly:[['care','Harvest outer stems','Cut at the base, centre keeps producing.']]}}},
+ monstera:{care:{
+   settling:{water:7,why:'Newly bought — let top 3–4 cm dry first; no feed or repot yet',
+     weekly:[['care','Check the spot','Bright indirect light, away from draughts/radiators. Wipe dust off leaves.']]},
+   established:{water:7,why:'Top 3–4 cm dry before watering',
+     weekly:[['care','Feed','Balanced feed monthly in season; give the aerial roots something to climb.']]}}},
+ hedera:{care:{
+   settling:{water:5,why:'Steady (not heavy) water while roots establish; top 2–3 cm dry first',
+     weekly:[['care','Check the leaves','Happy in the shady corner. Watch under leaves — spider mites love dry glazed air.']]},
+   established:{water:6,why:'Let surface dry between waterings',
+     weekly:[['care','Trim','Cut wandering vines to shape — regrows from any node. Hardy to −10°C.']]}}},
+ raspberry:{care:{
+   settling:{water:2,why:'New pot behind glass dries fast — keep evenly moist, top 2–3 cm dry, never waterlogged',
+     weekly:[['care','Tie in the canes','Loosely tie new canes to a support so wind and glass heat do not snap them.'],
+             ['care','Feed','Half-strength liquid feed weekly while establishing. Watch leaf undersides for spider mites.']]},
+   fruiting:{water:1,why:'Even water while berries swell — dry spells shrink fruit',
+     daily:[['pollen','Tap the flowers','Midday — few bees behind glass. Berries drop free when dead-ripe.']],
+     weekly:[['care','Pick the berries','Every 2–3 days — ripe ones spoil fast. High-K feed weekly.']]},
+   dormant:{water:7,why:'Barely water over winter — hardy, stays out on the balcony',
+     weekly:[['care','Cut the fruited canes','After fruiting, cut spent (2nd-year) canes to the ground; keep this year\'s new canes.']]}}},
+ garlic:{care:{
+   sprouting:{water:5,why:'Sparse — wet rots the clove',weekly:[]},
+   bulbing:{water:5,why:'Too wet rots the bulb; keep it in the coolest corner',
+     weekly:[['care','Check the leaves','Half the leaves yellow → stop watering, nearly ready.']]},
+   ready:{water:99,why:'Done drinking',
+     weekly:[['care','Lift the bulb?','Half+ leaves brown → lift, dry 2 weeks somewhere airy.']]}}}
+};
+const PROFILE={
+ basilmint:{t:'Basil “Italiano Classico” & Mint',src:'Biltema seeds · mint as plant',ids:['basil-mint'],
+   body:['Classic Genovese basil. Pinch above a leaf pair weekly — bushy, no flowers. Hates cold: sulks under 12°C nights.',
+     'Mint is invasive — divider in the shared bed, or trim its roots each month. Harvest mint outer stems, basil from the top.',
+     'Feed the bed liquid fertilizer every 2 weeks.']},
+ chilli:{t:'Chilli “Lombardo”',src:'Biltema 14-2867',ids:['chilli-1','chilli-2'],
+   body:['Mild Italian frying chilli — long fruit, green ripening to red. Early and productive.',
+     'Seedlings: water lightly only when top 1 cm is dry (damping-off kills sprouts). Max light, rotate pots so they don\'t lean. Pot up at 4–6 true leaves.',
+     'From flowering: tap flowers midday (no bees behind glass), feed high-K weekly.',
+     'Pick green for mild crunch or red for sweeter warmth — picking often = more fruit.']},
+ tigerella:{t:'Tomato “Tigerella”',src:'Nelson Garden',ids:['tomato-1'],
+   body:['Striped heirloom cordon — needs stake, pinch side shoots weekly.',
+     'Shake flower trusses daily at midday to set fruit behind glass.',
+     'Water deep and even — uneven water = split fruit + blossom end rot. High-K feed weekly.',
+     'Ripe when the stripes turn orange-red. Handles cool Tampere summers well.']},
+ noire:{t:'Tomato “Noire de Crimée”',src:'Nelson Garden',ids:['tomato-2'],
+   body:['Black beefsteak cordon — tall, hungry. Feed generously: high-K weekly from first flowers.',
+     'Shake trusses daily at midday. Stake well — big fruit gets heavy.',
+     'Ripe when SOFT, not by colour — it stays dark brown-red, darkest on top. Squeeze gently, don\'t wait for red.',
+     'Early variety with a long harvest — expect fruit from mid-August.']},
+ chives:{t:'Chives (Ruohosipuli)',src:'Biltema 14-2818',ids:['chives'],
+   body:['Perennial and frost-hardy — leave the bed on the balcony over winter, it returns early spring. Your one plant that outlives the season.',
+     'Cut whole leaves 2 cm above soil — regrows in days. Harvesting often keeps it productive.',
+     'Water when top 2 cm dry. Light feed monthly is plenty.']},
+ springonion:{t:'Spring onion (Pillisipuli)',src:'Biltema 14-2807',ids:['spring-onion'],
+   body:['Early, fast variety with long thick white stems.',
+     'Keep evenly moist — shallow roots dry fast in glazed heat.',
+     'Harvest whole at pencil thickness, thickest first. Re-sow a pinch every 3 weeks for steady supply into autumn.']},
+ parsley:{t:'Curly parsley (Persilja)',src:'Biltema 14-2820',ids:['parsley'],
+   body:['Curly, dark green type. The marathon runner — germination up to 4 weeks is normal.',
+     'Even moisture, deep soil. Bolts in heat: shade it on 30°C+ days.',
+     'Harvest outer stems at the base only — the centre keeps producing to late autumn. Moves to a windowsill for winter.']},
+ monstera:{t:'Monstera deliciosa',src:'IKEA · indoors',ids:['monstera'],
+   body:['Newly bought — let it settle a few weeks in a bright indirect spot, away from draughts and radiators. No feeding or repotting yet.',
+     'Water only when the top 3–4 cm of soil is dry, roughly weekly. Overwatering is the one thing that kills it.',
+     'Wipe the big leaves now and then — dust blocks light. Once settled, feed monthly in season and give the aerial roots a pole to climb.']},
+ hedera:{t:'Ivy · Hedera helix',src:'IKEA · balcony',ids:['hedera'],
+   body:['The tough one — happy in the shady corner where nothing else grows, and frost-hardy to about −10°C. Stays out all winter with the chives.',
+     'While it establishes: steady but light watering, top 2–3 cm dry between waterings. Never soggy.',
+     'Check leaf undersides — spider mites love warm dry glazed air. Trim wandering vines anytime; it regrows from any node.']},
+ maurin:{t:'Raspberry “Maurin Makea”',src:'Finnish summer raspberry',ids:['rasp-maurin'],
+   body:['A Finnish summer (floricane) raspberry prized for very sweet berries. Ahead of the other two — it has set green fruit already (Jul 2026), ripening red over the coming weeks.',
+     'Now fruiting: keep the water even so berries swell without splitting — top 2–3 cm dry between waterings, never bone-dry or soggy. High-K feed weekly. Pick every 2–3 days once they colour up; dead-ripe berries pull free with a light tug.',
+     'Tie the fruiting canes to a support so glass heat and wind don\'t snap them. Watch leaf undersides for spider mites in dry glazed air.',
+     'Frost-hardy — leave it out on the balcony over winter with the chives and ivy. After the canes finish fruiting, cut those spent canes to the ground and keep this year\'s fresh canes for next summer.']},
+ 'takala-1':{t:'Raspberry “Takalan Herkku” 1',src:'New pot · Finnish summer raspberry',ids:['rasp-takala-1'],
+   body:['A hardy Finnish summer (floricane) raspberry with large, sweet berries — a reliable home-garden favourite. Just potted: new canes grow this year, main crop next summer.',
+     'Even moisture, top 2–3 cm dry between waterings — never waterlogged. New pot dries fast behind glass; steady water while establishing. Half-strength feed weekly.',
+     'Tie the new canes to a support against wind and glass heat; check leaf undersides for spider mites.',
+     'Very hardy — overwinters on the balcony. Cut spent (fruited) canes to the ground after they crop; keep this year\'s canes for next summer\'s berries.']},
+ 'takala-2':{t:'Raspberry “Takalan Herkku” 2',src:'New pot · Finnish summer raspberry',ids:['rasp-takala-2'],
+   body:['The second Takalan Herkku pot — same hardy Finnish summer raspberry, large sweet berries. Just potted: new canes grow this year, main crop next summer.',
+     'Even moisture, top 2–3 cm dry between waterings — never waterlogged. New pot dries fast behind glass; steady water while establishing. Half-strength feed weekly.',
+     'Give it its own cane/support and room from pot 1 for airflow; check leaf undersides for spider mites.',
+     'Very hardy — overwinters on the balcony. Cut spent (fruited) canes to the ground after they crop; keep this year\'s canes for next summer\'s berries.']},
+ garlic:{t:'Garlic pot',src:'from cloves',ids:['garlic'],
+   body:['Water sparingly — wet soil rots the bulb. Coolest corner of the balcony; glazed heat rushes it.',
+     'When half the leaves yellow: stop watering. When half are brown: lift the bulb.',
+     'Dry lifted bulbs 2 weeks somewhere airy before storing.']},
+};
+const REAL={
+ basilmint:['https://upload.wikimedia.org/wikipedia/commons/9/97/Ocimum_basilicum_8zz.jpg','Genovese basil · Wikimedia'],
+ chilli:['https://upload.wikimedia.org/wikipedia/commons/4/46/Fefferoni.jpg','Italian frying peppers · Wikimedia'],
+ tigerella:['https://upload.wikimedia.org/wikipedia/commons/6/6c/Balkoncontent_Tomatensorte_Tigerella.jpg','Tigerella on the vine · Wikimedia'],
+ noire:['https://upload.wikimedia.org/wikipedia/commons/thumb/2/2c/Black_krim_tomato.jpg/1280px-Black_krim_tomato.jpg','Noire de Crimée (Black Krim) · Wikimedia'],
+ chives:['https://upload.wikimedia.org/wikipedia/commons/thumb/4/49/Allium_schoenoprasum_-_Bombus_lapidarius_-_Tootsi.jpg/1280px-Allium_schoenoprasum_-_Bombus_lapidarius_-_Tootsi.jpg','Chives in flower · Wikimedia'],
+ springonion:['https://upload.wikimedia.org/wikipedia/commons/f/fc/2010-06-19-supermarkt-by-RalfR-32.jpg','Spring onions · Wikimedia'],
+ parsley:['https://upload.wikimedia.org/wikipedia/commons/b/bf/Parsley100.jpg','Curly parsley · Wikimedia'],
+ garlic:['https://upload.wikimedia.org/wikipedia/commons/4/49/Opened_garlic_bulb_with_garlic_clove.jpg','Garlic bulb · Wikimedia'],
+ monstera:['https://www.ikea.com/fi/en/images/products/monstera-deliciosa-potted-plant-swiss-cheese-plant__1177967_pe895590_s5.jpg?f=xl','Monstera deliciosa · IKEA'],
+ hedera:['https://www.ikea.com/fi/en/images/products/hedera-helix-potted-plant-ivy__0902464_pe594502_s5.jpg?f=xl','Hedera helix · IKEA'],
+ maurin:['https://upload.wikimedia.org/wikipedia/commons/thumb/1/12/Raspberry_%2852479964737%29.jpg/1280px-Raspberry_%2852479964737%29.jpg','Ripe raspberries · Wikimedia'],
+ 'takala-1':['https://upload.wikimedia.org/wikipedia/commons/6/67/Raspberries_-_geograph.org.uk_-_506621.jpg','Raspberries on the cane · Wikimedia'],
+ 'takala-2':['https://upload.wikimedia.org/wikipedia/commons/6/67/Raspberries_-_geograph.org.uk_-_506621.jpg','Raspberries on the cane · Wikimedia'],
+};
+/* public/garden-data.js, verbatim */
+const SEED=[
+ {
+  "id": "tomato-1",
+  "name": "Tigerella tomato",
+  "species": "tomato",
+  "stage": "flowering",
+  "area": "balcony",
+  "note": "Striped, indeterminate — stake + pinch side shoots. Ripe when stripes turn orange-red. Tolerates cool summers."
+ },
+ {
+  "id": "tomato-2",
+  "name": "Noire de Crimée tomato",
+  "species": "tomato",
+  "stage": "flowering",
+  "area": "balcony",
+  "note": "Black beefsteak, tall — feed generously. Ripe when SOFT, not by colour (stays dark brown-red)."
+ },
+ {
+  "id": "rasp-maurin",
+  "name": "Maurin Makea raspberry",
+  "species": "raspberry",
+  "stage": "fruiting",
+  "area": "balcony",
+  "note": "Finnish summer raspberry, very sweet berries. Frost-hardy, overwinters on the balcony."
+ },
+ {
+  "id": "rasp-takala-1",
+  "name": "Takalan Herkku raspberry 1",
+  "species": "raspberry",
+  "stage": "settling",
+  "area": "balcony",
+  "note": "New pot · hardy Finnish summer raspberry. First-year canes — main crop next summer."
+ },
+ {
+  "id": "rasp-takala-2",
+  "name": "Takalan Herkku raspberry 2",
+  "species": "raspberry",
+  "stage": "settling",
+  "area": "balcony",
+  "note": "New pot · hardy Finnish summer raspberry. First-year canes — main crop next summer."
+ },
+ {
+  "id": "parsley",
+  "name": "Parsley bed",
+  "species": "parsley",
+  "stage": "growing",
+  "area": "balcony"
+ },
+ {
+  "id": "chilli-1",
+  "name": "Lombardo chilli 1",
+  "species": "chilli",
+  "stage": "seedling",
+  "area": "balcony",
+  "note": "Mild Italian frying chilli (Biltema)"
+ },
+ {
+  "id": "chilli-2",
+  "name": "Lombardo chilli 2",
+  "species": "chilli",
+  "stage": "seedling",
+  "area": "balcony",
+  "note": "Mild Italian frying chilli (Biltema)"
+ },
+ {
+  "id": "basil-mint",
+  "name": "Basil & Mint bed",
+  "species": "basilmint",
+  "stage": "growing",
+  "area": "balcony",
+  "note": "Basil: Italiano Classico (Biltema). Shared bed — keep mint from taking over"
+ },
+ {
+  "id": "chives",
+  "name": "Chive bed",
+  "species": "chives",
+  "stage": "growing",
+  "area": "balcony"
+ },
+ {
+  "id": "spring-onion",
+  "name": "Spring onion bed",
+  "species": "springonion",
+  "stage": "growing",
+  "area": "balcony"
+ },
+ {
+  "id": "garlic",
+  "name": "Garlic pot",
+  "species": "garlic",
+  "stage": "bulbing",
+  "area": "balcony"
+ },
+ {
+  "id": "monstera",
+  "name": "Monstera",
+  "species": "monstera",
+  "stage": "settling",
+  "area": "indoor",
+  "note": "IKEA · bright indirect spot, away from radiators"
+ },
+ {
+  "id": "hedera",
+  "name": "Ivy (Hedera helix)",
+  "species": "hedera",
+  "stage": "settling",
+  "area": "balcony",
+  "note": "IKEA · balcony, shade-tolerant, frost-hardy"
+ }
+];
+const ART={
+ basilmint:`<svg viewBox="0 0 80 80" xmlns="http://www.w3.org/2000/svg"><rect width="80" height="80" fill="#93BFA3"/><path d="M30 62C14 50 16 28 30 16c6 10 8 34 0 46z" fill="#1E4D3B"/><path d="M50 64C38 54 40 34 52 22c8 8 10 32-2 42z" fill="#2E7D52"/><path d="M52 22c-2 14-2 28-2 42" stroke="#93BFA3" stroke-width="2" fill="none"/><path d="M30 16c0 16 0 30 0 46" stroke="#93BFA3" stroke-width="2" fill="none"/></svg>`,
+ chilli:`<svg viewBox="0 0 80 80" xmlns="http://www.w3.org/2000/svg"><rect width="80" height="80" fill="#F2D8AC"/><path d="M24 18c-2 22 4 40 18 46 6 3 10-2 6-6C36 48 32 34 32 18z" fill="#D9472B"/><path d="M52 26c4 16 0 30-8 36-5 4-10 0-7-4 8-8 10-20 9-32z" fill="#2E7D52"/><path d="M28 12c2 4 4 6 4 6h-8s2-2 4-6z" fill="#1E4D3B"/><path d="M50 20c1 4 2 6 2 6l-7-1s3-2 5-5z" fill="#1E4D3B"/></svg>`,
+ tigerella:`<svg viewBox="0 0 80 80" xmlns="http://www.w3.org/2000/svg"><rect width="80" height="80" fill="#F6E3C5"/><circle cx="40" cy="46" r="25" fill="#D9472B"/><path d="M28 26q-7 20 0 40M40 22q-4 24 0 48M52 26q7 20 0 40" stroke="#E08A3C" stroke-width="5" stroke-linecap="round" fill="none"/><path d="M40 14l3 7h7l-5 5 2 7-7-4-7 4 2-7-5-5h7z" fill="#1E4D3B"/></svg>`,
+ noire:`<svg viewBox="0 0 80 80" xmlns="http://www.w3.org/2000/svg"><rect width="80" height="80" fill="#D7C4B0"/><ellipse cx="40" cy="48" rx="27" ry="21" fill="#6E3B3F"/><path d="M13 48a27 21 0 0 1 54 0c-8-10-18-14-27-14s-19 4-27 14z" fill="#4A2A31"/><path d="M30 30q-3 18 2 36M50 30q3 18-2 36" stroke="#5C3136" stroke-width="3" fill="none"/><path d="M40 22l3 6h6l-4 5 1 6-6-3-6 3 1-6-4-5h6z" fill="#1E4D3B"/></svg>`,
+ chives:`<svg viewBox="0 0 80 80" xmlns="http://www.w3.org/2000/svg"><rect width="80" height="80" fill="#EAF0E9"/><path d="M26 70V26M36 70V18M46 70V24M56 70V32" stroke="#2E7D52" stroke-width="5" stroke-linecap="round"/><circle cx="36" cy="14" r="7" fill="#D793A8"/><circle cx="56" cy="28" r="6" fill="#C77E96"/></svg>`,
+ springonion:`<svg viewBox="0 0 80 80" xmlns="http://www.w3.org/2000/svg"><rect width="80" height="80" fill="#93BFA3"/><path d="M28 70V44M40 70V42M52 70V44" stroke="#F6F7F3" stroke-width="8" stroke-linecap="round"/><path d="M28 44 22 16M28 44l4-26M40 42l-3-28M40 42l5-28M52 44l-4-26M52 44l6-24" stroke="#1E4D3B" stroke-width="4" stroke-linecap="round"/></svg>`,
+ parsley:`<svg viewBox="0 0 80 80" xmlns="http://www.w3.org/2000/svg"><rect width="80" height="80" fill="#F6E3C5"/><path d="M40 72V40M40 48l-14-8M40 48l14-8" stroke="#2E7D52" stroke-width="4" stroke-linecap="round"/><g fill="#1E4D3B"><circle cx="40" cy="26" r="9"/><circle cx="26" cy="32" r="8"/><circle cx="54" cy="32" r="8"/><circle cx="32" cy="20" r="7"/><circle cx="48" cy="20" r="7"/></g><g fill="#2E7D52"><circle cx="40" cy="18" r="6"/><circle cx="22" cy="26" r="5"/><circle cx="58" cy="26" r="5"/></g></svg>`,
+ garlic:`<svg viewBox="0 0 80 80" xmlns="http://www.w3.org/2000/svg"><rect width="80" height="80" fill="#EAF0E9"/><path d="M40 24c-14 4-22 14-22 26 0 12 10 18 22 18s22-6 22-18c0-12-8-22-22-26z" fill="#F6F7F3" stroke="#1E4D3B" stroke-width="3"/><path d="M40 26v40M30 28q-4 20 2 38M50 28q4 20-2 38" stroke="#1E4D3B" stroke-width="2.5" fill="none"/><path d="M40 24c-2-8 2-14 6-16-1 6 0 10-2 16z" fill="#2E7D52"/></svg>`,
+ monstera:`<svg viewBox="0 0 80 80" xmlns="http://www.w3.org/2000/svg"><rect width="80" height="80" fill="#F6E3C5"/><path d="M40 4v10" stroke="#1E4D3B" stroke-width="3" stroke-linecap="round"/><path d="M40 16C34 8 22 6 14 13 6 20 4 31 7 40c3 12 13 24 25 30q8 4 16 0c12-6 22-18 25-30 3-9 1-20-7-27-8-7-20-5-26 3Z" fill="#1E4D3B"/><path d="M6 40l29-8M12 54l24-9M22 66l15-9M74 40l-29-8M68 54l-24-9M58 66l-15-9" stroke="#F6E3C5" stroke-width="2.2" stroke-linecap="round"/><path d="M40 21v46" stroke="#F6E3C5" stroke-width="1.8"/></svg>`,
+ hedera:`<svg viewBox="0 0 80 80" xmlns="http://www.w3.org/2000/svg"><rect width="80" height="80" fill="#EAF0E9"/><path d="M14 66q26-4 52-44" stroke="#2E7D52" stroke-width="3" fill="none"/><path d="M30 54l-8-2 2-8 8 2zM46 40l-8-1 1-8 8 1zM60 26l-7-1 1-7 7 1z" fill="#1E4D3B"/><path d="M24 46l6 6M39 33l6 5M54 20l5 5" stroke="#2E7D52" stroke-width="2"/></svg>`,
+ maurin:`<svg viewBox="0 0 80 80" xmlns="http://www.w3.org/2000/svg"><rect width="80" height="80" fill="#EAF0E9"/><path d="M40 40c-8 0-14 4-14 14 0 9 7 14 14 14s14-5 14-14c0-10-6-14-14-14z" fill="#B23A5B"/><g fill="#C9557A"><circle cx="34" cy="52" r="4.4"/><circle cx="46" cy="52" r="4.4"/><circle cx="40" cy="49" r="4.4"/><circle cx="31" cy="60" r="4.4"/><circle cx="49" cy="60" r="4.4"/><circle cx="40" cy="58" r="4.4"/><circle cx="35" cy="66" r="4.2"/><circle cx="45" cy="66" r="4.2"/></g><path d="M40 40l0-8" stroke="#2E7D52" stroke-width="3"/><path d="M40 34c-8-2-14-8-14-8 6 0 12 2 14 6 2-4 8-6 14-6 0 0-6 6-14 8z" fill="#2E7D52"/></svg>`,
+};
+ART['takala-1']=ART['takala-2']=ART.maurin;
+const SEASON={
+  'tigerella':[['flower','2026-06-29','2026-08-01'],['fruit','2026-08-01','2026-08-20'],['harvest','2026-08-20','2026-10-01']],
+  'noire':[['flower','2026-06-29','2026-08-01'],['fruit','2026-08-01','2026-08-15'],['harvest','2026-08-15','2026-10-01']],
+  'maurin':[['fruit','2026-07-21','2026-08-12'],['harvest','2026-08-12','2026-09-10']],
+  'takala-1':[['grow','2026-07-21','2026-10-05']],
+  'takala-2':[['grow','2026-07-21','2026-10-05']],
+  'parsley':[['grow','2026-06-29','2026-08-25'],['harvest','2026-08-25','2026-10-05']],
+  'chilli':[['grow','2026-07-10','2026-08-05'],['flower','2026-08-05','2026-08-20'],['fruit','2026-08-20','2026-09-05'],['harvest','2026-09-05','2026-09-30']],
+  'basilmint':[['grow','2026-06-29','2026-08-05'],['harvest','2026-08-05','2026-09-30']],
+  'chives':[['grow','2026-06-29','2026-08-15'],['harvest','2026-08-15','2026-10-05']],
+  'springonion':[['grow','2026-06-29','2026-08-20'],['harvest','2026-08-20','2026-10-05']],
+  'garlic':[['grow','2026-06-29','2026-08-10'],['harvest','2026-08-10','2026-09-15']],
+  'monstera':[['grow','2026-06-29','2026-10-05']],
+  'hedera':[['grow','2026-06-29','2026-10-05']],
+};
+
+const KEY_BY_ID={};
+Object.entries(PROFILE).forEach(([key,pr])=>(pr.ids||[]).forEach(id=>{KEY_BY_ID[id]=key;}));
+const careOf=p=>(CARE[p.species]&&CARE[p.species].care[p.stage])||{water:3,why:'',weekly:[],daily:[]};
+const keyOf=pid=>KEY_BY_ID[pid]||'';
+const artOf=pid=>ART[keyOf(pid)]||'<span aria-hidden="true">🪴</span>';
+/* each illustration already carries a background colour; that colour becomes the
+   plant's identity everywhere else on the page */
+const TINT={};
+Object.entries(ART).forEach(([k,svg])=>{const m=svg.match(/<rect[^>]*fill="(#[0-9A-Fa-f]{6})"/);if(m)TINT[k]=m[1];});
+const tintOf=pid=>TINT[keyOf(pid)]||'#93BFA3';
+const shortName=n=>{const w=n.split(' ')[0].replace(/[(),]/g,''),d=n.match(/\d$/);return w+(d?' '+d[0]:'');};
+
+const S_START=new Date('2026-06-29'),S_END=new Date('2026-10-05');
+const spos=d=>Math.max(0,Math.min(100,(new Date(d)-S_START)/(S_END-S_START)*100));
+const PHASE_WORD={grow:'kasvaa',flower:'kukkii',fruit:'raakile',harvest:'sato'};
+const phaseNow=pid=>{const h=(SEASON[keyOf(pid)]||[]).find(([,f,t])=>T>=f&&T<=t);
+  return h?PHASE_WORD[h[0]]:'—';};
+
+/* ================= weather (Open-Meteo stands in, offline) ================= */
+const hash=s=>{let h=0;for(const c of s)h=(h*31+c.charCodeAt(0))|0;return Math.abs(h);};
+const WX={};
+for(let i=-70;i<80;i++){const d=addDays(T,i),h=hash(d);WX[d]={tmax:20+h%9,tmin:11+h%6,pop:(h>>3)%100};}
+WX[T]={tmax:29,tmin:14,pop:10};
+WX[addDays(T,1)]={tmax:21,tmin:9,pop:40};
+const wxIcon=w=>!w?'':w.pop>=60?'🌧️':w.pop>=30?'🌦️':w.tmax>=27?'☀️':w.tmax>=18?'⛅':'☁️';
+const alertsOn=d=>{const w=WX[d];if(!w)return[];const out=[];
+  if(w.tmin<=10)out.push({ico:'❄️',cold:true,what:`Kylmä yö ~${w.tmin}° — sulje lasit`,
+    why:'Tomato fruit-set stalls near 10°C; chilli sprouts sulk under 12°C.'});
+  if(w.tmax>=27)out.push({ico:'🔥',what:`${w.tmax}° — tuuleta puoleenpäivään mennessä`,
+    why:'Glazed balcony bakes. Shade parsley and chilli sprouts; tomato pollen dies over ~32°C.'});
+  return out;};
+
+/* ================= state ================= */
+let PLANTS=[],PHOTOS=[],S={};
+function fresh(){
+  PLANTS=SEED.map(sp=>({...sp,last:addDays(T,-(hash(sp.id)%3)-1),health:null,issues:[],notes:[]}));
+  const qp=new URLSearchParams(location.search);
+  S={frame:qp.get('frame')||LS.get('protoFrame')||'phone',
+     speed:+(qp.get('speed')||LS.get('protoSpeed')||1),
+     plant:qp.get('plant')||null,day:null,mode:qp.get('mode')||'today',
+     view:{y:new Date().getFullYear(),m:new Date().getMonth()},
+     draft:'',dockMin:false,busy:null,diff:null,extra:[],removed:[],
+     done:new Set(),touched:new Set(),plan:{at:Date.now()-1000*60*47},
+     entries:[
+      {id:'e1',date:addDays(T,-3),at:Date.now()-1000*60*60*70,
+       text:'repotted both takala raspberries into the big terracotta pots, watered them in well',
+       status:'sorted',assigned:[
+        {pid:'rasp-takala-1',note:'Repotted into a larger terracotta pot and watered in.',tone:'watch',label:'settling'},
+        {pid:'rasp-takala-2',note:'Repotted into a larger terracotta pot and watered in.',tone:'watch',label:'settling'}]},
+      {id:'e2',date:addDays(T,-2),at:Date.now()-1000*60*60*44,
+       text:'monstera has a yellow lower leaf. also watered everything on the balcony',
+       status:'sorted',assigned:[
+        {pid:'monstera',note:'One lower leaf yellowing. Reads as settling stress, not overwatering yet.',tone:'watch',label:'settling in'}]},
+      {id:'e3',date:addDays(T,-1),at:Date.now()-1000*60*60*20,
+       text:'first maurin berries are properly red, picked a handful',
+       status:'sorted',assigned:[
+        {pid:'rasp-maurin',note:'First ripe pick of the season. Harvest window is open.',tone:'good',label:'cropping'}]},
+     ]};
+  S.entries.forEach(e=>(e.assigned||[]).forEach(a=>{
+    const p=PLANTS.find(x=>x.id===a.pid);if(!p)return;
+    p.notes.unshift({date:e.date,text:a.note,quote:e.text});
+    p.health={tone:a.tone,label:a.label};}));
+  const t1=PLANTS.find(p=>p.id==='tomato-1');if(t1)t1.health={tone:'good',label:'thriving'};
+  PHOTOS=[];let n=0;
+  [['tomato-1',[-46,-39,-32,-25,-18,-11,-4]],['tomato-2',[-46,-32,-18,-4]],
+   ['rasp-maurin',[-40,-28,-16,-8,-1]],['rasp-takala-1',[-3,-3]],['rasp-takala-2',[-3]],
+   ['chilli-1',[-30,-15]],['chilli-2',[-30,-15,-2]],['basil-mint',[-44,-30,-16]],
+   ['monstera',[-9,-2]],['parsley',[-38,-12]],['garlic',[-24]],['chives',[-35,-7]]]
+    .forEach(([pid,days])=>days.forEach(d=>PHOTOS.push({id:'p'+(++n),pid,date:addDays(T,d)})));
+}
+const plantOf=id=>PLANTS.find(p=>p.id===id)||PLANTS[0];
+const nameOf=id=>plantOf(id).name;
+const photosFor=pid=>PHOTOS.filter(x=>x.pid===pid).sort((a,b)=>b.date.localeCompare(a.date));
+const photosOn=d=>PHOTOS.filter(x=>x.date===d);
+
+/* ================= tasks: the site's own engine ================= */
+const HORIZON=60;
+let TASKS={};
+const weeklyIco=w=>/feed/i.test(w)?'🍽️':/re-sow|sow/i.test(w)?'🌱':/harvest|lift|pull|pick/i.test(w)?'🧺'
+  :/rotate/i.test(w)?'🔄':/check/i.test(w)?'🔍':/pinch|shoot|trim|tidy|prune|leaf|cane/i.test(w)?'✂️':'🌿';
+function buildTasks(){
+  TASKS={};
+  const add=(d,t)=>{(TASKS[d]=TASKS[d]||[]).push(t);};
+  PLANTS.forEach(p=>{
+    const c=careOf(p);let last=p.last;
+    for(let i=0;i<HORIZON;i++){
+      const d=addDays(T,i),w=WX[d];
+      const eff=p.area==='balcony'&&w?Math.max(1,Math.round(c.water*(w.tmax>=32?.5:w.tmax>=28?.65:w.tmax>=24?.8:1))):c.water;
+      if(dBetween(last,d)>=eff){add(d,{pid:p.id,cat:'water',ico:'💧',what:'Kastele',why:c.why,key:'w|'+p.id});last=d;}
+      (c.daily||[]).forEach(([cat,what,why])=>add(d,{pid:p.id,cat,ico:cat==='pollen'?'✋':'🌱',what,why,key:cat+'|'+p.id+'|'+what}));
+      if(new Date(d).getDay()===0)(c.weekly||[]).forEach(([cat,what,why])=>
+        add(d,{pid:p.id,cat,ico:weeklyIco(what),what,why,key:'wk|'+p.id+'|'+what}));
+    }
+  });
+  (S.extra||[]).forEach(t=>{for(let i=0;i<t.days;i++){const d=addDays(T,i);
+    if(!(TASKS[d]||[]).some(x=>x.key===t.key))add(d,{...t,added:true});}});
+  (S.removed||[]).forEach(k=>{TASKS[T]=(TASKS[T]||[]).filter(x=>x.key!==k);});
+}
+const tasksOn=d=>TASKS[d]||[];
+
+/* ================= the two model calls, simulated ================= */
+const WORDS=[[/tomato|tigerella|noire|truss/i,['tomato-1','tomato-2']],[/chilli|lombardo|pepper/i,['chilli-1','chilli-2']],
+ [/raspberr|vadelma|takala|maurin|berr/i,['rasp-maurin','rasp-takala-1','rasp-takala-2']],
+ [/basil|mint/i,['basil-mint']],[/parsley/i,['parsley']],[/chive/i,['chives']],
+ [/onion|sipuli/i,['spring-onion']],[/garlic|valkosipuli/i,['garlic']],
+ [/monstera/i,['monstera']],[/ivy|hedera/i,['hedera']]];
+const ISSUES=[[/aphid|kirva/i,'aphids','bad'],[/mite|punkki/i,'spider mites','bad'],
+ [/yellow|kellast/i,'yellowing leaves','watch'],[/wilt|droop|sad|limp/i,'wilting','bad'],
+ [/curl/i,'curling leaves','watch'],[/dry|kuiva/i,'dry soil','watch'],
+ [/mould|mold|home/i,'mould','bad'],[/repot|potted/i,'repotted','watch'],
+ [/flower|kukk/i,'flowering','good'],[/ripe|red|pick|harvest/i,'ripening','good']];
+function distill(text,forced){
+  let ids=forced?[forced]:[];
+  if(!forced){
+    WORDS.forEach(([re,list])=>{if(re.test(text))ids.push(...list);});
+    if(/everything|all the|kaikki|whole balcony/i.test(text))ids=PLANTS.map(p=>p.id);
+    const n=text.match(/\b(?:chilli|tomato|raspberr\w*|takala)\s*(\d)\b/i);
+    if(n&&ids.length>1){const pick=ids.filter(i=>i.endsWith('-'+n[1]));if(pick.length)ids=pick;}
+  }
+  ids=[...new Set(ids)];
+  const hit=ISSUES.find(([re])=>re.test(text));
+  const label=hit?hit[1]:'noted',tone=hit?hit[2]:'watch';
+  return {ids,label,tone,
+    note:hit?`${hit[1][0].toUpperCase()+hit[1].slice(1)} reported. ${tone==='bad'?'Worth acting on this week.':'Keeping an eye on it.'}`
+             :'Logged against this plant.'};
+}
+function planEffects(text,d){
+  const extra=[],removed=[],changed=[];
+  if(/water(ed)?|kastel/i.test(text))d.ids.forEach(id=>{
+    const p=PLANTS.find(x=>x.id===id);if(p)p.last=T;
+    if(tasksOn(T).some(t=>t.key==='w|'+id))removed.push('w|'+id);});
+  if(/aphid|mite|curl|kirva|punkki/i.test(text)){
+    d.ids.forEach(id=>extra.push({pid:id,cat:'care',ico:'🔍',what:'Tarkista lehtien alapinnat',
+      why:'Rinse or soap-spray while the count is low.',key:'chk|'+id,days:4}));
+    d.ids.forEach(id=>changed.push({pid:id,note:'kasteluväli tiivistetty 2 päivään toipumisen ajaksi'}));
+  }
+  if(/repot|potted/i.test(text))d.ids.forEach(id=>extra.push({pid:id,cat:'care',ico:'🔍',
+    what:'Tarkista juurtuminen',why:'New soil dries unevenly for the first week.',key:'set|'+id,days:5}));
+  if(/yellow|wilt|sad|droop|kellast/i.test(text))d.ids.forEach(id=>extra.push({pid:id,cat:'care',ico:'🌡️',
+    what:'Siirrä pois suorasta auringosta',why:'Rule out heat stress before feeding.',key:'sun|'+id,days:3}));
+  if(/ripe|red|pick|harvest/i.test(text))d.ids.forEach(id=>extra.push({pid:id,cat:'care',ico:'🧺',
+    what:'Poimi joka toinen päivä',why:'Dead-ripe fruit spoils on the plant.',key:'pick|'+id,days:6}));
+  if(!extra.length&&!removed.length&&d.ids.length)d.ids.forEach(id=>extra.push({pid:id,cat:'care',ico:'🔍',
+    what:'Katso huomenna',why:'Following up on your note.',key:'fu|'+id,days:2}));
+  return {extra,removed,changed};
+}
+
+const DISTILL=9500,PLAN=29000;
+let ticker=null;
+function save(){
+  const text=S.draft.trim();if(!text||S.busy)return;
+  const e={id:'e'+Date.now(),date:T,at:Date.now(),text,status:'pending',assigned:[],forced:S.plant||null};
+  S.entries.push(e);S.draft='';S.diff=null;S.dockMin=false;
+  S.busy={id:e.id,t0:Date.now(),stage:'distill'};
+  clearInterval(ticker);ticker=setInterval(tick,250);
+  render();
+}
+function tick(){
+  const b=S.busy;if(!b)return;
+  const el=(Date.now()-b.t0)*S.speed;
+  const e=S.entries.find(x=>x.id===b.id);
+  if(b.stage==='distill'&&el>=DISTILL){
+    const d=distill(e.text,e.forced);
+    if(!d.ids.length){e.status='unsorted';S.busy=null;clearInterval(ticker);render();return;}
+    e.status='sorted';
+    e.assigned=d.ids.map(pid=>({pid,note:d.note,tone:d.tone,label:d.label}));
+    d.ids.forEach(pid=>{const p=plantOf(pid);
+      p.health={tone:d.tone,label:d.label};
+      if(d.tone!=='good')p.issues=[d.label];
+      p.notes.unshift({date:T,text:d.note,quote:e.text});
+      S.touched.add(pid);});
+    b.stage='plan';render();return;
+  }
+  if(b.stage==='plan'&&el>=PLAN){
+    const d=distill(e.text,e.forced),fx=planEffects(e.text,d);
+    S.extra=[...S.extra,...fx.extra];S.removed=[...S.removed,...fx.removed];
+    S.diff={added:fx.extra,removed:fx.removed,changed:fx.changed,at:Date.now()};
+    S.plan={at:Date.now()};S.busy=null;clearInterval(ticker);
+    buildTasks();render();
+    setTimeout(()=>{S.touched.clear();render();},2600);
+    return;
+  }
+  render();
+}
+const pct1=()=>{const b=S.busy;if(!b)return 0;
+  return b.stage==='distill'?Math.min(100,(Date.now()-b.t0)*S.speed/DISTILL*100):100;};
+const pct2=()=>{const b=S.busy;if(!b||b.stage==='distill')return 0;
+  return Math.min(100,((Date.now()-b.t0)*S.speed-DISTILL)/(PLAN-DISTILL)*100);};
+const secsLeft=()=>{const b=S.busy;if(!b)return 0;
+  return Math.max(1,Math.round((PLAN-(Date.now()-b.t0)*S.speed)/1000));};
+const stageLabel=()=>!S.busy?'':S.busy.stage==='distill'
+  ?'1/2 · Luetaan merkintääsi':'2/2 · Rakennetaan suunnitelmaa';
+
+/* ================= pieces ================= */
+function taskRow(t,date){
+  const done=S.done.has(date+'|'+t.key);
+  const isNew=!!t.added&&S.diff&&S.diff.added.some(a=>a.key===t.key);
+  const chg=S.diff&&t.key.startsWith('w|')&&S.diff.changed.find(c=>c.pid===t.pid);
+  return `<div class="task ${done?'done':''} ${isNew?'added':chg?'changed':''}" style="--tint:${tintOf(t.pid)}">
+    ${isNew?'<span class="flag add">+</span>':chg?'<span class="flag chg">~</span>':'<span class="flag"></span>'}
+    <span class="mk">${t.ico}</span>
+    <span class="body">
+      <span class="what">${esc(t.what)}</span>
+      <span class="whose">${esc(nameOf(t.pid))}</span>
+      ${t.why?`<span class="why">${esc(t.why)}</span>`:''}
+      ${chg?`<span class="why" style="color:var(--pollen)">${esc(chg.note)}</span>`:''}
+    </span>
+    <button class="tick" data-act="done" data-val="${date}|${esc(t.key)}">Tehty${done?' ✓':''}</button>
+  </div>`;
+}
+function cutRows(){
+  if(!S.diff||!S.diff.removed.length)return'';
+  return S.diff.removed.map(k=>{const pid=k.slice(2);
+    return `<div class="task cut" style="--tint:${tintOf(pid)}">
+      <span class="flag cut">−</span><span class="mk">💧</span>
+      <span class="body"><span class="what">Kastele</span>
+        <span class="whose">${esc(nameOf(pid))}</span>
+        <span class="why">kirjasit että kastelit sen</span></span></div>`;}).join('');
+}
+function dayList(date){
+  if(date<T)return '<div class="none">Mennyt päivä.</div>';
+  const isNew=x=>!!x.added&&S.diff&&S.diff.added.some(a=>a.key===x.key);
+  const isChg=x=>!!S.diff&&x.key.startsWith('w|')&&S.diff.changed.some(c=>c.pid===x.pid);
+  const t=tasksOn(date).slice().sort((a,b)=>(isNew(b)-isNew(a))||(isChg(b)-isChg(a)));
+  const rows=(date===T?cutRows():'')+t.map(x=>taskRow(x,date)).join('');
+  return rows?`<div class="list">${rows}</div>`:'<div class="none">Ei tehtäviä</div>';
+}
+function wxBlock(date){
+  const w=WX[date];if(!w)return'';
+  return `<div class="wx">
+    <div class="read">
+      <span class="deg ${w.tmax>=27?'hot':''}">${wxIcon(w)} ${w.tmax}°</span>
+      <span>yö <span class="${w.tmin<=10?'cold':''}">${w.tmin}°</span></span>
+      <span>sade ${w.pop}%</span>
+      <span>${date===T?'tänään':dayLabel(date)}</span>
+    </div>
+    ${alertsOn(date).map(a=>`<div class="warn ${a.cold?'cold':''}">
+      <b>${a.ico} ${esc(a.what)}</b><span>${esc(a.why)}</span></div>`).join('')}
+  </div>`;
+}
+function entryCard(e,{live=false}={}){
+  const shots=photosOn(e.date).filter(x=>(e.assigned||[]).some(a=>a.pid===x.pid));
+  return `<article class="entry ${live?'live':''}">
+    <p class="said">${esc(e.text)}</p>
+    ${(e.assigned||[]).map(a=>`<div class="read" style="--tint:${tintOf(a.pid)}">
+      <span class="art">${artOf(a.pid)}</span>
+      <span><b>${esc(nameOf(a.pid))}</b><span>${esc(a.note)}</span></span></div>`).join('')}
+    ${e.status==='unsorted'?'<div class="none">AI ei tunnistanut kasvia — valitse se yltä.</div>':''}
+    ${shots.length?`<div class="shots" style="margin-top:var(--s2)">${shots.map(x=>
+      `<button data-act="plant" data-val="${x.pid}">${artOf(x.pid)}
+        <span class="when">${shortDate(x.date)}</span></button>`).join('')}</div>`:''}
+  </article>`;
+}
+function journalSpine(){
+  let last='';
+  return [...S.entries].reverse().map(e=>{
+    const hd=e.date!==last?`<div class="day"><span>${dayLabel(e.date)}</span><i></i>
+      <span${e.date===T?' style="color:var(--pine)"':''}>${e.date===T?'tänään':relTime(e.at)}</span></div>`:'';
+    last=e.date;return hd+entryCard(e);}).join('')||'<div class="none">Ei merkintöjä</div>';
+}
+function photoGroups(list){
+  const g=[];
+  list.forEach(x=>{const k=x.date.slice(0,7),l=g[g.length-1];
+    if(l&&l.k===k)l.items.push(x);else g.push({k,items:[x]});});
+  return g.map(grp=>`<div class="sub"><span>${KUUT[+grp.k.slice(5,7)-1]}</span>
+      <span class="n">${grp.items.length}</span></div>
+    <div class="shots">${grp.items.map(x=>`<button data-act="plant" data-val="${x.pid}">
+      ${artOf(x.pid)}<span class="when">${shortDate(x.date)}</span></button>`).join('')}</div>`).join('');
+}
+/* what the line says about a plant now: the model's read if there is one, else
+   the fact that matters at this stage */
+function stateOf(p){
+  const since=dBetween(p.last,T);
+  const meta=since<=0?'kasteltu tänään':`kasteltu ${since} pv sitten`;
+  const iss=(p.issues||[])[0];
+  if(p.health&&p.health.tone==='bad')return {mk:'⚠️',tone:'bad',text:iss||p.health.label,meta};
+  if(p.health&&p.health.tone==='watch')return {mk:'👀',tone:'watch',text:iss||p.health.label,meta};
+  const w=WX[T],c=careOf(p);
+  const eff=p.area==='balcony'&&w?Math.max(1,Math.round(c.water*(w.tmax>=32?.5:w.tmax>=28?.65:w.tmax>=24?.8:1))):c.water;
+  if(since>eff)return {mk:'💧',tone:'watch',text:'maa kuivunut',meta};
+  if(p.health)return {mk:'🌿',tone:'good',text:p.health.label,meta};
+  return {mk:'🌿',tone:'good',text:p.stage,meta};
+}
+function lifeOf(p){
+  return [{date:addDays(T,-6),kind:'stage',text:'Vaihe → '+p.stage},
+    {date:p.last,kind:'water',text:'Kasteltu'},
+    ...p.notes.map(n=>({date:n.date,kind:'note',text:n.text}))]
+    .sort((a,b)=>b.date.localeCompare(a.date));
+}
+const LIFE_MK={stage:'🪴',water:'💧',note:'✨'};
+const lifeList=p=>`<ul class="life">${lifeOf(p).map(l=>`<li>
+  <span class="when">${dayLabel(l.date)}</span>
+  <span class="what">${LIFE_MK[l.kind]} ${esc(l.text)}</span></li>`).join('')}</ul>`;
+
+function chartRow(p){
+  const s=stateOf(p),ph=SEASON[keyOf(p.id)]||[];
+  return `<div class="row ${S.touched.has(p.id)?'touched':''}" style="--tint:${tintOf(p.id)}">
+    <span class="art">${artOf(p.id)}</span>
+    <span class="who"><b>${esc(p.name)}</b><em>${esc(phaseNow(p.id))}</em></span>
+    <span class="bars"><span class="track">${ph.map(([c,f,t])=>
+      `<i class="bar ${c}" style="left:${spos(f)}%;width:${Math.max(spos(t)-spos(f),1.5)}%"></i>`).join('')}</span></span>
+    <span class="now ${s.tone}"><span class="mk">${s.mk}</span>
+      <span class="txt">${esc(s.text)}<em>${esc(s.meta)}</em></span></span>
+  </div>`;
+}
+/* The nav is the page's primary control, so it lives above everything and
+   answers for the whole page: whole balcony, or one plant. */
+function navBar(){
+  const sel=S.plant;
+  return `<nav class="nav" aria-label="Kasvit">
+    <div class="strip">
+      <button class="chip all" data-act="all" aria-pressed="${!sel}">Koko parveke</button>
+      ${PLANTS.map(p=>`<button class="chip" data-act="plant" data-val="${p.id}"
+        aria-pressed="${sel===p.id}" title="${esc(p.name)}">
+        <span class="av">${artOf(p.id)}</span>${esc(shortName(p.name))}</button>`).join('')}
+    </div>
+  </nav>`;
+}
+function chart(){
+  const scaleRow=(inner,cls)=>`<div class="row ${cls}">
+    <span class="art"></span><span class="who"></span>
+    <span class="bars"><span class="scale">${inner}</span></span><span class="now"></span></div>`;
+  const need=PLANTS.filter(p=>p.health&&p.health.tone!=='good').length;
+  return `<section class="sect">
+    <div class="hd"><h2>Kasvit</h2>
+      <span class="meta">${need?`<b>${need} vaatii huomiota</b> · `:''}${PLANTS.length} kasvia</span></div>
+    ${scaleRow([['Kesä','2026-07-01'],['Elo','2026-08-01'],['Syys','2026-09-01'],['Loka','2026-10-01']]
+      .map(([l,d])=>`<b style="left:${spos(d)}%">${l}</b>`).join(''),'head')}
+    ${PLANTS.map(chartRow).join('')}
+    ${scaleRow(`<b class="today" style="left:${spos(T)}%">▏tänään</b>`,'axis')}
+    <div class="legend">
+      <span><i style="background:var(--ph-grow)"></i>kasvaa</span>
+      <span><i style="background:var(--ph-flower)"></i>kukkii</span>
+      <span><i style="background:var(--ph-fruit)"></i>raakile</span>
+      <span><i style="background:var(--ph-harvest)"></i>sato</span></div>
+  </section>`;
+}
+function monthGrid(){
+  const {y,m}=S.view;
+  const first=new Date(y,m,1),daysIn=new Date(y,m+1,0).getDate(),lead=(first.getDay()+6)%7;
+  const pd=new Set(PHOTOS.map(x=>x.date)),nd=new Set(S.entries.map(e=>e.date));
+  let h='<div class="dow"><span>Ma</span><span>Ti</span><span>Ke</span><span>To</span><span>Pe</span><span>La</span><span>Su</span></div><div class="grid">';
+  for(let i=0;i<lead;i++)h+='<div class="cell out"></div>';
+  for(let d=1;d<=daysIn;d++){
+    const date=iso(new Date(y,m,d)),w=WX[date],list=tasksOn(date),al=alertsOn(date);
+    h+=`<button class="cell ${date===T?'today':''} ${date<T?'past':''} ${
+      al.some(a=>!a.cold)?'hot':al.some(a=>a.cold)?'cold':''}" data-act="day" data-val="${date}"
+      aria-label="${dayLabel(date)}, ${list.length} tehtävää">
+      <span class="d">${d}</span>${w?`<span class="t ${w.tmax>=27?'warm':''}">${w.tmax}°</span>`:''}
+      <span class="dots">${list.slice(0,5).map(x=>
+        `<i class="dot ${x.cat==='water'?'water':x.cat==='pollen'?'pollen':'care'}"></i>`).join('')}${
+        nd.has(date)?'<i class="dot note"></i>':''}${pd.has(date)?'<i class="dot photo"></i>':''}</span></button>`;
+  }
+  return h+'</div>';
+}
+
+/* ================= the plant, in full ================= */
+function plantView(p){
+  const key=keyOf(p.id),pr=PROFILE[key]||{t:p.name,body:[],src:''};
+  const s=stateOf(p),mine=photosFor(p.id);
+  const notes=p.notes.slice().sort((a,b)=>b.date.localeCompare(a.date));
+  const ph=SEASON[keyOf(p.id)]||[];
+  return `<section class="sect">
+    <div class="hd"><h2>${esc(pr.t)}</h2>
+      <span class="meta">${p.area==='balcony'?'Parvekkeella':'Sisällä'} · ${esc(p.stage)}</span></div>
+    <p class="lede ${s.tone}"><span class="mk">${s.mk}</span>${esc(s.text)}<em>${esc(s.meta)}</em></p>
+    ${p.note?`<p class="prose dimmed">${esc(p.note)}</p>`:''}
+
+    <div class="sub"><span>Kausi</span><span class="n">${esc(phaseNow(p.id))}</span></div>
+    <div class="seasonstrip">
+      <span class="scale">${[['Kesä','2026-07-01'],['Elo','2026-08-01'],['Syys','2026-09-01'],['Loka','2026-10-01']]
+        .map(([l,d])=>`<b style="left:${spos(d)}%">${l}</b>`).join('')}</span>
+      <span class="track">${ph.map(([c,f,t])=>
+        `<i class="bar ${c}" style="left:${spos(f)}%;width:${Math.max(spos(t)-spos(f),1.5)}%"></i>`).join('')}</span>
+      <span class="scale"><b class="today" style="left:${spos(T)}%">▏tänään</b></span>
+    </div>
+    ${lifeList(p)}
+
+    <div class="sub"><span>Päiväkirja</span><span class="n">${notes.length}</span></div>
+    ${notes.length?notes.map(n=>`<div class="note">
+      <div class="data">${dayLabel(n.date)} ✨</div>
+      <p class="prose">${esc(n.text)}</p>
+      ${n.quote?`<p class="prose quote">“${esc(n.quote)}”</p>`:''}</div>`).join('')
+      :'<div class="none">Ei merkintöjä</div>'}
+
+    ${mine.length?`<div class="sub"><span>Kuvat</span>
+      <span class="n">${mine.length} kuvaa · ${dBetween(mine[mine.length-1].date,T)} pv</span></div>
+      ${photoGroups(mine)}`:''}
+
+    <div class="sub"><span>Hoito</span><span class="n">${esc(pr.src||'')}</span></div>
+    ${(pr.body||[]).map(b=>`<p class="prose">${esc(b)}</p>`).join('')}
+    ${REAL[key]?`<figure class="ref"><img src="${REAL[key][0]}" alt="${esc(REAL[key][1])}" loading="lazy"
+      onerror="this.parentElement.style.display='none'"><figcaption>${esc(REAL[key][1])}</figcaption></figure>`:''}
+  </section>`;
+}
+
+/* ================= the balcony ================= */
+function balconyView(){
+  const seg=(k,l)=>`<button data-act="mode" data-val="${k}" aria-selected="${S.mode===k}">${l}</button>`;
+  if(S.day){
+    return `<section class="sect">
+      <div class="hd"><h2>${dayLabel(S.day)}</h2>
+        <span class="meta"><button class="tick" data-act="mode" data-val="month">‹ ${KUUT[S.view.m]}</button></span></div>
+      ${wxBlock(S.day)}${dayList(S.day)}
+      <div class="sub"><span>Päiväkirja</span></div>
+      ${S.entries.filter(e=>e.date===S.day).map(e=>entryCard(e)).join('')||'<div class="none">Ei merkintöjä</div>'}
+      ${photosOn(S.day).length?`<div class="shots">${photosOn(S.day).map(x=>
+        `<button data-act="plant" data-val="${x.pid}">${artOf(x.pid)}
+          <span class="when">${esc(shortName(nameOf(x.pid)))}</span></button>`).join('')}</div>`:''}
+    </section>`;
+  }
+  const body=S.mode==='today'?wxBlock(T)+dayList(T)
+    :S.mode==='month'?`<div class="navrow">
+        <button data-act="step" data-val="-1" aria-label="Edellinen kuukausi">‹</button>
+        <span class="lab">${KUUT[S.view.m]} ${S.view.y}</span>
+        <button data-act="step" data-val="1" aria-label="Seuraava kuukausi">›</button></div>${monthGrid()}`
+    :journalSpine();
+  const meta=S.mode==='today'?`${tasksOn(T).length} tehtävää`
+    :S.mode==='journal'?`${S.entries.length} merkintää`:'';
+  return `<section class="sect">
+    <div class="hd"><h2>Koko parveke</h2>
+      <div class="segs">${seg('today','Tänään')}${seg('month','Kuukausi')}${seg('journal','Päiväkirja')}</div>
+      <span class="meta">${meta}</span></div>
+    ${body}</section>`;
+}
+
+/* ================= composer ================= */
+function dock(){
+  const p=S.plant?plantOf(S.plant):null;
+  const can=!!S.draft.trim();
+  return `<div class="dock ${S.dockMin?'min':''} ${can?'tall':''}">
+    <div class="box">
+      <div class="top">
+        <span>Uusi merkintä · ${shortDate(T)}</span>
+        ${p?`<span class="tag">${artOf(p.id)} ${esc(shortName(p.name))}</span>`:''}
+        <button class="fold" data-act="fold" aria-expanded="${!S.dockMin}"
+          aria-label="${S.dockMin?'Avaa kirjoituskenttä':'Pienennä kirjoituskenttä'}">${S.dockMin?'▲':'▼'}</button>
+      </div>
+      <div class="in">
+        <label class="vhid" for="ta">Uusi merkintä</label>
+        <textarea id="ta" data-ta="1"
+          placeholder="${p?`Mitä ${esc(shortName(p.name))} tekee?`:'Mitä parvekkeella tapahtuu?'}">${esc(S.draft)}</textarea>
+        <div class="acts">
+          <button data-act="photo" aria-label="Lisää kuva">📷</button>
+          <span class="sp"></span>
+          <button class="save ${can?'on':''}" data-act="save" ${can?'':'disabled'}>Tallenna</button>
+        </div>
+      </div>
+    </div></div>`;
+}
+
+/* ================= the lock ================= */
+/* While the two calls run the whole page is inert: the plan on screen is about
+   to be replaced, so ticking or editing against it would write to a plan that
+   no longer exists. The card is the note itself, filling in as the calls land. */
+function lockView(){
+  const el=$('#lock'),b=S.busy;
+  if(!b){el.className='';el.innerHTML='';document.body.classList.remove('locked');return;}
+  const e=S.entries.find(x=>x.id===b.id);
+  el.className='on';document.body.classList.add('locked');
+  el.innerHTML=`<div class="waiting">
+    <p class="said">${esc(e.text)}</p>
+    <div class="steps"><i><b style="width:${pct1()}%"></b></i><i><b style="width:${pct2()}%"></b></i></div>
+    <div class="stage">${stageLabel()}</div>
+    <div class="eta">noin ${secsLeft()} s · muu käyttöliittymä odottaa</div>
+    ${(e.assigned||[]).length?`<div class="found">${e.assigned.map(a=>`
+      <div class="read" style="--tint:${tintOf(a.pid)}"><span class="art">${artOf(a.pid)}</span>
+      <span><b>${esc(nameOf(a.pid))}</b><span>${esc(a.note)}</span></span></div>`).join('')}</div>`:''}
+    ${(Date.now()-b.t0)*S.speed>45000?'<button class="out" data-act="escape">Päästä minut takaisin</button>':''}
+  </div>`;
+}
+
+/* ================= render ================= */
+function render(){
+  const a=document.activeElement,keep=a&&a.dataset&&a.dataset.ta?a.selectionStart:null;
+  $('#root').className=S.frame==='phone'?'phone':'';
+  $('#page').innerHTML=
+    `<header class="mast">
+       <h1>Daran parvekepuutarha</h1>
+       <span class="where">Tampere · lasitettu parveke</span>
+       <span class="fresh">Suunnitelma ${relTime(S.plan.at)}</span>
+     </header>
+     ${navBar()}
+     ${dock()}
+     ${S.plant?plantView(plantOf(S.plant)):chart()+balconyView()}`;
+  lockView();
+  document.querySelectorAll('#frames button').forEach(b=>b.setAttribute('aria-pressed',String(b.dataset.frame===S.frame)));
+  document.querySelectorAll('#speeds button').forEach(b=>b.setAttribute('aria-pressed',String(+b.dataset.speed===S.speed)));
+  if(keep!=null){const t=$('#ta');if(t){t.focus();t.setSelectionRange(keep,keep);}}
+}
+
+/* ================= actions ================= */
+const ACT={
+  plant:v=>{S.plant=v;S.day=null;render();},
+  all:()=>{S.plant=null;render();},
+  mode:v=>{S.mode=v;S.day=null;render();},
+  day:v=>{S.day=v;S.plant=null;render();},
+  step:v=>{S.view.m+=+v;
+    if(S.view.m<0){S.view.m=11;S.view.y--;} if(S.view.m>11){S.view.m=0;S.view.y++;}
+    render();},
+  done:v=>{S.done.has(v)?S.done.delete(v):S.done.add(v);render();},
+  fold:()=>{S.dockMin=!S.dockMin;render();if(!S.dockMin)setTimeout(()=>$('#ta')&&$('#ta').focus(),30);},
+  save:()=>save(),
+  photo:()=>alert('Prototyypissä kuvat ovat piirroksia. Oikeassa sovelluksessa tähän tulee kameran valinta.'),
+  escape:()=>{S.busy=null;clearInterval(ticker);render();},
+};
+document.addEventListener('click',e=>{
+  const el=e.target.closest('[data-act]');if(!el)return;
+  if(S.busy&&el.dataset.act!=='escape')return;    /* the lock answers, nothing else */
+  const fn=ACT[el.dataset.act];if(!fn)return;
+  e.preventDefault();fn(el.dataset.val,el);
+});
+document.addEventListener('input',e=>{
+  if(!e.target.dataset.ta)return;
+  S.draft=e.target.value;
+  const b=document.querySelector('[data-act="save"]');
+  if(b){b.disabled=!S.draft.trim();b.classList.toggle('on',!!S.draft.trim());}
+  const d=document.querySelector('.dock');if(d)d.classList.toggle('tall',!!S.draft.trim());
+});
+document.addEventListener('keydown',e=>{
+  if((e.metaKey||e.ctrlKey)&&e.key==='Enter')save();
+  if(e.key==='Escape'&&!S.busy&&S.plant){S.plant=null;render();}
+});
+
+/* prototype controls */
+$('#frames').onclick=e=>{const b=e.target.closest('[data-frame]');if(!b)return;
+  S.frame=b.dataset.frame;LS.set('protoFrame',S.frame);render();};
+$('#speeds').onclick=e=>{const b=e.target.closest('[data-speed]');if(!b)return;
+  S.speed=+b.dataset.speed;LS.set('protoSpeed',S.speed);render();};
+$('#demo').onclick=()=>{S.draft='aphids on chilli 2, the new leaves are curling';S.dockMin=false;
+  render();if($('#ta'))$('#ta').focus();};
+$('#reset').onclick=()=>{clearInterval(ticker);const f=S.frame,sp=S.speed;fresh();S.frame=f;S.speed=sp;buildTasks();render();};
+
+fresh();buildTasks();render();
+if(new URLSearchParams(location.search).get('sim')){S.draft='aphids on chilli 2, the new leaves are curling';save();}
+</script>
+</body>
+</html>

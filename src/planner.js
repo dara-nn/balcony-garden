@@ -1,4 +1,5 @@
 import { readStatus, writeStatus, writePlan } from './garden.js';
+import { readSeed } from './seed.js';
 
 const STAGES_HINT = 'Use only the plant\'s allowed stages.';
 
@@ -57,10 +58,11 @@ const PLAN_SCHEMA = {
           health: {
             type: 'object',
             properties: {
-              overall: { type: 'string', enum: ['thriving', 'steady', 'struggling'] },
+              label: { type: 'string' },
+              tone: { type: 'string', enum: ['good', 'watch', 'bad'] },
               issues: { type: 'array', items: ISSUE_SCHEMA },
             },
-            required: ['overall', 'issues'],
+            required: ['label', 'tone', 'issues'],
           },
           observations: { type: 'string' },
           stage: { type: 'string' },
@@ -95,12 +97,22 @@ export function buildGeminiBody(statusDoc, forecast, today, photoPartsByPlant) {
   return {
     system_instruction: {
       parts: [{ text:
-        'You are a balcony-garden care planner for a glazed balcony in Tampere, Finland. ' +
+        'You are a garden care planner for a household in Tampere, Finland. ' +
         'Given each plant\'s status, recent notes, same-day photos, and the 14-day forecast, ' +
         'produce a task list for the next 14 days. EVERY plant in the context MUST appear as an ' +
         'entry in plants[] (with its exact id), even if healthy — assess its health and give it ' +
         'at least the appropriate watering days. Task categories: water, pollen, care, alert. ' +
         'Each open health issue must get a matching task (pest->treat, nutrient->feed, water->adjust). ' +
+        'health.label is your own one-or-two-word verdict on that plant right now — say what you ' +
+        'actually see ("thirsty", "in full swing", "bouncing back", "leggy", "nearly done"), not a ' +
+        'word from a fixed list, and never repeat the stage. health.tone is only the colour it ' +
+        'should carry: good, watch, or bad. ' +
+        'Each plant has an "area". area="balcony" means a glazed balcony: the forecast drives its ' +
+        'watering, it bakes on hot days and chills on cold nights. area="indoor" means a heated room: ' +
+        'the forecast does NOT apply to it — never give an indoor plant a heat, frost or venting task, ' +
+        'and keep its watering on a steady rhythm. ' +
+        'Tasks are shown grouped under the plant they belong to, so never repeat the plant name in ' +
+        '"what" — write "Water", not "Water Tigerella". ' +
         STAGES_HINT + ' Return JSON matching the schema. Keep "why" short.' }],
     },
     contents: [{ role: 'user', parts }],
@@ -204,7 +216,14 @@ export async function replan(env, { trigger } = {}) {
       }
     } catch { return; } // photo-gathering failure (KV or encoding): leave stores intact
 
-    const body = buildGeminiBody(status, forecast, today, photoPartsByPlant);
+    // Place is not stored with the condition — it is read from the inventory each run,
+    // and only handed to the model, never written back.
+    const seed = await readSeed(env);
+    const areas = Object.fromEntries((seed?.plants || []).map((p) => [p.id, p.area || 'balcony']));
+    const withArea = { ...status, plants: Object.fromEntries(
+      Object.entries(status.plants).map(([id, p]) => [id, { ...p, area: areas[id] || 'balcony' }])) };
+
+    const body = buildGeminiBody(withArea, forecast, today, photoPartsByPlant);
     const url = `https://generativelanguage.googleapis.com/v1beta/models/${MODEL}:generateContent`;
     let res;
     try {
