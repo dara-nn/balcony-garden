@@ -397,3 +397,51 @@ test('an empty journal has no groups', () => {
   assert.deepEqual(journalGroups([]), []);
   assert.deepEqual(journalGroups(), []);
 });
+
+/* ---- the bar must agree with the stage the plant is actually in ---- */
+
+test('the phase the plant is in covers today, even with nothing recorded', () => {
+  // Tigerella: the table says harvest by now, the plant says flowering.
+  const out = seasonSpans(DEF, [], [], '2026-12-29', { stage: 'flowering', date: '2026-09-29' });
+  const flower = out.find((s) => s[0] === 'flower');
+  assert.ok(flower[1] <= '2026-09-29' && flower[2] >= '2026-09-29',
+    `flowering should cover today, got ${flower[1]} to ${flower[2]}`);
+});
+
+test('the phases after it slide along, keeping their lengths', () => {
+  const out = seasonSpans(DEF, [], [], '2026-12-29', { stage: 'flowering', date: '2026-09-29' });
+  const harvest = out.find((s) => s[0] === 'harvest');
+  // spans meet at a boundary, so beginning exactly today is correct
+  assert.ok(harvest[1] >= '2026-09-29', 'harvest must not still be in the past');
+  const days = (a, b) => Math.round((Date.parse(b) - Date.parse(a)) / 86400000);
+  assert.equal(days(out[2][1], out[2][2]), days(DEF[2][1], DEF[2][2]));   // length preserved
+});
+
+test('a plant already on schedule is left alone', () => {
+  const out = seasonSpans(DEF, [], [], '2026-12-29', { stage: 'harvesting', date: '2026-09-15' });
+  assert.deepEqual(out, DEF);
+});
+
+test('a recorded transition still beats the current stage', () => {
+  const out = seasonSpans(DEF, [{ date: '2026-08-20', stage: 'flowering' }], [], '2026-12-29',
+    { stage: 'flowering', date: '2026-09-29' });
+  assert.equal(out.find((s) => s[0] === 'flower')[1], '2026-08-20');
+});
+
+test('a stage with no colour leaves the bar alone', () => {
+  assert.deepEqual(seasonSpans(DEF, [], [], '2026-12-29', { stage: 'dormant', date: '2026-09-29' }), DEF);
+});
+
+test('no current stage keeps the old behaviour', () => {
+  assert.deepEqual(seasonSpans(DEF, [], [], '2026-12-29'), DEF);
+  assert.deepEqual(seasonSpans(DEF, [], [], '2026-12-29', null), DEF);
+});
+
+test('sliding never inverts a span', () => {
+  for (const stage of ['growing', 'flowering', 'fruiting', 'harvesting']) {
+    for (const date of ['2026-06-01', '2026-08-15', '2026-09-29', '2026-12-01']) {
+      const out = seasonSpans(DEF, [], [], '2027-03-01', { stage, date });
+      for (const [, f, t] of out) assert.ok(f <= t, `${stage} ${date}: ${f} after ${t}`);
+    }
+  }
+});

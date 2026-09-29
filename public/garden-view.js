@@ -60,7 +60,7 @@ export function phaseOfStage(stage) {
    actually changed, that date wins and the bar redraws around it. Where the
    planner expects a change that has not happened yet, that date is used too,
    but a recorded change always beats a predicted one for the same phase. */
-export function seasonSpans(defaults, history, upcoming, windowEnd) {
+export function seasonSpans(defaults, history, upcoming, windowEnd, current) {
   const spans = (defaults || []).map((s) => s.slice());
   const byDate = (a, b) => (a.date || '').localeCompare(b.date || '');
 
@@ -70,8 +70,10 @@ export function seasonSpans(defaults, history, upcoming, windowEnd) {
     if (phase && h.date) realStart.set(phase, h.date);   // a later record wins
   }
   const preds = [...(upcoming || [])].filter((u) => u && u.date).sort(byDate);
+  const nowPhase = current && phaseOfStage(current.stage) && current.date
+    ? phaseOfStage(current.stage) : null;
   if (!spans.length) return spans;
-  if (!realStart.size && !preds.length) return spans;
+  if (!realStart.size && !preds.length && !nowPhase) return spans;
 
   const predStart = new Map();
   for (const u of preds) {
@@ -99,6 +101,23 @@ export function seasonSpans(defaults, history, upcoming, windowEnd) {
     known.add(phase);
   }
 
+  /* The plant's own stage is a fact about today, not a guess: whatever phase it
+     says it is in has to be the one covering today. When the plant is running
+     behind the table, the phases after it slide by the same amount and keep
+     their lengths, so the bar shows how late it is rather than contradicting
+     the label next to it. A phase the history already dates is left alone. */
+  if (nowPhase) {
+    const at = spans.findIndex((x) => x[0] === nowPhase);
+    if (at !== -1 && !realStart.has(nowPhase) && spans[at][2] < current.date) {
+      const shift = dayDiff(spans[at][2], current.date);
+      spans[at][2] = current.date;
+      for (let i = at + 1; i < spans.length; i++) {
+        spans[i][1] = addDaysISO(spans[i][1], shift);
+        spans[i][2] = addDaysISO(spans[i][2], shift);
+      }
+    }
+  }
+
   /* A phase runs until the next one begins, so once a start moves every end
      before it follows. Starts are made monotone first, otherwise a change
      recorded out of sequence would run a span backwards. */
@@ -115,6 +134,13 @@ export function seasonSpans(defaults, history, upcoming, windowEnd) {
   }
   return spans;
 }
+
+const dayDiff = (a, b) => Math.round((Date.parse(b + 'T00:00:00Z') - Date.parse(a + 'T00:00:00Z')) / 86400000);
+const addDaysISO = (iso, n) => {
+  const d = new Date(iso + 'T00:00:00Z');
+  d.setUTCDate(d.getUTCDate() + n);
+  return d.toISOString().slice(0, 10);
+};
 
 const MONTH_ABBR = ['Jan', 'Feb', 'Mar', 'Apr', 'May', 'Jun',
   'Jul', 'Aug', 'Sep', 'Oct', 'Nov', 'Dec'];

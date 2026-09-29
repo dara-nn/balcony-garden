@@ -66,8 +66,7 @@
   .mast{display:flex;align-items:baseline;gap:var(--s2);flex-wrap:wrap;margin-bottom:var(--s4)}
   .mast h1{font-size:clamp(20px,3vw,25px);font-weight:600}
   .mast .where{font-size:13px;color:var(--dim)}
-  .mast .fresh{margin-left:auto;font-size:12px;color:var(--dim);background:var(--field);
-    border-radius:var(--r-pill);padding:5px 11px;border:1px solid var(--rule)}
+  .mast .fresh{margin-left:auto;font-size:12px;color:var(--dim)}
 
   /* ---- a section is a card ---- */
   .sect{background:var(--field);border:1px solid var(--rule);border-radius:var(--r-lg);
@@ -91,7 +90,15 @@
   .pname .art svg{width:100%;height:100%;display:block}
   .pname em{font-style:normal;color:var(--dim);font-size:.85em}
   .water{font-size:.85em;color:var(--dim)}
-  .wline{display:flex;align-items:center;gap:var(--s1);margin:2px 0 4px}
+  .wline{display:flex;align-items:center;gap:var(--s3);margin:var(--s3) 0 0}
+  .waterbtn{display:inline-flex;align-items:center;gap:6px;border:1px solid var(--rule);
+    background:var(--paper);border-radius:var(--r-pill);padding:5px 14px;cursor:pointer;
+    font:inherit;font-size:13.5px;color:var(--ink)}
+  .waterbtn:hover,.waterbtn:focus-visible{border-color:var(--water);color:var(--water)}
+  .photobtn{display:inline-flex;align-items:center;gap:6px;border:1px solid var(--rule);
+    background:var(--paper);border-radius:var(--r-pill);padding:6px 15px;cursor:pointer;
+    font:inherit;font-size:13.5px;color:var(--ink)}
+  .photobtn:hover,.photobtn:focus-visible{border-color:var(--leaf);color:var(--pine)}
   /* Two paragraphs that read differently: what it is doing, then what to do.
      A label each, on one shared column so the prose lines up. */
   .status,.guide{display:grid;grid-template-columns:58px 1fr;gap:var(--s2);
@@ -109,8 +116,6 @@
   .sw.grow{background:var(--ph-grow)} .sw.flower{background:var(--ph-flower)}
   .sw.fruit{background:var(--ph-fruit)} .sw.harvest{background:var(--ph-harvest)}
   .sw.future{background:var(--dim);opacity:.4}
-  .drop{background:none;border:0;padding:2px 4px;cursor:pointer;opacity:.35;font-size:.95em}
-  .drop:hover,.drop:focus-visible{opacity:1}
   .chart{min-width:0}
   .prow.solo .phead{grid-template-columns:1fr}
   /* A tooltip that answers straight away, rather than the browser's slow one. */
@@ -171,10 +176,13 @@
   .jent:hover .entry-acts,.jbody:focus-within .entry-acts{opacity:1}
   @media (hover:none){.jbody .entry-acts{opacity:1}}
   /* a plant named in an entry, standing in for its name */
-  .ptag{display:inline-flex;align-items:center;gap:5px;vertical-align:baseline;
+  /* A tag stands in for a plant's name mid-sentence, so it has to sit on the
+     line like a word, not float above it like a button. */
+  .ptag{display:inline-flex;align-items:center;gap:4px;vertical-align:-.18em;
     border:1px solid var(--rule);background:var(--paper);border-radius:var(--r-pill);
-    padding:1px 9px 1px 2px;font:inherit;font-size:.86em;cursor:pointer;color:inherit}
-  .ptag .av{width:18px;height:18px;flex:none;overflow:hidden;border-radius:var(--r-pill)}
+    padding:0 7px 0 2px;margin:0 1px;line-height:1.35;font:inherit;font-size:.8em;
+    cursor:pointer;color:inherit;font-family:var(--ui)}
+  .ptag .av{width:15px;height:15px;flex:none;overflow:hidden;border-radius:var(--r-pill)}
   .ptag .av svg{width:100%;height:100%;display:block}
   .ptag:hover,.ptag:focus-visible{border-color:var(--leaf);background:var(--field)}
   @media (max-width:560px){
@@ -185,6 +193,24 @@
     .jbody{padding-left:0;border-left:2px solid var(--rule);padding-left:var(--s3)}
     .jmonth{padding-left:0}
     .jbody .entry-acts{opacity:1}   /* never strand the controls on a small screen */
+  }
+
+  /* ---- the variety page: text left, pictures in a narrow column ---- */
+  .wiki{display:grid;grid-template-columns:1fr 260px;gap:var(--s5)}
+  .wtext .prose{max-width:62ch}
+  .facts{display:grid;grid-template-columns:auto 1fr;gap:6px var(--s3);margin:var(--s4) 0 0;
+    font-size:13.5px;border-top:1px solid var(--rule);padding-top:var(--s3)}
+  .facts dt{color:var(--dim)}
+  .facts dd{margin:0}
+  .wpics{display:flex;flex-direction:column;gap:var(--s3)}
+  .wpics figure{margin:0}
+  .wpics img{width:100%;aspect-ratio:4/3;object-fit:cover;border-radius:var(--r-md);
+    border:1px solid var(--rule);display:block}
+  .wpics figcaption{margin-top:5px;font-size:12px;color:var(--dim)}
+  @media (max-width:760px){
+    .wiki{grid-template-columns:1fr;gap:var(--s4)}
+    .wpics{flex-direction:row}
+    .wpics figure{flex:1 1 0;min-width:0}
   }
 
   /* a sub-heading inside a section: smaller, its own rule, its own air */
@@ -767,6 +793,70 @@ const SEASON=[
  {key:'monstera',lbl:'Monstera',ph:[['grow','2026-06-29','2026-10-05']]},
  {key:'hedera',lbl:'Ivy',ph:[['grow','2026-06-29','2026-10-05']]},
 ];
+/* Basic variety facts, written from general growing knowledge rather than from
+   the seed packets, so they are a starting point to correct, not gospel.
+   `fruit` is the second photo: what the crop itself looks like. */
+const FACTS={
+ tigerella:{family:'Tomato, Solanum lycopersicum',type:'Cordon (indeterminate)',
+  sow:'March to early April indoors',sun:'Full sun, 6h+',pot:'20 L or more, one plant',
+  water:'Deep and even, daily in heat',harvest:'From ~75 days after planting out',
+  hardy:'None, dies at first frost',crop:'Red fruit with yellow stripes, 60 to 90 g'},
+ noire:{family:'Tomato, Solanum lycopersicum',type:'Cordon (indeterminate)',
+  sow:'March indoors',sun:'Full sun, 6h+',pot:'25 L or more, one plant',
+  water:'Deep and even, splits if erratic',harvest:'From ~80 days after planting out',
+  hardy:'None',crop:'Dark brown-red beefsteak, 200 to 400 g'},
+ chilli:{family:'Chilli, Capsicum annuum',type:'Bush, 50 to 70 cm',
+  sow:'February to March indoors, needs warmth',sun:'Full sun, the hotter the better',
+  pot:'7 to 10 L',water:'Little and often, hates wet feet',
+  harvest:'Green from ~70 days, red ~2 weeks later',hardy:'None, indoors below 10°C',
+  crop:'Long mild frying pepper, green turning red'},
+ maurin:{family:'Raspberry, Rubus idaeus',type:'Summer-fruiting cane',
+  sow:'Planted as a cane, autumn or spring',sun:'Sun to light shade',pot:'20 L or more',
+  water:'Steady while fruiting',harvest:'July to August on last year\'s canes',
+  hardy:'Very, overwinters outdoors in Finland',crop:'Sweet red berries'},
+ parsley:{family:'Parsley, Petroselinum crispum',type:'Biennial, grown as annual',
+  sow:'April, slow, up to 4 weeks to germinate',sun:'Sun to part shade',pot:'5 L, or a bed',
+  water:'Evenly moist, bolts if dry',harvest:'Cut outer leaves from ~10 weeks',
+  hardy:'Survives light frost',crop:'Curly leaf'},
+ chives:{family:'Chives, Allium schoenoprasum',type:'Perennial clump',
+  sow:'Spring, or divide an existing clump',sun:'Sun to part shade',pot:'3 L+',
+  water:'Moderate',harvest:'Cut to 5 cm any time, regrows',
+  hardy:'Fully, returns each spring',crop:'Hollow leaves, edible purple flowers'},
+ springonion:{family:'Spring onion, Allium fistulosum',type:'Annual, sown in succession',
+  sow:'April to July, every few weeks',sun:'Full sun',pot:'Shallow, 15 cm deep',
+  water:'Little and often, shallow roots',harvest:'From ~8 weeks, pull as needed',
+  hardy:'Light frost',crop:'Slim white stems'},
+ garlic:{family:'Garlic, Allium sativum',type:'Overwintering bulb',
+  sow:'October, cloves pointed end up',sun:'Full sun',pot:'Deep, 20 cm+',
+  water:'Sparse, stop once leaves yellow',harvest:'July to August, when the tops die back',
+  hardy:'Fully, the cold is what makes it bulb',crop:'Bulb of 8 to 12 cloves'},
+ basilmint:{family:'Basil, Ocimum basilicum. Mint, Mentha',type:'Basil annual, mint perennial',
+  sow:'Basil from May indoors, mint from a plant',sun:'Basil full sun, mint happy in shade',
+  pot:'Basil 3 L, mint alone or it takes over',water:'Basil moderate, mint thirsty',
+  harvest:'Pinch basil tops weekly, mint outer stems',
+  hardy:'Basil none, mint fully',crop:'Leaves'},
+ monstera:{family:'Monstera deliciosa',type:'Climbing houseplant',
+  sow:'From a cutting with a node',sun:'Bright indirect, never direct',pot:'Up one size every 2 years',
+  water:'When the top half dries, less in winter',harvest:'Grown for foliage',
+  hardy:'None, indoors above 15°C',crop:'Split leaves once mature'},
+ hedera:{family:'Ivy, Hedera helix',type:'Evergreen climber or trailer',
+  sow:'From a cutting, roots easily',sun:'Shade to part sun',pot:'Any, tolerant',
+  water:'Moderate, drains freely',harvest:'Grown for foliage',
+  hardy:'Fully, to about -10°C',crop:'Evergreen leaves'},
+};
+const FACT_LABEL={family:'Family',type:'Type',sow:'Sowing',sun:'Light',pot:'Pot',
+  water:'Water',harvest:'Harvest',hardy:'Frost',crop:'Crop'};
+
+/* A second photo for anything grown for a crop, so the page shows both the
+   plant and the thing you are waiting for. Every URL here was checked. */
+const FRUIT={
+ tigerella:['https://upload.wikimedia.org/wikipedia/commons/thumb/d/d5/Tigerella_%28tomato%29.jpg/1280px-Tigerella_%28tomato%29.jpg','On the plant'],
+ noire:['https://upload.wikimedia.org/wikipedia/commons/thumb/b/b0/Black_krim_tomato_cut_open.jpg/1280px-Black_krim_tomato_cut_open.jpg','The fruit, cut'],
+ chilli:['https://upload.wikimedia.org/wikipedia/commons/thumb/7/79/Chilli_plant_in_a_pot_20.jpg/1280px-Chilli_plant_in_a_pot_20.jpg','A plant in a pot'],
+ maurin:['https://upload.wikimedia.org/wikipedia/commons/thumb/2/2b/Raspberries_%28Rubus_idaeus%29.jpg/1280px-Raspberries_%28Rubus_idaeus%29.jpg','The berries'],
+ garlic:['https://upload.wikimedia.org/wikipedia/commons/thumb/6/61/Garlic_Bulbs_%28Unsplash%29.jpg/1280px-Garlic_Bulbs_%28Unsplash%29.jpg','Cured bulbs'],
+};
+
 const PROFILE={
  basilmint:{t:'Basil “Italiano Classico” & Mint',src:'Biltema seeds · mint as plant',ids:['basil-mint'],
    body:['Classic Genovese basil. Pinch above a leaf pair weekly, bushy, no flowers. Hates cold: sulks under 12°C nights.',
@@ -1154,8 +1244,7 @@ function dockHTML(){
     <div class="box">
       <div class="top"><span>New note · ${shortDate(todayISO())}</span>
         ${p?`<span class="tag">${avatarFor(p.id)} ${esc(shortName(p.name))}</span>`:''}
-        <button class="fold" data-act="fold" aria-expanded="${!V.dockMin}"
-          aria-label="${V.dockMin?'Open the note box':'Collapse the note box'}">${V.dockMin?'▲':'▼'}</button>
+
       </div>
       <div class="in">
         <label class="vhid" for="ctext">New note</label>
@@ -1166,7 +1255,7 @@ function dockHTML(){
           <button class="rm" data-act="unstage" data-val="${i}" aria-label="Remove photo">×</button>
         </div>`).join('')}</div>`:''}
         <div class="acts">
-          <button data-act="attach" aria-label="Add a photo">📷</button>
+          <button class="photobtn" data-act="attach">📷 Add a photo</button>
           <span class="sp"></span>
           ${p?`<label class="wchk"><input type="checkbox" data-act="watered-chk"
             ${staged.watered?'checked':''}> watered today</label>`:''}
@@ -1184,7 +1273,9 @@ const upcomingFor=id=>((careDoc&&careDoc.plants&&careDoc.plants[id])||{}).upcomi
 function refreshWindow(){
   const list=plants();
   WIN=chartWindow({
-    spans:list.map(p=>(SEASON.find(r=>r.key===KEY_BY_ID[p.id])||{}).ph||[]),
+    spans:list.map(p=>seasonSpans((SEASON.find(r=>r.key===KEY_BY_ID[p.id])||{}).ph||[],
+      (statusDoc.plants[p.id]||{}).history||[],upcomingFor(p.id),null,
+      {stage:p.stage,date:todayISO()})),
     histories:list.map(p=>(statusDoc.plants[p.id]||{}).history||[]),
     upcomings:list.map(p=>upcomingFor(p.id)),
     today:todayISO(),monthsAhead:3});
@@ -1217,7 +1308,7 @@ function monthScaleHTML(){
 function seasonBarHTML(p){
   const row=SEASON.find(r=>r.key===KEY_BY_ID[p.id]);
   const spans=seasonSpans(row?row.ph:[],(statusDoc.plants[p.id]||{}).history||[],
-    upcomingFor(p.id),WIN.end);
+    upcomingFor(p.id),WIN.end,{stage:p.stage,date:todayISO()});
   const T=todayISO(),t=wpos(T);
   const piece=(c,f,to,future)=>{
     const l=wpos(f),w=wpos(to)-l;
@@ -1247,15 +1338,14 @@ function plantRowHTML(p){
       </button>
       <div class="chart">${monthScaleHTML()}${seasonBarHTML(p)}</div>
     </div>
-    <div class="wline">
-      <span class="water">${esc(waterLabel(p.last,todayISO()))}</span>
-      <button class="drop" data-act="water" data-val="${esc(p.id)}"
-        aria-label="Mark ${esc(p.name)} watered today" title="Mark watered today">💧</button>
-    </div>
     <p class="status"><b class="lbl">Status</b><span>${
       status?esc(status):'No reading yet.'}</span></p>
     <p class="guide"><b class="lbl">Care</b><span>${care&&care.guidance?esc(care.guidance)
       :'No guidance yet. Add a note, or wait for tonight\'s update.'}</span></p>
+    <div class="wline">
+      <button class="waterbtn" data-act="water" data-val="${esc(p.id)}">💧 Water now</button>
+      <span class="water">${esc(waterLabel(p.last,todayISO()))}</span>
+    </div>
   </article>`;
 }
 
@@ -1265,7 +1355,9 @@ function plantRowHTML(p){
    tinted with the phase the plant was in, so the season reads down the page. */
 function phaseAt(pid,date){
   const row=SEASON.find(r=>r.key===KEY_BY_ID[pid]);
-  const spans=seasonSpans(row?row.ph:[],(statusDoc.plants[pid]||{}).history||[],upcomingFor(pid),WIN.end);
+  const st=statusDoc.plants[pid]||{};
+  const spans=seasonSpans(row?row.ph:[],st.history||[],upcomingFor(pid),WIN.end,
+    {stage:st.stage,date:todayISO()});
   const hit=spans.find(([,f,t])=>date>=f&&date<=t);
   return hit?hit[0]:'';
 }
@@ -1410,25 +1502,35 @@ function plantHTML(p){
         <span class="meta">${p.area==='indoor'?'Indoor':'Balcony'} · ${esc(p.stage)}</span></div>
       <div class="prow solo">
         <div class="phead"><div class="chart">${monthScaleHTML()}${seasonBarHTML(p)}</div></div>
-        <div class="wline">
-          <span class="water">${esc(waterLabel(p.last,todayISO()))}</span>
-          <button class="drop" data-act="water" data-val="${esc(p.id)}"
-            aria-label="Mark watered today" title="Mark watered today">💧</button>
-        </div>
         <p class="status"><b class="lbl">Status</b><span>${
           p.observations?esc(p.observations):'No reading yet.'}</span></p>
         <p class="guide"><b class="lbl">Care</b><span>${care&&care.guidance?esc(care.guidance)
           :'No guidance yet. Add a note, or wait for tonight\'s update.'}</span></p>
+        <div class="wline">
+          <button class="waterbtn" data-act="water" data-val="${esc(p.id)}">💧 Water now</button>
+          <span class="water">${esc(waterLabel(p.last,todayISO()))}</span>
+        </div>
       </div>
     </section>
 
     <section class="sect">${plantJournalHTML(p)}</section>
 
     <section class="sect">
-      <div class="hd"><h2>Care guide</h2><span class="meta">${esc(pr.src||'')}</span></div>
-      ${(pr.body||[]).map(b=>`<p class="prose">${esc(b)}</p>`).join('')}
-      ${REAL[key]?`<figure class="ref"><img src="${REAL[key][0]}" alt="${esc(REAL[key][1])}" loading="lazy"
-        onerror="this.parentElement.style.display='none'"><figcaption>${esc(REAL[key][1])}</figcaption></figure>`:''}
+      <div class="hd"><h2>About this variety</h2><span class="meta">${esc(pr.src||'')}</span></div>
+      <div class="wiki">
+        <div class="wtext">
+          ${(pr.body||[]).map(b=>`<p class="prose">${esc(b)}</p>`).join('')}
+          ${FACTS[key]?`<dl class="facts">${Object.entries(FACT_LABEL)
+            .filter(([k])=>FACTS[key][k])
+            .map(([k,l])=>`<dt>${esc(l)}</dt><dd>${esc(FACTS[key][k])}</dd>`).join('')}</dl>`:''}
+        </div>
+        <div class="wpics">
+          ${REAL[key]?`<figure><img src="${REAL[key][0]}" alt="${esc(REAL[key][1])}" loading="lazy"
+            onerror="this.parentElement.style.display='none'"><figcaption>${esc(REAL[key][1].split(' · ')[0])}</figcaption></figure>`:''}
+          ${FRUIT[key]?`<figure><img src="${FRUIT[key][0]}" alt="${esc(FRUIT[key][1])}" loading="lazy"
+            onerror="this.parentElement.style.display='none'"><figcaption>${esc(FRUIT[key][1])}</figcaption></figure>`:''}
+        </div>
+      </div>
     </section>`;
 }
 function editBoxHTML(kind,id,plantId,text){
