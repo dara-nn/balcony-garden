@@ -167,3 +167,73 @@ export function photosInView(photos, plantIds, allPlants) {
   const ids = new Set(plantIds || []);
   return (photos || []).filter((p) => (p.plant ? ids.has(p.plant) : !!allPlants));
 }
+
+/* The garden journal shows what was actually written, with every plant the
+   distiller recognised turned into a tag in place of its name. One phrase can
+   name several plants ("all raspberry"), so a span carries a list. A mention
+   the text does not contain is dropped: better no tag than a tag on the wrong
+   words. */
+export function tagEntryText(text, mentions) {
+  if (!text) return [];
+  const byPhrase = new Map();
+  for (const m of mentions || []) {
+    if (!m || !m.mention || !m.plantId) continue;
+    const key = m.mention.toLowerCase();
+    if (!byPhrase.has(key)) byPhrase.set(key, { phrase: m.mention, plants: [] });
+    byPhrase.get(key).plants.push({ plantId: m.plantId, label: m.label });
+  }
+  // Longest phrase first, so "chilli seedlings" is not eaten by "chilli".
+  const phrases = [...byPhrase.values()].sort((a, b) => b.phrase.length - a.phrase.length);
+
+  const hay = text.toLowerCase();
+  const hits = [];
+  const taken = (from, to) => hits.some((h) => from < h.to && to > h.from);
+  for (const p of phrases) {
+    const needle = p.phrase.toLowerCase();
+    let i = hay.indexOf(needle);
+    while (i !== -1) {
+      if (!taken(i, i + needle.length)) hits.push({ from: i, to: i + needle.length, plants: p.plants });
+      i = hay.indexOf(needle, i + needle.length);
+    }
+  }
+  hits.sort((a, b) => a.from - b.from);
+
+  const out = [];
+  let at = 0;
+  for (const h of hits) {
+    if (h.from > at) out.push({ type: 'text', text: text.slice(at, h.from) });
+    out.push({ type: 'tags', plants: h.plants });
+    at = h.to;
+  }
+  if (at < text.length) out.push({ type: 'text', text: text.slice(at) });
+  return out;
+}
+
+const MONTH_FULL = ['January', 'February', 'March', 'April', 'May', 'June',
+  'July', 'August', 'September', 'October', 'November', 'December'];
+
+/* In a garden journal the silences are information: nothing written for two
+   months is itself a record of the season going quiet. */
+function gapLabel(laterISO, earlierISO) {
+  const days = Math.round((Date.parse(laterISO + 'T00:00:00Z') - Date.parse(earlierISO + 'T00:00:00Z')) / 86400000);
+  if (!Number.isFinite(days) || days < 21) return null;
+  if (days < 60) return `${Math.round(days / 7)} weeks earlier`;
+  const months = Math.round(days / 30);
+  return `${months} month${months === 1 ? '' : 's'} earlier`;
+}
+
+/* The journal reads newest first, broken by month, with the quiet stretches
+   called out between entries. */
+export function journalGroups(entries) {
+  const sorted = [...(entries || [])].filter((e) => e && e.date)
+    .sort((a, b) => b.date.localeCompare(a.date));
+  const groups = [];
+  sorted.forEach((e, i) => {
+    const next = sorted[i + 1];
+    const d = new Date(e.date + 'T00:00:00Z');
+    const label = `${MONTH_FULL[d.getUTCMonth()]} ${d.getUTCFullYear()}`;
+    if (!groups.length || groups[groups.length - 1].label !== label) groups.push({ label, entries: [] });
+    groups[groups.length - 1].entries.push({ ...e, gapAfter: next ? gapLabel(e.date, next.date) : null });
+  });
+  return groups;
+}

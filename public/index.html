@@ -139,6 +139,54 @@
     .status,.guide{grid-template-columns:48px 1fr;gap:6px}
   }
 
+  /* ---- the journal ----
+     A spine down the left carries the season: each entry's dot takes the colour
+     of the phase the plant was in that day, the same colours as the charts. */
+  .jmonth{font-size:12.5px;letter-spacing:.02em;color:var(--dim);
+    margin:var(--s4) 0 var(--s2);padding-left:calc(var(--jrail) + var(--s3))}
+  .jmonth:first-of-type{margin-top:var(--s2)}
+  .jlist{--jrail:88px;list-style:none;margin:0;padding:0}
+  .sect{--jrail:88px}
+  .jent{position:relative;display:grid;grid-template-columns:var(--jrail) 1fr;
+    gap:var(--s3);padding:0 0 var(--s4)}
+  .jent::before{content:"";position:absolute;left:calc(var(--jrail) + 5px);top:.75em;bottom:0;
+    width:2px;background:var(--rule)}
+  .jent:last-child::before{bottom:auto;height:calc(100% - 1.4em)}
+  .jent::after{content:"";position:absolute;left:var(--jrail);top:calc(.75em - 5px);
+    width:12px;height:12px;border-radius:50%;background:var(--dim);
+    box-shadow:0 0 0 3px var(--field)}
+  .jent.ph-grow::after{background:var(--ph-grow)}
+  .jent.ph-flower::after{background:var(--ph-flower)}
+  .jent.ph-fruit::after{background:var(--ph-fruit)}
+  .jent.ph-harvest::after{background:var(--ph-harvest)}
+  .jdate{text-align:right;font-size:12.5px;color:var(--dim);padding-top:.15em;white-space:nowrap}
+  .jbody{padding-left:var(--s3);min-width:0}
+  .jbody .prose{margin:0;max-width:60ch}
+  .aside{margin:4px 0 0;font-size:13px;color:var(--dim);font-style:italic;max-width:60ch}
+  .jgap{margin:var(--s3) 0 0;font-size:12px;color:var(--dim)}
+  .jgap::before{content:"";display:inline-block;width:18px;height:1px;
+    background:var(--rule);vertical-align:middle;margin-right:7px}
+  /* controls stay out of the way until you reach for them */
+  .jbody .entry-acts{opacity:0;transition:opacity .12s;margin-top:4px}
+  .jent:hover .entry-acts,.jbody:focus-within .entry-acts{opacity:1}
+  @media (hover:none){.jbody .entry-acts{opacity:1}}
+  /* a plant named in an entry, standing in for its name */
+  .ptag{display:inline-flex;align-items:center;gap:5px;vertical-align:baseline;
+    border:1px solid var(--rule);background:var(--paper);border-radius:var(--r-pill);
+    padding:1px 9px 1px 2px;font:inherit;font-size:.86em;cursor:pointer;color:inherit}
+  .ptag .av{width:18px;height:18px;flex:none;overflow:hidden;border-radius:var(--r-pill)}
+  .ptag .av svg{width:100%;height:100%;display:block}
+  .ptag:hover,.ptag:focus-visible{border-color:var(--leaf);background:var(--field)}
+  @media (max-width:560px){
+    .jlist,.sect{--jrail:0px}
+    .jent{grid-template-columns:1fr;gap:2px}
+    .jent::before,.jent::after{display:none}
+    .jdate{text-align:left}
+    .jbody{padding-left:0;border-left:2px solid var(--rule);padding-left:var(--s3)}
+    .jmonth{padding-left:0}
+    .jbody .entry-acts{opacity:1}   /* never strand the controls on a small screen */
+  }
+
   /* a sub-heading inside a section: smaller, its own rule, its own air */
   .sub{display:flex;align-items:baseline;gap:var(--s2);margin:var(--s5) 0 var(--s2);font-size:15px;
     font-weight:600;color:var(--ink);padding-bottom:6px;border-bottom:1px solid var(--rule)}
@@ -498,7 +546,7 @@ stored on this device only, so it is asked once.</p>
 <script src="garden-data.js"></script>
 <script type="module">
 import { weatherAlerts, normalizeHealth } from './care-rules.js';
-import { groupByArea, waterLabel, historyStream, seasonSpans, photosInView, chartWindow, monthTicks } from './garden-view.js';
+import { groupByArea, waterLabel, seasonSpans, chartWindow, monthTicks, tagEntryText, journalGroups } from './garden-view.js';
 
 /* ================= basics ================= */
 const $=s=>document.querySelector(s);
@@ -1211,38 +1259,91 @@ function plantRowHTML(p){
   </article>`;
 }
 
-/* Notes and photos, one record, newest first.
-   An entry the distiller could not place belongs to no plant, so it is carried
-   on the all-plants stream under "Unsorted" rather than disappearing. */
-function historyHTML(list,allPlants){
-  const ids=list.map(p=>p.id);
-  const notes=list.flatMap(p=>shown(p.notes).map(n=>({...n,plantId:p.id})));
-  const loose=allPlants?shown(entriesDoc.entries)
-    .filter(e=>!(e.assigned||[]).length)
-    .map(e=>({id:e.id,date:e.date,text:e.text,plantId:null,entry:true,pending:e.status==='pending'})):[];
-  const stream=historyStream([...notes,...loose],photosInView(shown(PHOTOS),ids,allPlants));
-  const nameOf=id=>id?((list.find(p=>p.id===id)||{}).name||'Unsorted'):'Unsorted';
-  const noteHTML=n=>editing&&editing.kind===(n.entry?'entry':'note')&&editing.id===n.id
-    ? editBoxHTML(n.entry?'entry':'note',n.id,n.plantId,n.text)
-    : `<p class="prose">${esc(n.text)}${n.ai?' ✨':''}${n.pending?' <em class="dimmed">reading...</em>':''}</p>
-       <div class="entry-acts">
-         <button class="lnk" data-act="${n.entry?'entry-edit':'note-edit'}" data-val="${esc(n.id)}"
-           data-plant="${esc(n.plantId||'')}">Edit</button>
-         <button class="lnk" data-act="${n.entry?'entry-del':'note-del'}"
-           data-val="${esc(n.entry?n.id:n.plantId)}" data-note="${esc(n.id)}">Delete</button>
-         ${n.entry?`<button class="lnk" data-act="assign-pick" data-val="${esc(n.id)}">Assign to a plant</button>`:''}
-       </div>`;
-  return `<div class="sub"><span>History</span><span class="n">${stream.length}</span></div>
-    ${stream.length?stream.map(e=>`<div class="hrow">
-      <div class="data">${dayLabel(e.date)} · ${esc(nameOf(e.plantId))}</div>
-      ${e.notes.map(noteHTML).join('')}
-      ${e.photoIds.length?`<div class="shots">${e.photoIds.map(id=>
-        `<button data-act="view" data-val="${esc(id)}"><img src="${photoURL(id)}" alt="" loading="lazy"></button>`
-      ).join('')}</div>`:''}
-    </div>`).join('')
-    :'<div class="none">Nothing recorded yet.</div>'}`;
+/* The journal. On the garden page it is what was actually written, once per
+   entry, with every plant the distiller recognised turned into a tag. On a
+   plant page it is that plant's own record. Either way it hangs off a spine
+   tinted with the phase the plant was in, so the season reads down the page. */
+function phaseAt(pid,date){
+  const row=SEASON.find(r=>r.key===KEY_BY_ID[pid]);
+  const spans=seasonSpans(row?row.ph:[],(statusDoc.plants[pid]||{}).history||[],upcomingFor(pid),WIN.end);
+  const hit=spans.find(([,f,t])=>date>=f&&date<=t);
+  return hit?hit[0]:'';
 }
 
+function tagsHTML(plants){
+  return plants.map(t=>`<button class="ptag" data-act="plant" data-val="${esc(t.plantId)}"
+    title="Open ${esc(t.label)}"><span class="av">${avatarFor(t.plantId)}</span>${esc(t.label)}</button>`).join(' ');
+}
+
+function entryBodyHTML(e){
+  const mentions=(e.assigned||[]).filter(a=>a.mention).map(a=>({
+    plantId:a.plantId,mention:a.mention,label:shortName((plantById(a.plantId)||{}).name||a.plantId)}));
+  const segs=tagEntryText(e.text,mentions);
+  return segs.map(sg=>sg.type==='tags'?tagsHTML(sg.plants):esc(sg.text)).join('');
+}
+
+function shotsHTML(ids){
+  if(!ids.length)return '';
+  return `<div class="shots">${ids.map(id=>
+    `<button data-act="view" data-val="${esc(id)}"><img src="${photoURL(id)}" alt="" loading="lazy"></button>`
+  ).join('')}</div>`;
+}
+
+function journalItemHTML(it){
+  const editing_=editing&&editing.kind===it.kind&&editing.id===it.id;
+  return `<li class="jent ${it.phase?'ph-'+it.phase:''}">
+    <div class="jdate">${dayLabel(it.date)}</div>
+    <div class="jbody">
+      ${editing_?editBoxHTML(it.kind,it.id,it.plantId,it.raw)
+        :`<p class="prose">${it.html}</p>
+          ${it.aside?`<p class="aside">${esc(it.aside)}</p>`:''}
+          ${shotsHTML(it.photoIds||[])}
+          <div class="entry-acts">
+            <button class="lnk" data-act="${it.kind}-edit" data-val="${esc(it.id)}"
+              data-plant="${esc(it.plantId||'')}">Edit</button>
+            <button class="lnk" data-act="${it.kind}-del"
+              data-val="${esc(it.kind==='entry'?it.id:it.plantId)}" data-note="${esc(it.id)}">Delete</button>
+          </div>`}
+      ${it.gapAfter?`<div class="jgap">${esc(it.gapAfter)}</div>`:''}
+    </div></li>`;
+}
+
+function journalHTML(items,count){
+  const groups=journalGroups(items);
+  return `<div class="hd"><h2>Journal</h2><span class="meta">${count}</span></div>
+    ${groups.length?groups.map(g=>`<div class="jmonth">${esc(g.label)}</div>
+      <ol class="jlist">${g.entries.map(journalItemHTML).join('')}</ol>`).join('')
+      :'<div class="none">Nothing written yet. The box at the top is where it starts.</div>'}`;
+}
+
+/* The garden journal: the entries as written. */
+function gardenJournalHTML(){
+  const items=shown(entriesDoc.entries).map(e=>({
+    kind:'entry',id:e.id,date:e.date,raw:e.text,html:entryBodyHTML(e),
+    photoIds:(e.photoIds||[]).filter(id=>shown(PHOTOS).some(x=>x.id===id)),
+    phase:(e.assigned||[])[0]?phaseAt(e.assigned[0].plantId,e.date):'',
+    aside:e.status==='unsorted'?'No plant recognised yet.':'',
+  }));
+  const loose=shown(PHOTOS).filter(p=>!items.some(i=>(i.photoIds||[]).includes(p.id)));
+  for(const p of loose)items.push({kind:'photo',id:p.id,date:p.date,html:'',photoIds:[p.id],phase:''});
+  return journalHTML(items,`${items.length} entries`);
+}
+
+/* A plant's journal: what the model filed under it, and its photos. */
+function plantJournalHTML(p){
+  const notes=shown(p.notes).map(n=>({
+    kind:'note',id:n.id,plantId:p.id,date:n.date,raw:n.text,html:esc(n.text),
+    aside:n.quote?`from your note: “${n.quote}”`:'',
+    phase:phaseAt(p.id,n.date),photoIds:[]}));
+  const byDate={};
+  for(const x of shown(PHOTOS).filter(x=>x.plant===p.id)){(byDate[x.date]=byDate[x.date]||[]).push(x.id);}
+  for(const [date,ids] of Object.entries(byDate)){
+    const hit=notes.find(n=>n.date===date);
+    if(hit)hit.photoIds=ids;
+    else notes.push({kind:'photo',id:ids[0],plantId:p.id,date,html:'',photoIds:ids,phase:phaseAt(p.id,date)});
+  }
+  return journalHTML(notes,`${notes.length} entries`);
+}
 
 /* ---- tasks and weather ---- */
 function wxHTML(date){
@@ -1296,7 +1397,7 @@ function allPlantsHTML(){
       ${g.area==='balcony'?wxHTML(T):''}
       ${g.plants.map(plantRowHTML).join('')}
     </section>`).join('')}
-    <section class="sect">${historyHTML(all,true)}</section>`;
+    <section class="sect">${gardenJournalHTML()}</section>`;
 }
 
 /* ---- one plant, in full ---- */
@@ -1321,7 +1422,7 @@ function plantHTML(p){
       </div>
     </section>
 
-    <section class="sect">${historyHTML([p],false)}</section>
+    <section class="sect">${plantJournalHTML(p)}</section>
 
     <section class="sect">
       <div class="hd"><h2>Care guide</h2><span class="meta">${esc(pr.src||'')}</span></div>

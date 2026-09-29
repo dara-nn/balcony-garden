@@ -12,9 +12,10 @@ const ASSIGNMENT_SCHEMA = {
     plantId: { type: 'string' },
     text: { type: 'string' },
     quote: { type: 'string' },
+    mention: { type: 'string' },
     watered: { type: 'boolean' },
   },
-  required: ['plantId', 'text', 'quote', 'watered'],
+  required: ['plantId', 'text', 'quote', 'mention', 'watered'],
 };
 const PHOTO_SCHEMA = {
   type: 'object',
@@ -48,11 +49,16 @@ export function buildDistillBody(entry, roster, photos) {
         'write a short observation in the same language the gardener used. Rewrite it as a ' +
         'log entry about that plant: drop the plant name (the note is already filed under it), ' +
         'drop "I", and keep only what happened to the plant. Never return the entry verbatim. ' +
-        'Example — entry "tigerella snapped today, I put a new support and tape it back on" ' +
+        'Example, entry "tigerella snapped today, I put a new support and tape it back on" ' +
         'becomes "Main stem snapped. Re-staked and taped." ' +
         'Also give "quote": the exact words from the entry that this plant\'s observation ' +
         'came from, copied verbatim and nothing more. If the entry says something about ' +
         'every plant ("watered everything"), quote just that part. ' +
+        'Also give "mention": the exact words in the entry that name this plant, copied ' +
+        'character for character from the entry and nothing more, so they can be found in it. ' +
+        'They are shown as a tag in place of the name. When one phrase names several plants ' +
+        '("all raspberry", "the chillies", "everything"), give every one of those plants that ' +
+        'same phrase. If the entry never names the plant, return an empty string. ' +
         'Set watered=true only when the entry says that plant was watered. ' +
         'A note about "everything" or "all of them" concerns every plant listed. ' +
         'For each supplied photo, say which plant it shows using its index; omit a photo ' +
@@ -90,7 +96,7 @@ export function mergeDistill(statusDoc, entriesDoc, entry, result, now, photoIds
         ...(a.watered ? { lastWatered: entry.date } : {}),
         updatedAt: now,
       };
-      assigned.push({ plantId: a.plantId, noteId });
+      assigned.push({ plantId: a.plantId, noteId, ...(a.mention ? { mention: a.mention } : {}) });
     });
   }
 
@@ -122,7 +128,7 @@ async function tagPhoto(env, photoId, plantId) {
   await env.PHOTOS.put('photo:' + photoId, cur.value, { metadata: { ...(cur.metadata || {}), plant: plantId } });
 }
 
-/* Runs in ctx.waitUntil after the entry is already saved — it must never throw. */
+/* Runs in ctx.waitUntil after the entry is already saved, so it must never throw. */
 export async function distill(env, entryId, roster) {
   try {
     const entriesDoc = await readEntries(env);

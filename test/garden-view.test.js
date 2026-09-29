@@ -1,6 +1,6 @@
 import { test } from 'node:test';
 import assert from 'node:assert/strict';
-import { groupByArea, daysSince, waterLabel, historyStream, phaseOfStage, seasonSpans, photosInView, chartWindow, monthTicks } from '../public/garden-view.js';
+import { groupByArea, daysSince, waterLabel, historyStream, phaseOfStage, seasonSpans, photosInView, chartWindow, monthTicks, tagEntryText, journalGroups } from '../public/garden-view.js';
 
 const p = (id, area) => ({ id, name: id, area });
 
@@ -287,4 +287,113 @@ test('a span still ends where the next one begins', () => {
   const out = seasonSpans(DEF, [{ date: '2026-08-20', stage: 'flowering' }], [], '2026-12-29');
   assert.equal(out[0][2], out[1][1]);
   assert.equal(out[1][2], out[2][1]);
+});
+
+/* ---- plant mentions become tags ---- */
+
+const M = (plantId, label, mention) => ({ plantId, label, mention });
+
+test('a plant mentioned by name becomes a tag', () => {
+  const out = tagEntryText('Tigerella snapped today.', [M('tomato-1', 'Tigerella', 'Tigerella')]);
+  assert.deepEqual(out, [
+    { type: 'tags', plants: [{ plantId: 'tomato-1', label: 'Tigerella' }] },
+    { type: 'text', text: ' snapped today.' },
+  ]);
+});
+
+test('one phrase covering several plants becomes several tags in its place', () => {
+  const out = tagEntryText('spider mite on all raspberry', [
+    M('rasp-takala-1', 'Takalan Herkku 1', 'all raspberry'),
+    M('rasp-takala-2', 'Takalan Herkku 2', 'all raspberry'),
+    M('rasp-maurin', 'Maurin Makea', 'all raspberry'),
+  ]);
+  assert.deepEqual(out, [
+    { type: 'text', text: 'spider mite on ' },
+    { type: 'tags', plants: [
+      { plantId: 'rasp-takala-1', label: 'Takalan Herkku 1' },
+      { plantId: 'rasp-takala-2', label: 'Takalan Herkku 2' },
+      { plantId: 'rasp-maurin', label: 'Maurin Makea' },
+    ] },
+  ]);
+});
+
+test('the whole example entry', () => {
+  const out = tagEntryText('Tigerella snapped today. I have spider mite on all raspberry', [
+    M('tomato-1', 'Tigerella', 'Tigerella'),
+    M('rasp-takala-1', 'Takalan Herkku 1', 'all raspberry'),
+    M('rasp-maurin', 'Maurin Makea', 'all raspberry'),
+  ]);
+  assert.deepEqual(out.map((s) => s.type), ['tags', 'text', 'tags']);
+  assert.equal(out[1].text, ' snapped today. I have spider mite on ');
+  assert.deepEqual(out[2].plants.map((p) => p.plantId), ['rasp-takala-1', 'rasp-maurin']);
+});
+
+test('matching ignores case', () => {
+  const out = tagEntryText('the tigerella is fine', [M('tomato-1', 'Tigerella', 'Tigerella')]);
+  assert.deepEqual(out.map((s) => s.type), ['text', 'tags', 'text']);
+  assert.equal(out[0].text, 'the ');
+});
+
+test('a mention that is not in the text is dropped rather than guessed at', () => {
+  const out = tagEntryText('everything looks fine', [M('tomato-1', 'Tigerella', 'Tigerella')]);
+  assert.deepEqual(out, [{ type: 'text', text: 'everything looks fine' }]);
+});
+
+test('the longer phrase wins when two mentions overlap', () => {
+  const out = tagEntryText('the chilli seedlings are cold', [
+    M('chilli-1', 'Lombardo 1', 'chilli'),
+    M('chilli-2', 'Lombardo 2', 'chilli seedlings'),
+  ]);
+  assert.deepEqual(out.map((s) => s.type), ['text', 'tags', 'text']);
+  assert.deepEqual(out[1].plants.map((p) => p.plantId), ['chilli-2']);
+  assert.equal(out[2].text, ' are cold');
+});
+
+test('the same plant named twice is tagged twice', () => {
+  const out = tagEntryText('Tigerella is fine, Tigerella is tall', [M('tomato-1', 'Tigerella', 'Tigerella')]);
+  assert.equal(out.filter((s) => s.type === 'tags').length, 2);
+});
+
+test('no mentions leaves the text whole', () => {
+  assert.deepEqual(tagEntryText('just a thought', []), [{ type: 'text', text: 'just a thought' }]);
+  assert.deepEqual(tagEntryText('just a thought'), [{ type: 'text', text: 'just a thought' }]);
+});
+
+test('an empty entry yields nothing to render', () => {
+  assert.deepEqual(tagEntryText('', [M('a', 'A', 'A')]), []);
+});
+
+/* ---- journal grouping ---- */
+
+test('entries group under their month, newest month first', () => {
+  const out = journalGroups([{ date: '2026-08-11' }, { date: '2026-07-27' }, { date: '2026-08-02' }]);
+  assert.deepEqual(out.map((g) => g.label), ['August 2026', 'July 2026']);
+  assert.deepEqual(out[0].entries.map((e) => e.date), ['2026-08-11', '2026-08-02']);
+});
+
+test('a long silence between entries is marked', () => {
+  const out = journalGroups([{ date: '2026-09-29' }, { date: '2026-07-27' }]);   // 64 days
+  const all = out.flatMap((g) => g.entries);
+  assert.equal(all[0].gapAfter, '2 months earlier');
+  assert.equal(all[1].gapAfter, null);   // nothing before it to be silent about
+});
+
+test('a gap of a few weeks reads in weeks', () => {
+  const out = journalGroups([{ date: '2026-09-29' }, { date: '2026-09-01' }]);   // 28 days
+  assert.equal(out[0].entries[0].gapAfter, '4 weeks earlier');
+});
+
+test('entries close together are not marked', () => {
+  const out = journalGroups([{ date: '2026-08-11' }, { date: '2026-08-02' }]);
+  assert.equal(out[0].entries[0].gapAfter, null);
+});
+
+test('a gap of a couple of months reads in months', () => {
+  const out = journalGroups([{ date: '2026-09-29' }, { date: '2026-06-01' }]);
+  assert.equal(out[0].entries[0].gapAfter, '4 months earlier');
+});
+
+test('an empty journal has no groups', () => {
+  assert.deepEqual(journalGroups([]), []);
+  assert.deepEqual(journalGroups(), []);
 });
