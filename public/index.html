@@ -33,7 +33,13 @@
   :root{
     --paper:#EFF2EA; --field:#FFFFFF; --ink:#17211B; --dim:#6C7A70; --rule:#E1E7DA;
     --pine:#1E4D3B; --leaf:#3E7D5C; --tomato:#C4462C; --water:#2F6E8F; --pollen:#B0810F;
-    --ph-grow:#9BC7AA; --ph-flower:#DDA0B4; --ph-fruit:#E79A4E; --ph-harvest:#CC5438;
+    /* The season phases, seedling first. Mid tones, so the bar reads as a
+       calm timeline rather than a heavy stripe, and a step apart in hue and
+       lightness so two phases that touch are still two. Seedling is the
+       palest, a sand that sits before the greens. Expected is a pale tint of
+       the same hue, mixed in the bar rules below. */
+    --ph-seed:#D9D2A6; --ph-grow:#92C6A4; --ph-flower:#E394AC; --ph-fruit:#EDA55E; --ph-harvest:#DB7054;
+    --ph-tint:42%;
     --ui:"Avenir Next","Avenir","Segoe UI",system-ui,sans-serif;
     --prose:"Charter","Iowan Old Style","Georgia",serif;
     --display:"Young Serif","Charter","Iowan Old Style","Georgia",serif;
@@ -58,6 +64,7 @@
     :root:not([data-theme="light"]){
       --paper:#0F140F; --field:#19201A; --ink:#E7EEE4; --dim:#8B9A8C; --rule:#27302A;
       --pine:#8FCBA9; --leaf:#7FBFA0; --tomato:#EF7355; --water:#7BB9DB; --pollen:#DDB059;
+      --ph-seed:#D6CFA4; --ph-grow:#9BC7AA; --ph-flower:#DDA0B4; --ph-fruit:#E79A4E; --ph-harvest:#CC5438;
       --shadow:0 2px 12px rgba(0,0,0,.3);
       --wash:color-mix(in srgb,var(--tint) 20%,var(--field));
     }
@@ -65,6 +72,7 @@
   :root[data-theme="dark"]{
     --paper:#0F140F; --field:#19201A; --ink:#E7EEE4; --dim:#8B9A8C; --rule:#27302A;
     --pine:#8FCBA9; --leaf:#7FBFA0; --tomato:#EF7355; --water:#7BB9DB; --pollen:#DDB059;
+    --ph-seed:#D6CFA4; --ph-grow:#9BC7AA; --ph-flower:#DDA0B4; --ph-fruit:#E79A4E; --ph-harvest:#CC5438;
     --shadow:0 2px 12px rgba(0,0,0,.3);
     --wash:color-mix(in srgb,var(--tint) 20%,var(--field));
   }
@@ -79,7 +87,7 @@
   h1,h2,h3{margin:0;font-weight:600;letter-spacing:-.01em}
 
   #root{container-type:inline-size;position:relative;margin:0 auto;background:var(--paper)}
-  #root.phone{max-width:392px;box-shadow:0 0 0 1px var(--rule)}
+
   .page{max-width:1120px;margin:0 auto;padding:var(--s5) var(--s6) var(--s6)}
   @container (max-width:899px){ .page{padding:var(--s4) var(--s4) var(--s5)} }
   @container (max-width:560px){ .page{padding:var(--s3) var(--s3) var(--s4)} }
@@ -96,7 +104,6 @@
   .mast .mtitle{flex:1 1 48ch;min-width:0}
   .mast .blurb{margin:var(--s2) 0 0;max-width:80ch;font-size:var(--t3);
     line-height:1.5;color:var(--dim)}
-  .mast .fresh{margin-left:auto;font-size:var(--t2);color:var(--dim)}
 
   /* ---- a section is a card ---- */
   .sect{background:var(--field);border:1px solid var(--rule);border-radius:var(--r-lg);
@@ -129,6 +136,10 @@
   .pname b{font-family:var(--display);font-size:var(--t5);font-weight:400;
     line-height:1.25;letter-spacing:0}
   .pname em{font-style:normal;color:var(--dim);font-size:var(--t2)}
+  em.ptag-phase{align-self:center;font-style:normal;font-size:var(--t2);font-weight:600;
+    line-height:1.3;padding:2px var(--s2);border-radius:var(--r-pill);white-space:nowrap;
+    background:color-mix(in srgb,var(--c) 30%,var(--field));
+    color:color-mix(in srgb,var(--c) 40%,var(--ink))}
   .water{color:var(--dim)}
   .wline>span{display:flex;align-items:center;gap:var(--s3);flex-wrap:wrap}
   .waterbtn{display:inline-flex;align-items:center;gap:var(--s1);border:1px solid var(--rule);
@@ -157,15 +168,18 @@
   .legend{display:flex;align-items:center;gap:var(--s3);flex-wrap:wrap;
     margin:0 0 var(--s3);padding:0 var(--s4);font-size:var(--t2);color:var(--dim)}
   .legend span{display:flex;align-items:center;gap:var(--s1)}
-  .legend .sep{width:1px;height:var(--s3);background:var(--rule);padding:0}
+
   .sw{width:14px;height:6px;border-radius:3px;display:inline-block}
-  .sw.grow{background:var(--ph-grow)} .sw.flower{background:var(--ph-flower)}
-  .sw.fruit{background:var(--ph-fruit)} .sw.harvest{background:var(--ph-harvest)}
-  .sw.future{background:var(--dim);opacity:.62;
-    background-image:repeating-linear-gradient(135deg,
-      color-mix(in srgb,var(--field) 80%,transparent) 0 2px,transparent 2px 5px)}
+  /* Each phase names its colour once as --c, so solid and expected are the
+     same hue by construction and only the tint differs. */
+  .seed{--c:var(--ph-seed)} .grow{--c:var(--ph-grow)} .flower{--c:var(--ph-flower)}
+  .fruit{--c:var(--ph-fruit)} .harvest{--c:var(--ph-harvest)}
+  .sw.seed,.sw.grow,.sw.flower,.sw.fruit,.sw.harvest{background:var(--c)}
+  /* Expected stands for all four phases at once, so it is the same tint of
+     a neutral rather than of any one colour. */
+
   .chart{min-width:0}
-  .prow.solo .phead{grid-template-columns:1fr}
+
   /* Two plants to a row. A plant needs a name, a bar and two short paragraphs,
      so a whole page width each wastes half of it and doubles the scroll. The
      page is 1120px less its gutters, which is room for exactly two columns and
@@ -195,19 +209,23 @@
   /* Care is the sentence to act on. It takes the tint, the reading face and
      the full width of the card: a band of the card rather than a box wedged
      between two loose lines, which is what an inset panel looked like. */
-  .plist .guide{margin:var(--s3) 0 0;padding:0 0 0 var(--s3);
+  .plist .guide{margin:var(--s4) 0 0;padding:0 0 0 var(--s3);
     border-left:2px solid color-mix(in srgb,var(--leaf) 55%,transparent)}
   .plist .guide > span{font-family:var(--prose);font-size:var(--t3);line-height:1.55}
   .plist .guide .lbl{color:var(--pine)}
   /* The action, fenced off from the reading. auto on the top so that in a
      row of two the shorter card puts its water line on the same bottom edge
      as the taller one, instead of leaving the card empty underneath it. */
+  /* The bottom margin eats into the card's s4 padding down to s3, so the
+     row has the same s3 above and below its content. */
   .plist .wline{display:flex;align-items:center;gap:var(--s3);
-    margin:auto calc(-1 * var(--s4)) calc(-1 * var(--s1));
+    margin:auto calc(-1 * var(--s4)) calc(var(--s3) - var(--s4));
     padding:var(--s3) var(--s4) 0;border-top:1px solid var(--rule);font-size:var(--t2)}
   .plist .wline .lbl{display:none}
-  .plist .wline > span{flex:1}
-  .plist .waterbtn{margin-left:auto}
+  .wline .ago,.wline .water,.wline .waterbtn{font-size:var(--t2);line-height:1.4}
+  .wline .ago,.wline .water{color:var(--dim)}
+  .plist .wline > span{flex:1;display:flex;align-items:center;gap:var(--s3)}
+  .plist .wline .water{margin-left:auto}
   /* The water row's top margin is auto, which collapses to nothing once the
      card is full, so the last paragraph was landing on the rule. This is the
      floor under it, whether care or status is the one that ends the card. */
@@ -247,13 +265,25 @@
   }
   /* The legend is reference, not content: once at the top, flush with the
      cards now that no card padding is left to line it up with. */
-  .lgd-row .legend{margin:0 0 var(--s3);padding:0}
-  /* A tooltip that answers straight away, rather than the browser's slow one. */
-  #tip{position:fixed;z-index:60;pointer-events:none;opacity:0;transition:opacity .08s;
+  .lgd-row .legend{margin:0 0 var(--s3);padding:0 0 0 var(--s4)}
+  /* One tooltip for the whole page, in place of the browser's slow grey one.
+     Over a chart it follows the pointer; over a button it sits under it
+     with a small arrow pointing back. It eases in from the side it points
+     to, and on the dark photo view it turns light so it can still be seen. */
+  #tip{position:fixed;left:0;top:0;z-index:60;pointer-events:none;opacity:0;
     background:var(--ink);color:var(--paper);font-size:var(--t2);line-height:1.3;
     padding:var(--s1) var(--s2);border-radius:var(--r-sm);white-space:nowrap;
-    box-shadow:0 4px 14px rgba(0,0,0,.18)}
-  #tip.on{opacity:1}
+    box-shadow:0 4px 14px rgba(0,0,0,.18);transform:translateY(4px) scale(.96);
+    transform-origin:var(--ax,50%) 100%;transition:opacity .12s ease,transform .14s ease}
+  #tip[data-side="below"]{transform:translateY(-4px) scale(.96);transform-origin:var(--ax,50%) 0}
+  #tip.on{opacity:1;transform:none}
+  #tip.pin{padding:var(--s1) var(--s3)}
+  #tip.pin::after{content:"";position:absolute;left:var(--ax,50%);width:8px;height:8px;background:inherit;
+    border-radius:1px;transform:translateX(-50%) rotate(45deg)}
+  #tip.pin[data-side="below"]::after{top:-4px}
+  #tip.pin[data-side="above"]::after{bottom:-4px}
+  #tip.dark{background:#EAF0EA;color:#0B0F0C;box-shadow:0 4px 14px rgba(0,0,0,.5)}
+  @media (prefers-reduced-motion:reduce){ #tip,#tip[data-side="below"]{transform:none;transition:opacity .08s} }
   .prow .track .bar{cursor:default}
   /* The scale is the chart's label, so it is read at full strength rather
      than ghosted under it. */
@@ -263,21 +293,24 @@
      one line of the card, but unmistakably a measured thing. The segments
      stay square and the track clips them, so the year is one continuous band
      instead of a row of separate lozenges. */
+  /* The empty track is quieter than any expected tint, so the end of the
+     season is still visible. Only the track is rounded: the phases inside it
+     are square and meet on a straight join. */
   .prow .track{position:relative;height:9px;border-radius:var(--r-pill);
-    background:var(--rule);overflow:hidden}
+    background:color-mix(in srgb,var(--rule) 55%,var(--field))}
   .sect>.prow:first-of-type{padding-top:0}
-  .prow .track .bar{position:absolute;top:0;height:100%}
-  .prow .track .bar.grow{background:var(--ph-grow)} .prow .track .bar.flower{background:var(--ph-flower)}
-  .prow .track .bar.fruit{background:var(--ph-fruit)} .prow .track .bar.harvest{background:var(--ph-harvest)}
-  /* Declared after the phase colours, because those set the background
-     shorthand and would wipe the hatch out. */
-  .prow .track .bar.future{opacity:.62;
-    background-image:repeating-linear-gradient(135deg,
-      color-mix(in srgb,var(--field) 80%,transparent) 0 3px,transparent 3px 7px)}
-  /* Today overshoots the track top and bottom by 2px so it is readable
-     against a pale phase as well as a dark one. */
-  .prow .track .tline{position:absolute;top:-2px;width:2px;height:13px;background:var(--ink)}
-  .hrow{padding:var(--s2) 0;border-bottom:1px solid var(--rule)}
+  /* min-width keeps a phase the plant passed through in a day from vanishing
+     off the bar while the dated list still lists it. */
+  .prow .track .bar{position:absolute;top:0;height:100%;min-width:2px;background:var(--c)}
+  .prow .track .bar.first{border-radius:var(--r-pill) 0 0 var(--r-pill)}
+  .prow .track .bar.last{border-radius:0 var(--r-pill) var(--r-pill) 0}
+  .prow .track .bar.first.last{border-radius:var(--r-pill)}
+  /* One colour per phase, past and future alike, so today is the only thing
+     that splits them and has to carry that on its own: taller than the bar,
+     with a ring of card colour so it stands clear of any phase it crosses. */
+  .prow .track .tline{position:absolute;top:-4px;width:3px;height:17px;margin-left:-1.5px;
+    background:var(--ink);border-radius:2px;box-shadow:0 0 0 2px var(--field);z-index:1}
+
   .striplabel{align-self:center;padding:0 var(--s2);font-size:var(--t2);color:var(--dim)}
   .wchk{display:flex;align-items:center;gap:var(--s2);font-size:var(--t2);color:var(--dim)}
   /* Every other breakpoint in here asks the page container, not the window,
@@ -297,22 +330,24 @@
      times and temperatures. Only the sentence gets it. Dates, tags, month
      headings and controls stay in the UI face, or the page turns into a
      scrapbook and nothing is findable. */
-  .jmonth{font-size:var(--t2);letter-spacing:.02em;color:var(--dim);
-    margin:var(--s4) 0 var(--s2);padding-left:calc(var(--jrail) + var(--s3))}
-  .jmonth:first-of-type{margin-top:var(--s2)}
+  .jmonth{position:relative;font-size:var(--t2);letter-spacing:.02em;color:var(--dim);
+    margin:0;padding:var(--s4) 0 var(--s2) calc(var(--jrail) + var(--s3))}
+  .jmonth:first-of-type{padding-top:var(--s2)}
+
   .jlist{--jrail:88px;list-style:none;margin:0;padding:0}
   .sect{--jrail:88px}
   .jent{position:relative;display:grid;grid-template-columns:var(--jrail) 1fr;
     gap:var(--s3);padding:0 0 var(--s4)}
   .jent::before{content:"";position:absolute;left:calc(var(--jrail) + 5px);top:.75em;bottom:0;
     width:2px;background:var(--rule)}
-  /* Under the last entry the spine is a tail, not a line to nowhere, and
-     with a single entry there is nothing to hang off it at all. */
+  /* Each month has its own line, which stops short of the next month's
+     heading. Its last entry, or its only one, ends in the same short tail,
+     so every month closes the same way whatever it holds. */
   .jent:last-child::before{bottom:auto;height:var(--s5)}
-  .jent:only-child::before{display:none}
   .jent::after{content:"";position:absolute;left:var(--jrail);top:calc(.75em - 5px);
     width:12px;height:12px;border-radius:50%;background:var(--dim);
     box-shadow:0 0 0 3px var(--field)}
+  .jent.ph-seed::after{background:var(--ph-seed)}
   .jent.ph-grow::after{background:var(--ph-grow)}
   .jent.ph-flower::after{background:var(--ph-flower)}
   .jent.ph-fruit::after{background:var(--ph-fruit)}
@@ -324,9 +359,6 @@
   .jbody .prose{margin:0;max-width:60ch;font-family:var(--hand);
     font-size:var(--t4);line-height:1.7;letter-spacing:.005em}
   .aside{margin:var(--s1) 0 0;font-size:var(--t2);color:var(--dim);font-style:italic;max-width:60ch}
-  .jgap{margin:var(--s3) 0 0;font-size:var(--t2);color:var(--dim)}
-  .jgap::before{content:"";display:inline-block;width:18px;height:1px;
-    background:var(--rule);vertical-align:middle;margin-right:var(--s2)}
   /* controls stay out of the way until you reach for them */
   .jbody .entry-acts{opacity:0;transition:opacity .12s;margin-top:var(--s1)}
   .jent:hover .entry-acts,.jbody:focus-within .entry-acts{opacity:1}
@@ -399,69 +431,24 @@
   .chip[aria-pressed="true"]{background:var(--ink);color:var(--paper);border-color:var(--ink);font-weight:600}
   .chip.all{padding:var(--s1) var(--s4)}
 
-  /* ---- the chart: one soft row per plant ---- */
-  .row{display:flex;align-items:center;gap:var(--s3);padding:var(--s3) var(--s1);width:100%;text-align:left;
-    border-top:1px solid var(--rule)}
-  .row.head,.row.axis{border-top:none;padding:var(--s1)}
-  .row.axis{border-top:1px solid var(--rule);padding-top:var(--s2)}
-  .row .art{width:40px;height:40px;flex:none;overflow:hidden;border-radius:var(--r-sm)}
-  .row .art svg{width:100%;height:100%;display:block}
-  .row .who{width:136px;flex:none;min-width:0}
-  .row .who b{display:block;font-size:var(--t3);font-weight:600;white-space:nowrap;overflow:hidden;
-    text-overflow:ellipsis;letter-spacing:-.01em}
-  .row .who em{display:block;font-style:normal;font-size:var(--t2);color:var(--dim);margin-top:2px}
-  .row .bars{flex:1 1 auto;min-width:88px}
-  .row .now{flex:0 0 clamp(168px,26%,280px);min-width:0;display:flex;gap:var(--s2);align-items:flex-start}
-  .row .now .mk{flex:none;font-size:var(--t3);line-height:1.35}
-  .row .now .txt{min-width:0;font-size:var(--t3);line-height:1.35}
-  .row .now .txt em{display:block;font-style:normal;font-size:var(--t1);color:var(--dim);margin-top:1px}
-  .row .now.bad .txt{color:var(--tomato);font-weight:600}
-  .row .now.watch .txt{color:var(--water)}
+  /* ---- the season bar ---- */
   @keyframes settle{0%{transform:scale(1.01)}100%{transform:none}}
-  .row.touched{animation:settle .7s ease-out;background:color-mix(in srgb,var(--leaf) 10%,transparent)}
-
+  .prow.touched{animation:settle .7s ease-out;background:color-mix(in srgb,var(--leaf) 10%,transparent)}
   .track{position:relative;display:block;height:10px;background:color-mix(in srgb,var(--ink) 8%,transparent);
     border-radius:var(--r-pill);overflow:hidden}
   .bar{position:absolute;top:0;height:100%}
   .bar.grow{background:var(--ph-grow)} .bar.flower{background:var(--ph-flower)}
   .bar.fruit{background:var(--ph-fruit)} .bar.harvest{background:var(--ph-harvest)}
-  .scale{position:relative;display:block;height:14px;font-size:var(--t1);color:var(--dim)}
-  .scale b{position:absolute;transform:translateX(-50%);font-weight:400}
-  .scale b.today{color:var(--leaf);font-weight:600;transform:translateX(-4px)}
+
   .legend{display:flex;gap:var(--s3);flex-wrap:wrap;margin-top:var(--s3);font-size:var(--t2);color:var(--dim)}
   .legend i{display:inline-block;width:18px;height:8px;border-radius:var(--r-pill);margin-right:var(--s2);vertical-align:0}
 
   /* ---- prose the model wrote ---- */
-  .lede{font-family:var(--prose);font-size:var(--t7);line-height:1.35;margin:0 0 var(--s3);font-weight:400}
-  .lede .mk{margin-right:var(--s2)}
-  .lede.bad{color:var(--tomato)} .lede.watch{color:var(--water)}
   p.prose{font-family:var(--prose);font-size:var(--t4);line-height:1.6;margin:0 0 var(--s3);max-width:62ch}
-  .quote{font-style:italic;color:var(--dim);font-size:var(--t3);line-height:1.5}
-  .data{font-size:var(--t2);color:var(--dim)}
 
-  /* ---- lists you act on ----
-     The 1px and 2px nudges below are optical: they drop a small line onto the
-     baseline of the bigger one beside it. They are type, not spacing. */
-  .list{display:flex;flex-direction:column}
-  .task{display:flex;gap:var(--s2);align-items:flex-start;padding:var(--s3) var(--s1);
-    border-top:1px solid var(--rule)}
-  .task:first-child{border-top:none}
-  .task .mk{width:22px;flex:none;text-align:center;font-size:var(--t4)}
-  .task .body{flex:1;min-width:0}
-  .task .what{font-size:var(--t3);font-weight:600}
-  .task .whose{font-size:var(--t2);color:var(--dim);display:block;margin-top:1px}
-  .task .why{display:block;font-size:var(--t3);color:var(--dim);line-height:1.45;margin-top:var(--s1);
-    font-family:var(--prose)}
-  .task.done{opacity:.45}
-  .task.added{background:color-mix(in srgb,var(--leaf) 9%,transparent);border-radius:var(--r-sm)}
-  .task.changed{background:color-mix(in srgb,var(--pollen) 12%,transparent);border-radius:var(--r-sm)}
-  .task.cut{opacity:.55}
-  .task.cut .what{text-decoration:line-through;text-decoration-color:var(--tomato)}
-  .flag{font-size:var(--t3);font-weight:700;width:12px;flex:none;padding-top:1px}
-  .flag.add{color:var(--leaf)} .flag.chg{color:var(--pollen)} .flag.cut{color:var(--tomato)}
+  /* ---- buttons ---- */
   .tick{border:1px solid var(--leaf);color:var(--leaf);background:var(--field);border-radius:var(--r-pill);
     font-size:var(--t2);padding:var(--s2) var(--s3);cursor:pointer;white-space:nowrap;flex:none}
-  .task.done .tick{background:var(--leaf);color:var(--field);border-color:var(--leaf)}
 
   /* ---- weather ----
      The reading rides the area heading (see .wxnow). All that is left here is
@@ -475,83 +462,23 @@
   .warn span{color:var(--dim)}
   .warn span::before{content:' '}
 
-  /* ---- segmented control ---- */
-  .segs{display:flex;gap:var(--s1);background:var(--paper);border-radius:var(--r-pill);padding:var(--s1)}
-  .segs button{border:none;background:none;color:var(--dim);font-size:var(--t3);border-radius:var(--r-pill);
-    padding:var(--s2) var(--s4);cursor:pointer;min-height:32px}
-  .segs button[aria-selected="true"]{background:var(--field);color:var(--ink);font-weight:600;
-    box-shadow:var(--shadow)}
-
-  /* ---- month ---- */
-  .navrow{display:flex;align-items:center;gap:var(--s1);margin-bottom:var(--s3)}
-  .navrow button{border:1px solid var(--rule);background:var(--field);border-radius:var(--r-pill);
-    min-width:34px;height:34px;cursor:pointer;font-size:var(--t4)}
-  .navrow .lab{min-width:160px;text-align:center;font-size:var(--t4);font-weight:600}
-  .dow{display:grid;grid-template-columns:repeat(7,1fr);font-size:var(--t1);color:var(--dim);
-    text-align:center;padding-bottom:var(--s2)}
-  .grid{display:grid;grid-template-columns:repeat(7,1fr);gap:var(--s1)}
-  .cell{min-height:58px;background:var(--paper);border:1px solid transparent;border-radius:var(--r-sm);
-    padding:var(--s1) var(--s2);cursor:pointer;position:relative;text-align:left}
-  .cell:hover{border-color:var(--leaf)}
-  .cell.out{background:none;cursor:default}
-  .cell.past{opacity:.45}
-  .cell.today{background:color-mix(in srgb,var(--leaf) 14%,transparent);border-color:var(--leaf)}
-  .cell.hot{border-color:color-mix(in srgb,var(--tomato) 55%,transparent)}
-  .cell.cold{border-color:color-mix(in srgb,var(--water) 55%,transparent)}
-  .cell .d{font-size:var(--t2);font-weight:600}
-  .cell .t{position:absolute;top:var(--s1);right:var(--s2);font-size:var(--t1);color:var(--dim)}
-  .cell .t.warm{color:var(--tomato)}
-  .dots{display:flex;flex-wrap:wrap;gap:var(--s1);margin-top:var(--s2)}
-  .dot{width:6px;height:6px;border-radius:var(--r-pill);display:inline-block}
-  .dot.water{background:var(--water)} .dot.pollen{background:var(--pollen)} .dot.care{background:var(--leaf)}
-  .dot.note{background:var(--ink)}
-  .dot.photo{background:none;box-shadow:inset 0 0 0 1.5px var(--dim)}
-
-  /* ---- journal ---- */
-  .day{display:flex;align-items:center;gap:var(--s2);margin:var(--s4) 0 var(--s2);font-size:var(--t3);
-    font-weight:600;color:var(--dim)}
-  .day i{flex:1;height:1px;background:var(--rule)}
-  .day span:last-child{font-weight:400;font-size:var(--t2)}
-  .entry{padding:var(--s3) 0;border-top:1px solid var(--rule)}
-  .entry .said{font-family:var(--prose);font-size:var(--t4);line-height:1.45;margin:0 0 var(--s2)}
-  .entry .read{display:flex;gap:var(--s2);align-items:flex-start;padding:var(--s2) 0 0;margin-top:var(--s2)}
-  .entry .read .art{width:32px;height:32px;flex:none;border-radius:var(--r-sm);overflow:hidden;background:var(--field)}
-  .entry .read .art svg{width:100%;height:100%;display:block}
-  .entry .read b{font-size:var(--t3);font-weight:600;display:block}
-  .entry .read span{font-size:var(--t3);line-height:1.45;font-family:var(--prose)}
-  .entry.live{border-left:3px solid var(--leaf);padding-left:var(--s3)}
-
   /* ---- photos ---- */
   .shots{display:grid;grid-template-columns:repeat(auto-fill,minmax(84px,1fr));gap:var(--s2)}
   .shots button{padding:0;border:none;border-radius:var(--r-md);overflow:hidden;background:var(--wash);
     cursor:pointer;aspect-ratio:1;position:relative;display:block}
   .shots svg{width:100%;height:100%;display:block}
-  .shots .when{position:absolute;left:0;right:0;bottom:0;background:linear-gradient(to top,rgba(8,14,10,.62),transparent);
-    color:#fff;font-size:var(--t1);padding:var(--s4) var(--s1) var(--s1);text-align:center}
-  figure.ref{margin:var(--s3) 0 0}
-  figure.ref img{width:100%;max-height:210px;object-fit:cover;border-radius:var(--r-md);display:block}
-  figure.ref figcaption{font-size:var(--t2);color:var(--dim);margin-top:var(--s2)}
 
-  /* ---- life ---- */
-  ul.life{list-style:none;margin:0;padding:0}
-  ul.life li{display:flex;gap:var(--s3);padding:var(--s2) var(--s1);border-top:1px solid var(--rule)}
-  ul.life li:first-child{border-top:none}
-  ul.life .when{flex:none;width:76px;font-size:var(--t2);color:var(--dim);padding-top:2px}
-  ul.life .what{flex:1;min-width:0;font-size:var(--t3);line-height:1.45}
-
-  .seasonstrip{padding:var(--s1) 0 var(--s3)}
-  .seasonstrip .track{margin:var(--s1) 0}
+  /* ---- notes ---- */
   .note{padding:var(--s3) 0;border-top:1px solid var(--rule)}
   .note .prose{margin-bottom:var(--s2)}
   .note .prose:last-child{margin-bottom:0}
-  .dimmed{color:var(--dim)}
-  .lede em{display:block;font-style:normal;font-family:var(--ui);font-size:var(--t2);color:var(--dim);margin-top:var(--s1)}
+
   .none{color:var(--dim);font-size:var(--t3);font-family:var(--prose);font-style:italic;padding:var(--s2) 0}
 
   /* ---- the composer ---- */
   .dock{margin:0 0 var(--s5)}
   .dock .box{background:var(--field);border:1px solid var(--rule);border-radius:var(--r-lg);
-    overflow:hidden;transition:border-color .15s ease}
+    overflow:visible;transition:border-color .15s ease}
   .dock:focus-within .box{border-color:var(--leaf);box-shadow:0 0 0 3px color-mix(in srgb,var(--leaf) 14%,transparent)}
   .dock .top{display:flex;align-items:center;gap:var(--s2);padding:var(--s3) var(--s4);font-size:var(--t2);color:var(--dim)}
   .dock .top .tag{display:inline-flex;align-items:center;gap:var(--s2);color:var(--ink);background:var(--wash);
@@ -573,22 +500,88 @@
   .dock .acts .save{border-color:var(--leaf);color:var(--leaf)}
   .dock .acts .save:disabled{opacity:.35;cursor:default}
   .dock .acts .save.on{background:var(--leaf);color:#fff;border-color:var(--leaf)}
-  .dock.min .in{display:none}
 
+  /* ---- prints ----
+     A photo is a print taped to the page: a white border with a deeper chin
+     for the date, a slight tilt, and a strip of tape across the top edge. The
+     print stays white in the dark theme too, the way a real print would. */
+  :root{--print:#FBFAF6;--tape:color-mix(in srgb,#E9DDB4 72%,transparent)}
+  .snap{position:relative;display:block;padding:6px 6px 0;border:0;background:var(--print);
+    cursor:zoom-in;transform:rotate(var(--tilt,2deg));box-shadow:0 1px 2px rgba(0,0,0,.12),0 6px 16px rgba(22,40,28,.14);
+    transition:transform .18s ease}
+  .snap:hover,.snap:focus-visible{transform:rotate(0deg) scale(1.03)}
+  .snap img{display:block;width:100%;aspect-ratio:1;object-fit:cover;background:var(--wash)}
+  /* The date is written on the chin in pen: dark ink, a touch crooked, with
+     room above and below it rather than squeezed against the photo. */
+  .snap{--chin:26px}
+  .snap .cap{display:block;height:var(--chin);line-height:var(--chin);text-align:center;font-family:var(--hand);
+    font-size:var(--t2);color:#2F3A33;transform:rotate(-1.5deg)}
+  .snap::before{content:"";position:absolute;z-index:1;top:-9px;left:50%;width:58%;height:20px;
+    transform:translateX(-50%) rotate(calc(var(--tilt,2deg) * -1.5));background:var(--tape);
+    box-shadow:0 1px 1px rgba(0,0,0,.06);
+    /* torn ends */
+    clip-path:polygon(0 8%,4% 0,8% 10%,12% 2%,88% 2%,92% 12%,96% 0,100% 8%,100% 92%,96% 100%,92% 90%,88% 98%,12% 98%,8% 88%,4% 100%,0 92%)}
 
-  /* ---- narrow: a plant line cannot hold four columns on a phone, so it stacks:
-         name and drawing, then how it is doing, then its year ---- */
-  /* 50px is not a gap, it is the width of the drawing plus the gap after it,
-     so the stacked rows line up under the name instead of under the picture. */
+  /* On the card: the newest print sits to the right of the two sentences and
+     the text runs round it, so the bars above keep their full, shared width. */
+  .plist .prow{overflow:visible}
+  .pbody{display:flow-root}
+  .plist .pbody{margin-bottom:var(--s4)}
+  .plist .prow > p:last-of-type{margin-bottom:0}
+  /* s5 on top is s4, the step every block under the bar takes, plus the
+     tape's overhang, so the tape's top edge lines up with the STATUS label
+     instead of pressing on the bar. s5 at the side because a tilted print
+     needs more air than a straight text edge. */
+  .pbody > .snap{float:right;width:118px;margin:var(--s5) 0 var(--s3) var(--s5)}
+  @container (max-width:560px){ .pbody > .snap{width:96px} }
+
+  /* On the plant page: the whole pile beside the two sentences. */
+  .pfull-body{display:grid;grid-template-columns:minmax(0,66ch) auto;justify-content:space-between;
+    gap:var(--s5);align-items:start;margin:var(--s5) 0 0}
+  .pfull-body .pfull-say{margin:0}
+  /* s5 under the pile, because the tilted prints behind reach lower than the top one. */
+  .stack{display:flex;flex-direction:column;align-items:center;gap:var(--s5);padding:var(--s3) var(--s4) 0 var(--s2)}
+  .pile{position:relative;width:188px}
+  .pile .under{position:absolute;inset:0;background:var(--print);padding:8px 8px 0;box-shadow:0 1px 2px rgba(0,0,0,.12),0 4px 12px rgba(22,40,28,.12);
+    transition:transform .22s ease}
+  .pile .under img{display:block;width:100%;aspect-ratio:1;object-fit:cover;filter:saturate(.8)}
+  .pile .snap{--tilt:-1.5deg;--chin:40px;padding:8px 8px 0}
+  .pile .snap .cap{font-size:var(--t3)}
+  /* The deepest print leans left, the next one right, so both edges show. */
+  .pile .u0{transform:rotate(-7deg) translate(-10px,6px)}
+  .pile .u1{transform:rotate(5deg) translate(9px,2px)}
+  .pile:hover .u0{transform:rotate(-12deg) translate(-26px,8px)}
+  .pile:hover .u1{transform:rotate(10deg) translate(24px,2px)}
+  /* A link, not a caption: in the UI face so it cannot be read as writing on the print. */
+  .stack-n{border:0;background:none;padding:var(--s1) var(--s2);cursor:pointer;font-family:var(--ui);
+    font-size:var(--t2);color:var(--pine);text-decoration:underline;text-underline-offset:3px;
+    text-decoration-color:color-mix(in srgb,var(--pine) 40%,transparent)}
+  .stack-n:hover{text-decoration-color:currentColor}
   @container (max-width:760px){
-    .row{flex-wrap:wrap;row-gap:var(--s2);padding:var(--s3)}
-    .row .who{flex:1 1 auto;width:auto}
-    .row .now{flex:1 1 100%;order:3;padding-left:50px}
-    .row .bars{flex:1 1 100%;order:4;padding-left:50px}
-    .row.head,.row.axis{padding-top:0;padding-bottom:0}
-    .row.head .art,.row.head .who,.row.head .now,
-    .row.axis .art,.row.axis .who,.row.axis .now{display:none}
-    .row.head .bars,.row.axis .bars{padding-left:50px}
+    .pfull-body{grid-template-columns:1fr}
+    .stack{order:-1;padding:var(--s3) 0 0}
+    .pile{width:160px}
+  }
+
+  /* ---- tags on a note ----
+     Tags come from @names in the text. A small list under the caret offers
+     the names to pick from. */
+  .mwrap{position:relative}
+  .mpop{position:absolute;left:0;top:100%;z-index:20;min-width:240px;max-width:100%;
+    background:var(--field);border:1px solid var(--rule);border-radius:var(--r-md);
+    box-shadow:0 8px 24px rgba(22,40,28,.16);padding:var(--s1);display:flex;flex-direction:column}
+  .mpop[hidden]{display:none}
+  .mpop button{display:flex;align-items:center;gap:var(--s2);border:0;background:none;text-align:left;
+    padding:var(--s2) var(--s3);border-radius:var(--r-sm);cursor:pointer;font-size:var(--t3)}
+  .mpop button[aria-selected="true"],.mpop button:hover{background:var(--wash)}
+  .mpop .av{width:22px;height:22px;flex:none;overflow:hidden;border-radius:var(--r-pill)}
+  .mpop .av svg{width:100%;height:100%;display:block}
+  .mpop b{font-weight:600}
+  .mpop span:last-child{color:var(--dim);font-size:var(--t2);white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+  .handtags{white-space:nowrap}
+
+  /* ---- narrow ---- */
+  @container (max-width:760px){
     .sect{padding:var(--s3)}
   }
 
@@ -615,12 +608,10 @@
   .waiting .out{margin-top:var(--s3);border:none;background:none;color:var(--dim);cursor:pointer;
     font-size:var(--t2);text-decoration:underline;padding:var(--s2) 0}
   body.locked{overflow:hidden}
-  @media(prefers-reduced-motion:reduce){.row.touched{animation:none}}
-
+  @media(prefers-reduced-motion:reduce){.prow.touched{animation:none}}
 
   /* ---- pieces the live site needs on top of the prototype's system ---- */
-  .chip.small{padding:var(--s2) var(--s3)}
-  .chip.small .av{display:none}
+
   .cshots{display:flex;gap:var(--s2);flex-wrap:wrap;margin-bottom:var(--s2)}
   .cshot{position:relative}
   .cshot img{width:74px;height:74px;object-fit:cover;border-radius:var(--r-sm);display:block}
@@ -631,7 +622,7 @@
   .lnk{border:none;background:none;color:var(--dim);cursor:pointer;font-size:var(--t2);
     text-decoration:underline;padding:var(--s1) 0}
   .lnk:hover{color:var(--leaf)}
-  .chips-row{display:flex;gap:var(--s2);flex-wrap:wrap;align-items:center;margin-top:var(--s2)}
+
   .note textarea{width:100%;min-height:74px;resize:vertical;font:inherit;
     font-family:var(--hand);font-size:var(--t4);line-height:1.6;color:var(--ink);
     background:var(--paper);border:1px solid var(--leaf);border-radius:var(--r-sm);padding:var(--s3)}
@@ -650,17 +641,141 @@
     padding:var(--s2) var(--s4);font-size:var(--t2);cursor:pointer}
 
   /* ---- overlays kept from the live site, restyled ---- */
-  #viewer{position:fixed;inset:0;background:rgba(10,14,11,.92);display:none;z-index:30;
-    align-items:center;justify-content:center;flex-direction:column;gap:var(--s3);padding:var(--s4)}
-  #viewer.on{display:flex}
-  #viewer img{max-width:94vw;max-height:72vh;border-radius:var(--r-md)}
-  #viewer button{border:1px solid rgba(255,255,255,.25);background:rgba(255,255,255,.1);color:#fff;
-    border-radius:var(--r-pill);padding:var(--s3) var(--s4);font:inherit;font-size:var(--t3);cursor:pointer}
-  #viewer .vnav{position:absolute;top:50%;transform:translateY(-50%);width:46px;height:46px;padding:0;
-    font-size:var(--t7);display:flex;align-items:center;justify-content:center}
+  /* ---- one photo, full screen ----
+     The photo-app pattern: one bar on top, the way back on the left with what
+     the photo is beside it, and the actions as icons on the right, so the
+     photo gets everything under the bar. Solid, so the page behind stops
+     competing with it. Every icon has a 44px target and a tooltip. */
+  #viewer{position:fixed;inset:0;z-index:31;display:none;background:#0B0F0C;color:#EAF0EA;
+    grid-template-rows:auto minmax(0,1fr);height:100dvh}
+  #viewer.on{display:grid}
+  #viewer button{font:inherit;color:inherit;cursor:pointer}
+  .vbar{display:flex;align-items:center;gap:var(--s1);padding:var(--s2) var(--s3)}
+  .vic{flex:none;width:44px;height:44px;padding:0;border:0;border-radius:var(--r-pill);background:none;
+    display:flex;align-items:center;justify-content:center;color:rgba(234,240,234,.85)}
+  .vic:hover{background:rgba(255,255,255,.1);color:#fff}
+  .vic.vdel:hover{color:#F59A85}
+  .vic[hidden]{display:none}
+  .vcap{flex:1;min-width:0;display:flex;flex-direction:column;margin-left:var(--s2);line-height:1.3}
+  .vcap b{font-weight:600;font-size:var(--t3);white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+  .vcap span{font-size:var(--t2);color:rgba(234,240,234,.6);font-variant-numeric:tabular-nums}
+  .vstage{position:relative;display:flex;align-items:center;justify-content:center;min-height:0;
+    padding:0 72px var(--s5);touch-action:pan-y}
+  #viewer img{max-width:100%;max-height:100%;object-fit:contain;border-radius:var(--r-sm);
+    box-shadow:0 10px 40px rgba(0,0,0,.5);user-select:none;-webkit-user-drag:none}
+  #viewer .vnav{position:absolute;top:50%;transform:translateY(-50%);width:48px;height:48px;padding:0;
+    border:0;border-radius:var(--r-pill);background:rgba(255,255,255,.1);
+    display:flex;align-items:center;justify-content:center}
+  #viewer .vnav:hover:not(:disabled){background:rgba(255,255,255,.18)}
   #viewer #viewer-prev{left:var(--s3)} #viewer #viewer-next{right:var(--s3)}
-  #viewer .vnav:disabled{opacity:.25;cursor:default}
-  #viewer .vcap{font-size:var(--t3);color:#EAF0EA}
+  #viewer .vnav:disabled{opacity:0;pointer-events:none}
+  /* A phone swipes between photos instead. */
+  @media (max-width:560px){
+    .vstage{padding:0 0 var(--s4)}
+    #viewer .vnav{display:none}
+  }
+
+  /* ---- life on the page ----
+     Small moves that belong to a garden: water falls and soaks in, a saved
+     note sends up leaves, the plant drawings sway when you reach for them,
+     cards come up like seedlings on the first visit, and prints are laid down
+     rather than switched on. Everything here is off for anyone who asked
+     their system for less motion; the page reads the same without it. */
+  .waterbtn .drop{display:inline-block}
+  .fx{position:fixed;left:0;top:0;z-index:60;pointer-events:none}
+  .fx-water{width:7px;height:10px;background:var(--water);border-radius:50% 50% 50% 50%/62% 62% 38% 38%}
+  .fx-leaf{width:11px;height:7px;background:var(--leaf);border-radius:0 100% 0 100%}
+  .fx-leaf:nth-child(odd){background:var(--ph-grow)}
+  .pre .plist .prow,.pre #page > .sect,.pre .pfull-body .stack{opacity:0}
+  .plist .prow{position:relative}
+  .plist .prow::after{content:"";position:absolute;inset:0;border-radius:inherit;pointer-events:none;opacity:0;
+    background:radial-gradient(120% 90% at 92% 100%,color-mix(in srgb,var(--water) 18%,transparent),transparent 62%)}
+  @media (prefers-reduced-motion:no-preference){
+    /* A drawing sways from its base, the way a stem does in a breeze. */
+    @keyframes sway{0%,100%{transform:rotate(0)}30%{transform:rotate(-8deg)}70%{transform:rotate(6deg)}}
+    .chip .av svg,.pname .art svg,.ptag .av svg,.pfull-art svg,.gal-art svg,.mpop .av svg{transform-origin:50% 88%}
+    .chip:hover .av svg,.pname:hover .art svg,.ptag:hover .av svg,.pfull-art:hover svg,.mpop button[aria-selected="true"] .av svg{
+      animation:sway 1.3s ease-in-out infinite}
+    /* Hover says what the pointer is on. A season segment brightens so the
+       tooltip plainly belongs to it; a card rises a little off the paper;
+       the plant name takes the pine; a journal photo leans in. */
+    .prow .track .bar,.pfull-seg{transition:filter .15s ease}
+    .prow .track .bar:hover,.pfull-seg:hover{filter:brightness(1.08) saturate(1.15)}
+    .plist .prow{transition:box-shadow .2s ease,transform .2s ease}
+    .plist .prow:hover{box-shadow:0 6px 22px rgba(22,40,28,.10);transform:translateY(-2px)}
+    .pname b{transition:color .15s ease}
+    .pname:hover b{color:var(--pine)}
+    .shots button img{transition:transform .25s ease}
+    .shots button:hover img{transform:scale(1.05)}
+    /* The drop in the water button bobs as if about to fall. */
+    @keyframes bob{0%,100%{transform:translateY(0)}50%{transform:translateY(-3px)}}
+    .waterbtn:hover .drop{animation:bob .9s ease-in-out infinite}
+    /* Things you press give a little. */
+    .chip,.waterbtn,.photobtn,.dock .acts .save,.stack-n,.vic,.gal-x,.mpop button{transition:transform .12s ease}
+    .chip:active,.waterbtn:active,.photobtn:active,.dock .acts .save:active:not(:disabled),.stack-n:active,
+      .vic:active,.gal-x:active,.mpop button:active{transform:scale(.94)}
+    /* Watered: the card soaks it up from the corner the water came from. */
+    @keyframes soak{0%{opacity:0}25%{opacity:1}100%{opacity:0}}
+    .plist .prow.wet::after{animation:soak 1.6s ease-out}
+    /* A note just landed on this plant: a leaf-green ring that fades out. */
+    @keyframes tended{0%{box-shadow:0 0 0 0 color-mix(in srgb,var(--leaf) 45%,transparent),var(--shadow)}
+      30%{box-shadow:0 0 0 4px color-mix(in srgb,var(--leaf) 30%,transparent),var(--shadow)}
+      100%{box-shadow:0 0 0 0 transparent,var(--shadow)}}
+    .plist .prow.touched{animation:tended 2.4s ease-out}
+    /* A new journal entry grows in at the top of the list. */
+    @keyframes sprout{from{opacity:0;transform:translateY(-10px) scale(.98)}to{opacity:1;transform:none}}
+    .jent.fresh{animation:sprout .6s cubic-bezier(.2,.8,.2,1) both;transform-origin:0 0}
+    /* The @ list opens from the caret. */
+    @keyframes pop{from{opacity:0;transform:translateY(-4px) scale(.98)}to{opacity:1;transform:none}}
+    .mpop:not([hidden]){animation:pop .14s ease-out;transform-origin:0 0}
+    /* The photo panel rises, and its prints are dealt onto the table one by one. */
+    @keyframes fadein{from{opacity:0}to{opacity:1}}
+    @keyframes rise{from{opacity:0;transform:translateY(28px)}to{opacity:1;transform:none}}
+    @keyframes deal{from{opacity:0;transform:translateY(16px) rotate(calc(var(--tilt,0deg) * 4))}
+      to{opacity:1;transform:rotate(var(--tilt,0deg))}}
+    #gallery.on{animation:fadein .2s ease-out}
+    #gallery.on .gal-in{animation:rise .34s cubic-bezier(.2,.8,.2,1)}
+    #gallery.on .gal-grid .snap{animation:deal .5s cubic-bezier(.2,.8,.2,1) backwards;
+      animation-delay:calc(120ms + var(--i,0) * 45ms)}
+    #viewer.on{animation:fadein .18s ease-out}
+    @keyframes toastin{from{opacity:0;transform:translateY(12px)}to{opacity:1;transform:none}}
+    .toast{animation:toastin .28s cubic-bezier(.2,.8,.2,1)}
+  }
+
+  /* ---- all photos of one plant ----
+     A panel over the plant page rather than a page of its own: the page stays
+     in view, dimmed, so it is plain where closing it goes. A press outside
+     the panel closes it. On a phone it is a sheet up from the bottom edge.
+     The prints keep a small tilt each so the grid reads as prints on a
+     table, not a file browser, but no tape: twenty strips of tape is noise. */
+  #gallery{position:fixed;inset:0;z-index:30;display:none;align-items:center;justify-content:center;
+    padding:var(--s5);background:rgba(10,14,11,.55)}
+  #gallery.on{display:flex}
+  .gal-in{position:relative;width:min(960px,100%);max-height:calc(100dvh - 2 * var(--s5));overflow-y:auto;
+    overscroll-behavior:contain;background:var(--paper);border-radius:var(--r-lg);
+    box-shadow:0 20px 60px rgba(0,0,0,.35);padding:0 var(--s5) var(--s6)}
+  .gal-head{position:sticky;top:0;z-index:2;display:flex;align-items:center;gap:var(--s3);
+    margin:0 calc(-1 * var(--s5)) var(--s2);padding:var(--s4) var(--s5);
+    background:var(--paper);border-bottom:1px solid var(--rule)}
+  .gal-art{width:36px;height:36px;flex:none;overflow:hidden;border-radius:var(--r-pill)}
+  .gal-art svg{width:100%;height:100%;display:block}
+  .gal-head h2{font-family:var(--display);font-weight:400;font-size:var(--t7);line-height:1.18;letter-spacing:0}
+  .gal-n{color:var(--dim);font-size:var(--t3)}
+  .gal-x{margin-left:auto;width:44px;height:44px;flex:none;border:0;background:none;padding:0;
+    border-radius:var(--r-pill);cursor:pointer;color:var(--ink);display:flex;align-items:center;justify-content:center}
+  .gal-x:hover{background:var(--wash)}
+  .gal-month{margin:var(--s5) 0 var(--s4);font-size:var(--t1);letter-spacing:.09em;text-transform:uppercase;
+    font-weight:600;color:var(--dim)}
+  .gal-grid{display:grid;grid-template-columns:repeat(auto-fill,minmax(168px,1fr));gap:var(--s6) var(--s5)}
+  #gallery .snap::before{display:none}
+  #gallery .snap{--chin:34px;padding:8px 8px 0}
+  @media (max-width:560px){
+    #gallery{align-items:flex-end;padding:var(--s5) 0 0}
+    .gal-in{max-height:100%;border-radius:var(--r-lg) var(--r-lg) 0 0;padding:0 var(--s3) var(--s6)}
+    .gal-head{margin:0 calc(-1 * var(--s3)) var(--s2);padding:var(--s3)}
+    .gal-head h2{font-size:var(--t6)}
+    .gal-grid{grid-template-columns:repeat(2,1fr);gap:var(--s5) var(--s4)}
+  }
   .modal{position:fixed;inset:0;background:rgba(10,14,11,.7);display:none;z-index:35;
     align-items:flex-end;justify-content:center}
   .modal.open{display:flex}
@@ -716,43 +831,59 @@
   .pfull .pfull-art svg{width:100%;height:100%;display:block}
 
   /* One tall band, so the year still reads left to right in a single line. The
-     expected tail of a phase is hatched, not just faded, and the today marker
+     expected tail of a phase is a pale tint of the phase, and the today marker
      names itself instead of being a bare tick. */
   .pfull-chart{margin-bottom:var(--s4)}
-  .pfull-chart .monthscale{height:1.15em;margin-bottom:var(--s1);font-size:var(--t2)}
+  /* Same size as the list's scale, so the two charts speak at one volume. */
+  .pfull-chart .monthscale{height:1.15em;margin-bottom:var(--s1);font-size:var(--t1)}
   .pfull-track{position:relative;height:56px;border-radius:var(--r-sm);
-    background:var(--rule);overflow:hidden}
+    background:color-mix(in srgb,var(--rule) 55%,var(--field))}
+  .pfull-seg.first{border-radius:var(--r-sm) 0 0 var(--r-sm)}
+  .pfull-seg.last{border-radius:0 var(--r-sm) var(--r-sm) 0}
+  .pfull-seg.first.last{border-radius:var(--r-sm)}
   /* Names sit along the bottom of the band, so the today marker has the top
      edge to itself and the two never collide. */
+  /* min-width for the same reason as the list ribbon: a phase with no length
+     left in it is still a row in the dated list, so it has to be on the bar. */
+  /* Square segments on a rounded track: the two ends of the year are round,
+     every join between phases is a straight line with no gap. */
   .pfull-seg{position:absolute;top:0;height:100%;display:flex;align-items:flex-end;overflow:hidden;
-    container:pseg/inline-size;
-    border-radius:var(--r-sm);box-shadow:inset 0 0 0 1px color-mix(in srgb,var(--ink) 8%,transparent)}
-  /* A short phase drops its name rather than showing a syllable of it. The
-     dated list under the chart says the same thing in full anyway. */
-  .pfull-seg.grow{background:var(--ph-grow)} .pfull-seg.flower{background:var(--ph-flower)}
-  .pfull-seg.fruit{background:var(--ph-fruit)} .pfull-seg.harvest{background:var(--ph-harvest)}
-  /* The name sits on a wash of the card colour so it stays readable on every
-     phase, from the palest green to the darkest harvest red. */
-  .pfull-seg b{position:relative;z-index:1;margin:0 var(--s2) var(--s2);padding:var(--s1) var(--s2);
-    border-radius:var(--r-pill);background:color-mix(in srgb,var(--field) 80%,transparent);
-    color:var(--ink);font-size:var(--t2);font-weight:600;white-space:nowrap;overflow:hidden}
+    container:pseg/inline-size;min-width:3px;background:var(--c);font-style:normal}
+  /* Straight on the phase, no pill: the mid-tone palette is light enough for
+     ink to read on every phase and every tint, and a pill per segment was
+     more chrome than the name it carried. The segments are <i>, so italic is
+     switched off here. */
+  .pfull-seg b{position:relative;z-index:1;margin:0 var(--s2) var(--s2);
+    color:color-mix(in srgb,var(--c) 30%,#000);font-size:var(--t2);font-weight:600;
+    white-space:nowrap;overflow:hidden}
   .pfull-seg b .sm{display:none}
+  /* The solid phases are mid tones in both themes, so their names are always
+     dark. A wholly expected phase sits on the tint, which follows the card,
+     so its name follows the page ink instead. */
   @container pseg (max-width:112px){
     .pfull-seg b .lg{display:none}
     .pfull-seg b .sm{display:inline}
   }
-  @container pseg (max-width:52px){ .pfull-seg b{display:none} }
-  .pfull-fut{position:absolute;top:0;height:100%;border-radius:0 var(--r-sm) var(--r-sm) 0;
-    background:repeating-linear-gradient(135deg,
-      color-mix(in srgb,var(--field) 62%,transparent) 0 6px,transparent 6px 13px)}
-  .pfull-today{position:absolute;top:0;bottom:0;width:2px;background:var(--ink)}
+  /* Below this the widest short word plus its margins no longer fits, so the
+     name goes rather than being clipped. Measured, not guessed. */
+  @container pseg (max-width:64px){ .pfull-seg b{display:none} }
+  .pfull-today{position:absolute;top:-5px;bottom:-5px;width:3px;margin-left:-1.5px;
+    background:var(--ink);border-radius:2px;box-shadow:0 0 0 2px var(--field);z-index:2}
+  /* Where the season began: a hollow ring pinned on the left end of the bar.
+     Today is a solid line through the bar; a ring is a point, so the two can
+     never be mistaken for each other. Hover for the date. */
+  .pfull-startmk{position:absolute;top:50%;width:14px;height:14px;margin:-7px 0 0 -7px;
+    border-radius:50%;background:var(--field);border:2.5px solid var(--ink);z-index:2;cursor:default}
   /* The label hangs under the track rather than inside it, so it never lands on
      a phase name. Clamped off the edges so a season ending today cannot push
      the pill out of the card. */
-  .pfull-axis{position:relative;height:1.5em;margin:var(--s1) 0 var(--s3)}
-  .pfull-todaylbl{position:absolute;top:0;transform:translateX(-50%);padding:var(--s1) var(--s2);
-    border-radius:var(--r-pill);background:var(--ink);color:var(--paper);
-    font-size:var(--t1);font-weight:600;white-space:nowrap}
+  .pfull-axis{position:relative;height:24px;margin:var(--s1) 0 var(--s3)}
+  /* A quiet caption under the marker, same size and colour as the month
+     scale, not a black pill competing with the phase names. */
+  .pfull-todaylbl{position:absolute;top:var(--s1);transform:translateX(-50%);white-space:nowrap}
+  .pfull-todaylbl,.pfull-nowtag{font-style:normal;font-size:10px;line-height:1.2;letter-spacing:.06em;
+    text-transform:uppercase;font-weight:600;padding:2px 7px;
+    border-radius:var(--r-pill);background:var(--ink);color:var(--paper)}
 
   /* The dates under the chart. Wrapping rather than a grid, so on a narrow
      screen the mark drops to its own line instead of squeezing the dates. */
@@ -762,14 +893,12 @@
   .pfull-stage .sw{width:16px;height:8px;border-radius:var(--r-pill);flex:none}
   .pfull-name{font-weight:600;min-width:98px}
   .pfull-when{color:var(--dim)}
-  .pfull-nowtag{font-style:normal;font-size:var(--t1);letter-spacing:.06em;text-transform:uppercase;
-    font-weight:600;padding:var(--s1) var(--s2);border-radius:var(--r-pill);background:var(--ink);color:var(--paper)}
   .pfull-mark{margin-left:auto;font-style:normal;font-size:var(--t1);letter-spacing:.07em;
     text-transform:uppercase;font-weight:600;padding:var(--s1) var(--s3);border-radius:var(--r-pill);
     border:1px solid var(--rule);color:var(--dim)}
   .pfull-mark.recorded{color:var(--pine);border-color:color-mix(in srgb,var(--leaf) 45%,transparent);
     background:color-mix(in srgb,var(--leaf) 10%,transparent)}
-  .pfull-mark.expected{border-style:dashed}
+  .pfull-mark.expected,.pfull-mark.estimated{border-style:dashed}
   .pfull-none{margin:var(--s3) 0 0;font-size:var(--t2);line-height:1.5;color:var(--dim)}
 
   /* Two different kinds of sentence, so two different treatments. Status is
@@ -789,16 +918,16 @@
   .pfull .guide .lbl{color:var(--pine)}
   /* When the reading happened. Sits on the label line, never competing with it. */
   .ago{font-style:normal;font-weight:400;letter-spacing:0;text-transform:none;
-    font-size:var(--t1);color:var(--dim);margin-left:var(--s2);white-space:nowrap}
+    font-size:var(--t1);color:var(--dim);white-space:nowrap}
   .pfull .wline{display:flex;align-items:center;gap:var(--s3);
     margin:var(--s4) 0 0;padding-top:var(--s4);border-top:1px solid var(--rule)}
   .pfull .wline .lbl{display:none}
-  .pfull .wline > span{flex:1}
-  .pfull .waterbtn{margin-left:auto}
+  .pfull .wline > span{flex:1;display:flex;align-items:center;gap:var(--s3);flex-wrap:wrap}
+  .pfull .wline .water{margin-left:auto}
 
   @container (max-width:560px){
     .pfull-track{height:46px}
-    .pfull-seg b{font-size:var(--t1);padding:2px var(--s2);margin:0 var(--s1) var(--s1)}
+    .pfull-seg b{font-size:var(--t1);margin:0 var(--s1) var(--s1)}
     /* At this width the four parts of a stage line only fit without the column
        the name keeps on a wide screen. */
     .pfull-stage{gap:var(--s1) var(--s2)}
@@ -814,12 +943,28 @@
 <div id="lock" role="dialog" aria-modal="true" aria-live="polite"></div>
 
 <div id="tip" role="status" aria-live="polite"></div>
+<div id="gallery" role="dialog" aria-modal="true" aria-labelledby="gal-title">
+  <div class="gal-in">
+    <div class="gal-head"><span class="gal-art" id="gal-art"></span>
+      <h2 id="gal-title"></h2><span class="gal-n" id="gal-n"></span>
+      <button id="gal-close" class="gal-x" aria-label="Close" data-tip="Close"><svg viewBox="0 0 24 24" width="24" height="24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M18 6 6 18M6 6l12 12"/></svg></button></div>
+    <div id="gal-body"></div>
+  </div>
+</div>
+
 <div id="viewer" role="dialog" aria-modal="true" aria-label="Photo">
-  <button id="viewer-prev" class="vnav" aria-label="Previous photo">‹</button>
-  <img id="viewer-img" alt="">
-  <button id="viewer-next" class="vnav" aria-label="Next photo">›</button>
-  <div class="vcap" id="viewer-cap"></div>
-  <div><button id="ph-tag">Retag</button> <button id="ph-del">Delete</button> <button id="ph-close">Close</button></div>
+  <div class="vbar">
+    <button id="ph-close" class="vic" aria-label="Back" data-tip="Back"><svg viewBox="0 0 24 24" width="24" height="24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M19 12H5M12 19l-7-7 7-7"/></svg></button>
+    <div class="vcap" id="viewer-cap"></div>
+    <button id="viewer-back" class="vic" aria-label="All photos of this plant" data-tip="All photos"><svg viewBox="0 0 24 24" width="24" height="24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><rect x="3" y="3" width="7" height="7" rx="1"/><rect x="14" y="3" width="7" height="7" rx="1"/><rect x="3" y="14" width="7" height="7" rx="1"/><rect x="14" y="14" width="7" height="7" rx="1"/></svg></button>
+    <button id="ph-tag" class="vic" aria-label="Change plant" data-tip="Change plant"><svg viewBox="0 0 24 24" width="24" height="24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M20.6 13.4 13.4 20.6a2 2 0 0 1-2.8 0L3 13V3h10l7.6 7.6a2 2 0 0 1 0 2.8z"/><circle cx="8" cy="8" r="1.5"/></svg></button>
+    <button id="ph-del" class="vic vdel" aria-label="Delete photo" data-tip="Delete"><svg viewBox="0 0 24 24" width="24" height="24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M3 6h18M8 6V4a1 1 0 0 1 1-1h6a1 1 0 0 1 1 1v2M19 6l-1 14a2 2 0 0 1-2 2H8a2 2 0 0 1-2-2L5 6M10 11v6M14 11v6"/></svg></button>
+  </div>
+  <div class="vstage">
+    <button id="viewer-prev" class="vnav" aria-label="Previous photo"><svg viewBox="0 0 24 24" width="24" height="24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M15 18l-6-6 6-6"/></svg></button>
+    <img id="viewer-img" alt="">
+    <button id="viewer-next" class="vnav" aria-label="Next photo"><svg viewBox="0 0 24 24" width="24" height="24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M9 18l6-6-6-6"/></svg></button>
+  </div>
 </div>
 
 <div id="picker" class="modal" role="dialog" aria-modal="true" aria-label="Which plant?">
@@ -850,7 +995,7 @@ stored on this device only, so it is asked once.</p>
 <script src="/garden-data.js"></script>
 <script type="module">
 import { weatherAlerts, normalizeHealth } from '/care-rules.js';
-import { groupByArea, waterLabel, seasonSpans, phaseOfStage, chartWindow, monthTicks, tagEntryText, journalGroups } from '/garden-view.js';
+import { groupByArea, waterLabel, seasonSpans, withStart, phaseOfStage, chartWindow, monthTicks, tagEntryText, journalGroups, plantPhotos, findMentions, mentionQuery } from '/garden-view.js';
 
 /* ================= basics ================= */
 const $=s=>document.querySelector(s);
@@ -858,73 +1003,9 @@ const store={get:k=>JSON.parse(localStorage.getItem(k)||'null'),set:(k,v)=>local
 const TAMPERE={la:61.4981,lo:23.7610};
 const iso=d=>`${d.getFullYear()}-${String(d.getMonth()+1).padStart(2,'0')}-${String(d.getDate()).padStart(2,'0')}`;
 const todayISO=()=>iso(new Date());
-const addDays=(s,n)=>{const d=new Date(s);d.setDate(d.getDate()+n);return iso(d);};
-const dBetween=(a,b)=>Math.round((new Date(b)-new Date(a))/86400000);
-const MONTHS=['January','February','March','April','May','June','July','August','September','October','November','December'];
 const WEEKDAYS=['Sun','Mon','Tue','Wed','Thu','Fri','Sat'];
 const esc=s=>(s||'').replace(/[&<>"']/g,c=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[c]));
 const shortDate=s=>{const d=new Date(s);return d.getDate()+'.'+(d.getMonth()+1)+'.';};
-
-/* ================= care knowledge ================= */
-const CARE={
- basil:{care:{
-   growing:{water:2,why:'Pot dries fast behind glass',
-     weekly:[['care','Pinch the tips','Above a leaf pair, bushy, no flowers.'],
-             ['care','Feed','Liquid feed, every 2nd week is enough.']]},
-   harvesting:{water:2,why:'Keep harvest coming',
-     weekly:[['care','Harvest from the top','Pinch any flower buds while you are there.']]}}},
- mint:{care:{
-   growing:{water:2,why:'Thirsty, likes the soil damp',
-     weekly:[['care','Trim it back','Keeps it leafy and stops it sprawling.']]},
-   harvesting:{water:2,why:'Keep moist while you keep cutting',
-     weekly:[['care','Harvest outer stems','Cut at the base, the middle keeps going.']]}}},
- chilli:{care:{
-   seedling:{water:3,why:'Light water only, damping-off kills sprouts',
-     weekly:[['care','Rotate pots','Stops leggy lean toward the glass. Pot up at 4-6 true leaves.']]},
-   vegetative:{water:2,why:'Steady moisture while bulking up',
-     weekly:[['care','Feed','Half-strength liquid feed weekly.']]},
-   flowering:{water:2,why:'Even water so flowers hold',
-     daily:[['pollen','Tap the flowers','Midday, no bees behind glass.']],
-     weekly:[['care','Feed high-K','Tomato feed works.']]},
-   fruiting:{water:1,why:'Dry spells make fruit drop',
-     weekly:[['care','Feed','High-K weekly while fruiting.']]}}},
- tomato:{care:{
-   seedling:{water:2,why:'Even moisture',weekly:[]},
-   vegetative:{water:2,why:'Big leaves, big thirst',
-     weekly:[['care','Side shoots + ties','Snap armpit shoots, tie main stem higher.']]},
-   flowering:{water:1,why:'Uneven water now = blossom end rot later',
-     daily:[['pollen','Shake the flower trusses','Midday. No bees, no wind behind glass, no shake, no fruit. Vent hard: pollen sterile over ~32°C.']],
-     weekly:[['care','Feed high-K','Weekly from first flowers.'],
-             ['care','Side shoots + ties','Keep the 1 m stem supported.']]},
-   fruiting:{water:1,why:'Never bone-dry, fruit splits',
-     weekly:[['care','Feed high-K','Weekly.'],
-             ['care','Tidy lower leaves','Below lowest truss, airflow against mildew.']]}}},
- parsley:{care:{
-   growing:{water:3,why:'Even moisture; bolts in heat, shade on 30°C days',weekly:[]},
-   harvesting:{water:3,why:'Outer stems only',
-     weekly:[['care','Harvest outer stems','Cut at the base, centre keeps producing.']]}}},
- monstera:{care:{
-   settling:{water:7,why:'Newly bought, let top 3-4 cm dry first; no feed or repot yet',
-     weekly:[['care','Check the spot','Bright indirect light, away from draughts/radiators. Wipe dust off leaves.']]},
-   established:{water:7,why:'Top 3-4 cm dry before watering',
-     weekly:[['care','Feed','Balanced feed monthly in season; give the aerial roots something to climb.']]}}},
- hedera:{care:{
-   settling:{water:5,why:'Steady (not heavy) water while roots establish; top 2-3 cm dry first',
-     weekly:[['care','Check the leaves','Happy in the shady corner. Watch under leaves, spider mites love dry glazed air.']]},
-   established:{water:6,why:'Let surface dry between waterings',
-     weekly:[['care','Trim','Cut wandering vines to shape, regrows from any node. Hardy to −10°C.']]}}},
- raspberry:{care:{
-   settling:{water:2,why:'New pot behind glass dries fast, keep evenly moist, top 2-3 cm dry, never waterlogged',
-     weekly:[['care','Tie in the canes','Loosely tie new canes to a support so wind and glass heat do not snap them.'],
-             ['care','Feed','Half-strength liquid feed weekly while establishing. Watch leaf undersides for spider mites.']]},
-   fruiting:{water:1,why:'Even water while berries swell, dry spells shrink fruit',
-     daily:[['pollen','Tap the flowers','Midday, few bees behind glass. Berries drop free when dead-ripe.']],
-     weekly:[['care','Pick the berries','Every 2-3 days, ripe ones spoil fast. High-K feed weekly.']]},
-   dormant:{water:7,why:'Barely water over winter, hardy, stays out on the balcony',
-     weekly:[['care','Cut the fruited canes','After fruiting, cut spent (2nd-year) canes to the ground; keep this year\'s new canes.']]}}}
-};
-
-/* ================= server docs ================= */
 
 /* ================= server docs ================= */
 let statusDoc=store.get('statusDoc')||{updatedAt:0,plants:{}};
@@ -950,8 +1031,6 @@ function relTime(ms){if(!ms)return'';
 
 /* The distiller takes a few seconds; poll until the entry stops being pending.
    Redraw the open sheet too, that is where the entry the user just wrote is shown. */
-const typing=()=>{const a=document.activeElement;
-  return !!a&&(a.tagName==='TEXTAREA'||a.tagName==='INPUT');};
 function flashPlant(pid){touched.add(pid);setTimeout(()=>{touched.delete(pid);renderAll();},2600);}
 function refreshUI(){renderAll();}
 let _poll=null,busy='';
@@ -1020,8 +1099,6 @@ async function loadWx(){
 }
 const wxOf=date=>forecast?.days?.[date];
 const wxIcon=w=>!w?'':w.pop>=60?'🌧️':w.pop>=30?'🌦️':w.tmax>=27?'☀️':w.tmax>=18?'⛅':'☁️';
-const weeklyIco=w=>/feed/i.test(w)?'🍽️':/re-sow|sow/i.test(w)?'🌱':/harvest|lift|pull|pick/i.test(w)?'🧺'
-  :/rotate/i.test(w)?'🔄':/check/i.test(w)?'🔍':/pinch|shoot|trim|tidy|prune|leaf|cane/i.test(w)?'✂️':'🌿';
 
 /* ================= plants ================= */
 /* Condition comes from the server; identity and place come from the seed. */
@@ -1031,14 +1108,11 @@ function plants(){
     const s=statusDoc.plants[sp.id]||{};
     return {id:sp.id,name:sp.name,species:sp.species,area:sp.area||'balcony',
       stage:s.stage||sp.stage,last:s.lastWatered||sp.water||'',
+      started:sp.started||'',startedHow:sp.startedHow||'',
       health:normalizeHealth(s.health),observations:s.observations,notes:s.notes||[]};
   });
 }
 const plantById=id=>plants().find(p=>p.id===id);
-const AREA_LABEL={balcony:'Balcony',indoor:'Indoor'};
-
-/* ================= task engine ================= */
-/* tasks[date] = { alerts:[…], groups:[{plant, tasks:[…]}] } */
 
 /* ================= avatars ================= */
 const KEY_BY_ID={};
@@ -1239,17 +1313,13 @@ const REAL={
  'takala-1':['/img/takala-1-plant.jpg','Potted raspberry cane, about 1.5 m','Lubera'],
  'takala-2':['/img/takala-2-plant.jpg','Raspberry grown in a pot, 1.5 m','Lubera'],
 };
-const S_START=new Date('2026-06-29'),S_END=new Date('2026-10-05');
-const spos=d=>Math.max(0,Math.min(100,(new Date(d)-S_START)/(S_END-S_START)*100));
-/* The bar says where the season is. The list underneath says what actually happened:
-   every stage change, note and photo this plant has, newest first. */
-
 /* ================= photos ================= */
 let PHOTOS=[];
 const photoURL=id=>'/api/photos/'+id;
 const shown=list=>list.filter(x=>!_hidden.has(x.id));
 function applyPhotos(){
   PHOTOS.forEach(p=>{if(p.plant==='takala')p.plant='takala-1';});
+  if(galPlant)renderGallery();
   renderAll();
 }
 async function loadPhotos(){
@@ -1274,35 +1344,116 @@ function shrink(file){return new Promise(res=>{
 let viewerList=[],viewerIdx=-1,viewerKey=null,viewerFocus=null;
 function currentPhotoList(){
   const have=new Set(PHOTOS.map(p=>p.id));
-  return [...document.querySelectorAll('#page [data-act="view"]')].map(i=>i.dataset.val).filter(id=>have.has(id));
+  /* The card and the stack repeat a photo the journal also shows, so each id counts once. */
+  return [...new Set([...document.querySelectorAll('#page [data-act="view"]')].map(i=>i.dataset.val))].filter(id=>have.has(id));
 }
 function showViewerAt(i){
   if(i<0||i>=viewerList.length)return;
+  const dir=viewerIdx<0||!viewerOn()?0:Math.sign(i-viewerIdx);
   viewerIdx=i;viewerKey=viewerList[i];
+  if(!calm.matches)$('#viewer-img').animate([{opacity:0,transform:`translateX(${dir*28}px) scale(${dir?1:.97})`},
+    {opacity:1,transform:'none'}],{duration:dir?260:220,easing:'cubic-bezier(.2,.8,.2,1)'});
   const rec=PHOTOS.find(p=>p.id===viewerKey);
   $('#viewer-img').src=photoURL(viewerKey);
   const p=rec&&rec.plant?plantById(rec.plant):null;
-  $('#viewer-cap').textContent=rec?`${p?p.name:'All plants'} · ${shortDate(rec.date)}`:'';
+  const when=rec&&rec.date?niceDate(rec.date)+' '+rec.date.slice(0,4):'';
+  const pos=viewerList.length>1?`${i+1} of ${viewerList.length}`:'';
+  $('#viewer-cap').innerHTML=rec?`<b>${esc(p?p.name:'Whole garden')}</b>${
+    when||pos?`<span>${esc([when,pos].filter(Boolean).join(' · '))}</span>`:''}`:'';
+  /* Already on top of the grid, the back arrow is the way to it. */
+  $('#viewer-back').hidden=!p||!!galPlant;
   $('#viewer-prev').disabled=i<=0;
   $('#viewer-next').disabled=i>=viewerList.length-1;
 }
-function viewPhoto(id){
+/* The photo views are a stack over the plant page: all photos, then one
+   photo. Each layer is a history entry, so the back button and the phone's
+   back swipe step down it one layer at a time, the same as the ← in the bar.
+   history.state holds {ov:'gal'|'photo', gal:plantId, depth}; the screen is
+   always redrawn from it, never the other way round. */
+let ovDepth=0;
+const viewerOn=()=>$('#viewer').classList.contains('on');
+function pushLayer(st){ovDepth++;history.pushState({...(history.state||{}),...st,depth:ovDepth},'',location.href);}
+const stepBack=()=>history.back();
+function syncLayers(st){
+  st=st||{};ovDepth=st.depth||0;
+  if(st.gal){if(galPlant!==st.gal)showGallery(st.gal);}else if(galPlant)hideGallery();
+  if(st.ov!=='photo'&&viewerOn())hideViewer();
+  /* Forward into a photo that is no longer open has nothing to show. */
+  if(st.ov==='photo'&&!viewerOn())history.back();
+}
+addEventListener('popstate',e=>syncLayers(e.state));
+/* A reload lands with the layers shut, so the entry it lands on must say so. */
+if(history.state&&(history.state.ov||history.state.gal)){
+  const {ov,gal,depth,...rest}=history.state;history.replaceState(rest,'',location.href);
+}
+
+/* list: the photos the arrows walk. Without one, whatever the page shows. */
+function viewPhoto(id,list){
   viewerFocus=document.activeElement;
-  viewerList=currentPhotoList();viewerIdx=viewerList.indexOf(id);
+  viewerList=list||currentPhotoList();viewerIdx=viewerList.indexOf(id);
   if(viewerIdx<0){viewerList=[id];viewerIdx=0;}
   showViewerAt(viewerIdx);
   $('#viewer').classList.add('on');document.body.classList.add('noscroll');
+  pushLayer({ov:'photo'});
   $('#ph-close').focus();
 }
-function closeViewer(){
+function hideViewer(){
+  const key=viewerKey;
   $('#viewer').classList.remove('on');
-  document.body.classList.remove('noscroll');
-  if(viewerFocus&&viewerFocus.isConnected)viewerFocus.focus();
+  if(!galPlant)document.body.classList.remove('noscroll');
+  const inGal=galPlant&&document.querySelector(`#gallery [data-val="${CSS.escape(key||'')}"]`);
+  const f=inGal||viewerFocus;if(f&&f.isConnected)f.focus();
 }
+const closeViewer=stepBack;
+/* One layer down, to the photos of this plant. Opened from the journal there
+   is no such layer under it yet, so this one turns into it. */
+function viewerBack(){
+  const rec=PHOTOS.find(p=>p.id===viewerKey);
+  if(galPlant||!rec||!rec.plant){stepBack();return;}
+  history.replaceState({...(history.state||{}),ov:'gal',gal:rec.plant},'',location.href);
+  hideViewer();showGallery(rec.plant);
+}
+
+/* ---- all photos of one plant ---- */
+let galPlant=null,galFocus=null;
+function renderGallery(){
+  const p=plantById(galPlant);if(!p){hideGallery();return;}
+  const list=plantPhotos(shown(PHOTOS),p.id);
+  $('#gal-art').innerHTML=avatarFor(p.id);
+  $('#gal-title').textContent=p.name;
+  $('#gal-n').textContent=count(list.length,'photo');
+  $('#gal-body').innerHTML=list.length?journalGroups(list).map(g=>`<div class="gal-month">${esc(g.label)}</div>
+    <div class="gal-grid">${g.entries.map(x=>snapHTML(x,p.name,'','gview',x.id)).join('')}</div>`).join('')
+    :'<div class="none">No photos of this plant yet.</div>';
+}
+function showGallery(pid){
+  if(!galPlant)galFocus=document.activeElement;
+  galPlant=pid;renderGallery();
+  document.querySelectorAll('#gallery .gal-grid .snap').forEach((b,i)=>b.style.setProperty('--i',Math.min(i,14)));
+  $('#gallery').classList.add('on');$('.gal-in').scrollTop=0;
+  document.body.classList.add('noscroll');
+  $('#gal-close').focus();
+}
+function openGallery(pid){showGallery(pid);pushLayer({ov:'gal',gal:pid});}
+function hideGallery(){
+  galPlant=null;$('#gallery').classList.remove('on');
+  if(!viewerOn())document.body.classList.remove('noscroll');
+  if(galFocus&&galFocus.isConnected)galFocus.focus();
+}
+$('#gal-close').onclick=stepBack;
+$('#gallery').onclick=e=>{if(e.target.id==='gallery')stepBack();};
+$('#viewer-back').onclick=viewerBack;
 $('#viewer-prev').onclick=()=>showViewerAt(viewerIdx-1);
 $('#viewer-next').onclick=()=>showViewerAt(viewerIdx+1);
-$('#viewer').onclick=e=>{if(e.target.id==='viewer')closeViewer();};
-$('#ph-close').onclick=closeViewer;
+$('#viewer').onclick=e=>{if(e.target.classList.contains('vstage'))closeViewer();};
+$('#ph-close').onclick=stepBack;
+/* Swipe left or right on a phone to walk the photos. */
+{let sx=null,sy=0;
+  $('.vstage').addEventListener('touchstart',e=>{sx=e.touches[0].clientX;sy=e.touches[0].clientY;},{passive:true});
+  $('.vstage').addEventListener('touchend',e=>{
+    if(sx==null)return;const dx=e.changedTouches[0].clientX-sx,dy=e.changedTouches[0].clientY-sy;sx=null;
+    if(Math.abs(dx)>50&&Math.abs(dx)>Math.abs(dy))showViewerAt(viewerIdx+(dx<0?1:-1));
+  },{passive:true});}
 $('#ph-tag').onclick=async()=>{
   if(!viewerKey)return;
   const id=viewerKey;
@@ -1396,29 +1547,12 @@ async function saveEdit(kind,id,plantId){
   if(!text){editing=null;fillSheet();return;}
   const r=kind==='note'
     ? await apiWrite('POST','/api/notes',JSON.stringify({plantId,op:'edit',id,text}),'application/json')
-    : await apiWrite('PATCH','/api/entries/'+encodeURIComponent(id),JSON.stringify({text}),'application/json');
+    : await apiWrite('PATCH','/api/entries/'+encodeURIComponent(id),JSON.stringify({text,mentions:noteMentions(text)}),'application/json');
   if(!r||!r.ok){toast('Could not save. Try again.');return;}
   editing=null;
   await Promise.all([loadStatus(),loadEntries()]);
   refreshUI();
   if(kind==='entry')refreshSoon();          // the reworded entry is sorted again
-}
-/* Re-sorting is just the entry sent back unchanged: the server re-runs the distiller. */
-async function retryEntry(id){
-  const e=entriesDoc.entries.find(x=>x.id===id);if(!e)return;
-  const r=await apiWrite('PATCH','/api/entries/'+encodeURIComponent(id),
-    JSON.stringify({text:e.text}),'application/json');
-  if(!r||!r.ok){toast('Could not save. Try again.');return;}
-  await loadEntries();refreshUI();refreshSoon();
-}
-async function assignEntry(id,plantIds,el){
-  if(el){el.disabled=true;el.textContent='Filing…';}
-  setBusy('Filing your note…');
-  const r=await apiWrite('PATCH','/api/entries/'+encodeURIComponent(id),JSON.stringify({plantIds}),'application/json');
-  if(!r||!r.ok){setBusy('');if(el){el.disabled=false;}toast('Could not save. Try again.');return;}
-  await Promise.all([loadEntries(),loadStatus()]);
-  refreshUI();
-  refreshSoon();          // the plan rebuilds behind this; keep watching until it lands
 }
 
 /* ================= toasts + undo hold ================= */
@@ -1496,7 +1630,7 @@ function syncThemeBtn(){
 /* ================= the view =================
    Nav above everything, the note under it, then the chart and one content
    region: the whole balcony, or the plant the nav has selected. */
-let V={plant:null,dockMin:false,feedFilter:''};
+let V={plant:null};
 /* A plant is a page, so it gets a page's address: '/p/<id>', bookmarkable,
    shareable, and reachable with the back button. The page itself is one file,
    so the Worker answers every '/p/' path with it and the id is read back out
@@ -1511,33 +1645,29 @@ function syncTitle(){
   document.title=p?`${p.name}, Dara's Balcony Garden`:"Dara's Balcony Garden, Tampere";
 }
 function goTo(pid,push){
+  const was=V.plant;
   V.plant=pid;staged.watered=false;
   if(push&&location.pathname!==pathOf(pid))history.pushState({plant:pid},'',pathOf(pid));
   syncTitle();renderAll();
+  if(was!==pid)turnPage();
 }
-addEventListener('popstate',()=>{V.plant=plantFromPath();staged.watered=false;syncTitle();renderAll();});
+addEventListener('popstate',()=>{
+  const was=V.plant;
+  V.plant=plantFromPath();staged.watered=false;syncTitle();renderAll();
+  if(was!==V.plant)turnPage();
+});
 let touched=new Set(),busyAt=0;
 /* The one entry or note open in the inline editor, as {kind,id,plantId}. */
 let editing=null;
-const view={y:new Date().getFullYear(),m:new Date().getMonth()};
 
-const TINT={};
-Object.entries(ART).forEach(([k,svg])=>{const m=svg.match(/<rect[^>]*fill="(#[0-9A-Fa-f]{6})"/);if(m)TINT[k]=m[1];});
-const tintOf=pid=>TINT[KEY_BY_ID[pid]]||'#9BC7AA';
 const shortName=n=>{const w=n.split(' ')[0].replace(/[(),]/g,''),d=n.match(/\d$/);return w+(d?' '+d[0]:'');};
-const PHASE_WORD={grow:'growing',flower:'flowering',fruit:'green fruit',harvest:'harvest'};
-function phaseNow(pid){
-  const key=KEY_BY_ID[pid],row=SEASON.find(r=>r.key===key);
-  const hit=row&&row.ph.find(([,f,t])=>todayISO()>=f&&todayISO()<=t);
-  return hit?PHASE_WORD[hit[0]]:'none yet';
-}
 /* What a line says about a plant now: the model's read if there is one, else the
    fact that matters, a pot that is late is the only thing worth interrupting for. */
 
 function navBar(){
   const groups=groupByArea(plants());
   const tab=(id,label,art)=>`<button class="chip" data-act="plant" data-val="${esc(id)}"
-    aria-pressed="${V.plant===id}" title="${esc(label)}">
+    aria-pressed="${V.plant===id}" ${shortName(label)!==label?`data-tip="${esc(label)}"`:''}>
     <span class="av">${art}</span>${esc(shortName(label))}</button>`;
   return `<nav class="nav" aria-label="Plants"><div class="strip">
     <button class="chip all" data-act="all" aria-pressed="${!V.plant}">All plants</button>
@@ -1547,19 +1677,26 @@ function navBar(){
 }
 
 /* ---- the note ---- */
+/* A plant is tagged by writing @ and its name. The plant page's own plant is
+   always tagged, and the placeholder names it, so nothing else has to. */
+const mentionLabels=()=>plants().map(p=>({id:p.id,label:shortName(p.name)}));
+const noteMentions=text=>findMentions(text,mentionLabels());
+const noteTags=()=>[...new Set([V.plant,...noteMentions(draft).map(m=>m.plantId)])].filter(id=>id&&plantById(id));
 function dockHTML(){
   const p=V.plant?plantById(V.plant):null;
+  const tags=noteTags();
   const can=!!draft.trim()||staged.top.length>0;
-  return `<div class="dock ${V.dockMin?'min':''} ${draft.trim()?'tall':''}">
+  return `<div class="dock ${draft.trim()?'tall':''}">
     <div class="box">
-      <div class="top"><span>New note · ${shortDate(todayISO())}</span>
-        ${p?`<span class="tag">${avatarFor(p.id)} ${esc(shortName(p.name))}</span>`:''}
-
-      </div>
+      <div class="top"><span>New note · ${shortDate(todayISO())}</span></div>
       <div class="in">
         <label class="vhid" for="ctext">New note</label>
-        <textarea id="ctext" data-ta="1"
-          placeholder="${p?`How is ${esc(shortName(p.name))} doing?`:'What is happening in the garden?'}">${esc(draft)}</textarea>
+        <div class="mwrap">
+        <textarea id="ctext" data-ta="1" aria-autocomplete="list" aria-controls="mpop"
+          placeholder="${p?`How is ${esc(shortName(p.name))} doing? Type @ to tag another plant.`
+            :'What is happening in the garden? Type @ to tag a plant.'}">${esc(draft)}</textarea>
+        <div class="mpop" id="mpop" role="listbox" aria-label="Plants" hidden></div>
+        </div>
         ${staged.top.length?`<div class="cshots">${staged.top.map((s,i)=>`<div class="cshot">
           <img src="${s.url}" alt="">
           <button class="rm" data-act="unstage" data-val="${i}" aria-label="Remove photo">×</button>
@@ -1567,12 +1704,78 @@ function dockHTML(){
         <div class="acts">
           <button class="photobtn" data-act="attach">📷 Add a photo</button>
           <span class="sp"></span>
-          ${p?`<label class="wchk"><input type="checkbox" data-act="watered-chk"
-            ${staged.watered?'checked':''}> watered today</label>`:''}
+          <label class="wchk" ${tags.length?'':'hidden'}><input type="checkbox" data-act="watered-chk"
+            ${staged.watered?'checked':''}> watered today</label>
           <button class="save ${can?'on':''}" data-act="save" ${can?'':'disabled'}>Save</button>
         </div>
       </div>
     </div></div>`;
+}
+
+/* The @ list. It is drawn straight into the dock rather than through
+   renderAll, which would rebuild the page under the caret on every key. */
+let mq=null;          // {start,q,list,idx} while an @name is being typed
+function syncWatered(){
+  const w=document.querySelector('.dock .wchk');if(w)w.hidden=!noteTags().length;
+}
+function updateMention(t){
+  const hit=mentionQuery(t.value,t.selectionStart);
+  const pop=$('#mpop');if(!pop)return;
+  const q=hit&&hit.q.toLowerCase();
+  /* A name matches from the start of any of its words, short names first. */
+  const rank=p=>{const l=shortName(p.name).toLowerCase();
+    return l.startsWith(q)||l.replace(/\s+/g,'').startsWith(q)?0
+      :p.name.toLowerCase().split(/\s+/).some(w=>w.startsWith(q))?1:-1;};
+  const list=hit?plants().map(p=>[rank(p),p]).filter(([r])=>r>=0)
+    .sort((a,b)=>a[0]-b[0]).map(([,p])=>p).slice(0,8):[];
+  if(!list.length){mq=null;pop.hidden=true;t.removeAttribute('aria-activedescendant');return;}
+  const keep=mq&&mq.list[mq.idx]&&list.findIndex(p=>p.id===mq.list[mq.idx].id);
+  mq={...hit,list,idx:keep>0?keep:0};
+  pop.innerHTML=list.map((p,i)=>`<button type="button" role="option" id="mo-${esc(p.id)}"
+    aria-selected="${i===mq.idx}" data-act="mention-pick" data-val="${esc(p.id)}">
+    <span class="av">${avatarFor(p.id)}</span><b>${esc(shortName(p.name))}</b>${
+      shortName(p.name)===p.name?'':`<span>${esc(p.name)}</span>`}</button>`).join('');
+  pop.hidden=false;
+  const c=caretXY(t,mq.start);
+  pop.style.left=Math.max(0,Math.min(c.x,t.clientWidth-pop.offsetWidth))+'px';
+  pop.style.top=c.y+'px';
+  t.setAttribute('aria-activedescendant','mo-'+list[mq.idx].id);
+}
+/* Where a character of the note sits, from a hidden copy of the box with the
+   same font and width, so the list opens under the @ being typed. */
+function caretXY(t,at){
+  const m=document.createElement('div'),cs=getComputedStyle(t);
+  for(const k of ['fontFamily','fontSize','lineHeight','letterSpacing','padding','boxSizing','width','wordSpacing'])m.style[k]=cs[k];
+  Object.assign(m.style,{position:'absolute',visibility:'hidden',whiteSpace:'pre-wrap',overflowWrap:'break-word',top:0,left:0});
+  m.textContent=t.value.slice(0,at);
+  const mark=document.createElement('span');mark.textContent='@';m.appendChild(mark);
+  t.parentElement.appendChild(m);
+  const out={x:mark.offsetLeft,y:mark.offsetTop+mark.offsetHeight-t.scrollTop+4};
+  m.remove();return out;
+}
+function closeMention(){mq=null;const pop=$('#mpop');if(pop)pop.hidden=true;}
+function pickMention(id){
+  const t=$('#ctext'),p=plantById(id);if(!t||!p||!mq)return;
+  const word='@'+shortName(p.name)+' ';
+  const end=t.selectionStart;
+  t.value=t.value.slice(0,mq.start)+word+t.value.slice(end);
+  const at=mq.start+word.length;
+  t.focus();t.setSelectionRange(at,at);
+  draft=t.value;closeMention();syncWatered();
+  t.dispatchEvent(new Event('input',{bubbles:true}));
+}
+/* Keys the list answers while it is open. true = handled. */
+function mentionKey(e){
+  if(!mq||e.target.id!=='ctext')return false;
+  if(e.key==='ArrowDown'||e.key==='ArrowUp'){
+    mq.idx=(mq.idx+(e.key==='ArrowDown'?1:-1)+mq.list.length)%mq.list.length;
+    document.querySelectorAll('#mpop [role=option]').forEach((b,i)=>b.setAttribute('aria-selected',i===mq.idx));
+    e.target.setAttribute('aria-activedescendant','mo-'+mq.list[mq.idx].id);
+    return true;
+  }
+  if(e.key==='Enter'||e.key==='Tab'){pickMention(mq.list[mq.idx].id);return true;}
+  if(e.key==='Escape'){closeMention();return true;}
+  return false;
 }
 
 /* ---- the chart ---- */
@@ -1580,12 +1783,31 @@ function dockHTML(){
    scale above them share the same axis. */
 let WIN={start:todayISO(),end:todayISO()};
 const upcomingFor=id=>((careDoc&&careDoc.plants&&careDoc.plants[id])||{}).upcoming||[];
+/* A plant's season, worked out one way for every bar, list and spine on the
+   page: the variety table, moved by what was recorded and what is expected,
+   then begun where this plant actually began. */
+function plantSpans(p,end){
+  const row=SEASON.find(r=>r.key===KEY_BY_ID[p.id]);
+  return withStart(seasonSpans(row?row.ph:[],(statusDoc.plants[p.id]||{}).history||[],
+    upcomingFor(p.id),end,{stage:p.stage,date:todayISO()}),p.started,p.startedHow||'sown');
+}
+/* The phase covering today, in the bar's own words. The plant's recorded
+   stage settles a tie on a boundary day, but is never itself shown: the bar
+   has one vocabulary and the Status text carries the nuance. */
+function currentSpan(p,spans){
+  const T=todayISO(),nowPh=phaseOfStage(p.stage);
+  return spans.find(([c,f,to])=>f<=T&&to>=T&&c===nowPh)||spans.find(([,f,to])=>f<=T&&to>=T)||null;
+}
+const currentPhaseWord=p=>{const s=currentSpan(p,plantSpans(p,WIN.end));return s?PHASE_LABEL[s[0]]||s[0]:'';};
+const currentPhaseCode=p=>{const s=currentSpan(p,plantSpans(p,WIN.end));return s?s[0]:'';};
+/* The phase the plant is in, as a tag in that phase's colour: it is the same
+   fact the bar shows, so it wears the bar's colour and outranks the dates. */
+const phaseTagHTML=p=>{const w=currentPhaseWord(p);
+  return w?`<em class="ptag-phase ${esc(currentPhaseCode(p))}">${esc(w)}</em>`:'';};
 function refreshWindow(){
   const list=plants();
   WIN=chartWindow({
-    spans:list.map(p=>seasonSpans((SEASON.find(r=>r.key===KEY_BY_ID[p.id])||{}).ph||[],
-      (statusDoc.plants[p.id]||{}).history||[],upcomingFor(p.id),null,
-      {stage:p.stage,date:todayISO()})),
+    spans:list.map(p=>plantSpans(p,null)),
     histories:list.map(p=>(statusDoc.plants[p.id]||{}).history||[]),
     upcomings:list.map(p=>upcomingFor(p.id)),
     today:todayISO(),monthsAhead:3});
@@ -1597,17 +1819,57 @@ const wpos=d=>{
   return Math.max(0,Math.min(100,(Date.parse(d+'T00:00:00Z')-a)/(b-a)*100));
 };
 
-const PHASE_LABEL={grow:'Growing',flower:'Flowering',fruit:'Green fruit',harvest:'Harvest'};
+/* Every phase name on the page comes from here, the legend included, so
+   renaming a phase is this line and the next. */
+const PHASE_LABEL={seed:'Seedling',grow:'Growing',flower:'Flowering',fruit:'Green fruit',harvest:'Harvest'};
 /* What a narrow segment says instead, so a short phase is still named. */
-const PHASE_SHORT={grow:'Grow',flower:'Flower',fruit:'Fruit',harvest:'Crop'};
+const PHASE_SHORT={seed:'Seed',grow:'Grow',flower:'Flower',fruit:'Fruit',harvest:'Crop'};
+/* How the plant arrived, said on the date it did. */
+const STARTED_HOW={sown:'sown',planted:'planted',bought:'bought',cutting:'from a cutting'};
+const startWord=p=>STARTED_HOW[p.startedHow]||'started';
+const cap=w=>w.charAt(0).toUpperCase()+w.slice(1);
+/* A date on the bar, with the way the plant arrived when it is that date. */
+const spanDate=(p,d)=>(p&&p.started&&d===p.started?startWord(p)+' ':'')+chartDate(d);
 const niceDate=d=>{const x=new Date(d+'T00:00:00Z');
   return `${x.getUTCDate()} ${['Jan','Feb','Mar','Apr','May','Jun','Jul','Aug','Sep','Oct','Nov','Dec'][x.getUTCMonth()]}`;};
+/* A bar can run past new year, so a date outside this year says which year it
+   is. Every tooltip and every dated row goes through this one, or the small
+   bar and the big one describe the same span differently. */
+const chartDate=d=>niceDate(d)+(d.slice(0,4)===todayISO().slice(0,4)?'':' '+d.slice(0,4));
 
-/* The legend sits once at the top of the section, not under every chart. */
+/* wpos clamps, so a position of 0 or 100 is no evidence that the date is on
+   the chart at all. Ask the window itself before drawing the today marker. */
+const inWindow=d=>d>=WIN.start&&d<=WIN.end;
+
+/* Which phases actually happened. A stage change I wrote down dates its phase,
+   and the stage the plant carries today is a recorded fact as well, since a
+   plant that never changed stage has no history at all. Everything else is a
+   guess, the variety table's or tonight's, however far back it sits. The bars
+   and the dated list all ask this one question, so they cannot disagree about
+   which parts of the year are recorded. */
+function recordedPhases(p){
+  const T=todayISO(),done=new Set();
+  for(const h of (statusDoc.plants[p.id]||{}).history||[]){
+    const ph=phaseOfStage(h.stage);
+    if(ph&&h.date&&h.date<=T)done.add(ph);
+  }
+  const now=phaseOfStage(p.stage);
+  if(now)done.add(now);
+  if(p.started&&p.started<=T)done.add('seed');   // the start date is a record
+  return done;
+}
+
+/* How much of a span is behind us and backed by a record, as an ISO date: the
+   one rule the ribbon, the big band and the dated list all draw from. */
+const spanSolidTo=(c,f,to,rec,T)=>rec.has(c)&&f<=T?(to<T?to:T):f;
+const spanTip=(p,c,f,to,solidTo)=>`${PHASE_LABEL[c]||c}, ${spanDate(p,f)} to ${chartDate(to)}`+
+  (solidTo>=to?'':solidTo>f?`, expected from ${chartDate(solidTo)}`:', expected');
+
+/* The legend sits once, above the first chart. Past and future share one
+   colour per phase now, so there is no Expected swatch: today is the line. */
 function legendHTML(){
   return `<div class="legend">${Object.entries(PHASE_LABEL).map(([k,l])=>
-    `<span><i class="sw ${k}"></i>${l}</span>`).join('')}
-    <span class="sep"></span><span><i class="sw future"></i>Expected</span></div>`;
+    `<span><i class="sw ${k}"></i>${l}</span>`).join('')}</div>`;
 }
 
 function monthScaleHTML(){
@@ -1615,48 +1877,81 @@ function monthScaleHTML(){
     `<b style="left:${wpos(t.date)}%">${t.label}</b>`).join('')}</div>`;
 }
 
-/* Everything up to today is what happened, everything after it is expectation,
-   so each span is drawn twice when it straddles today: solid, then faded. */
+/* Solid is recorded, pale is expected, and today is where one stops being
+   possible. A phase whose start nobody wrote down stays pale however long
+   ago it was, because the variety table guessed it: drawing it solid claimed
+   a record that does not exist, and the dated list underneath said so. Every
+   span draws at least one piece, so nothing in that list is missing here. */
 function seasonBarHTML(p){
-  const row=SEASON.find(r=>r.key===KEY_BY_ID[p.id]);
-  const spans=seasonSpans(row?row.ph:[],(statusDoc.plants[p.id]||{}).history||[],
-    upcomingFor(p.id),WIN.end,{stage:p.stage,date:todayISO()});
-  const T=todayISO(),t=wpos(T);
-  const piece=(c,f,to,future)=>{
-    const l=wpos(f),w=wpos(to)-l;
-    if(w<=0)return '';
-    const tip=`${PHASE_LABEL[c]||c}, ${niceDate(f)} to ${niceDate(to)}${future?' (expected)':''}`;
-    return `<i class="bar ${c}${future?' future':''}" style="left:${l}%;width:${Math.max(w,1.2)}%"
-      data-tip="${esc(tip)}" title="${esc(tip)}"></i>`;
-  };
-  return `<span class="track">${spans.map(([c,f,to])=>{
-      if(to<=T)return piece(c,f,to,false);
-      if(f>=T)return piece(c,f,to,true);
-      return piece(c,f,T,false)+piece(c,T,to,true);
-    }).join('')}
-    ${t>=0&&t<=100?`<i class="tline" style="left:${t}%" title="Today"></i>`:''}</span>`;
+  const spans=plantSpans(p,WIN.end);
+  const T=todayISO(),rec=recordedPhases(p);
+  const piece=(c,f,to,tip,end)=>
+    `<i class="bar ${c}${end}" style="left:${wpos(f)}%;width:${
+      Math.max(wpos(to)-wpos(f),0)}%" data-tip="${esc(tip)}"></i>`;
+  /* A ribbon this small cannot say anything in words, so it says it here
+     instead: the bar is one object with one sentence, not fourteen hoverable
+     slivers, and it is the same sentence whether you can see colour or not. */
+  const nowSpan=currentSpan(p,spans);
+  const next=spans.find(x=>x!==nowSpan&&x[1]>=T);
+  const low=c=>(PHASE_LABEL[c]||c).toLowerCase();
+  const say=`Season bar. ${nowSpan?low(nowSpan[0])+' now':'no phase marked today'}`+
+    (next?`, ${low(next[0])} expected from ${chartDate(next[1])}`:'')+'.';
+  return `<span class="track" role="img" aria-label="${esc(say)}">${spans.map(([c,f,to],i)=>
+      piece(c,f,to,spanTip(p,c,f,to,spanSolidTo(c,f,to,rec,T)),runEnds(i,spans.length))).join('')}
+    ${inWindow(T)?`<i class="tline" style="left:${wpos(T)}%" data-tip="Today"></i>`:''}</span>`;
+}
+
+/* A photo as a print taped to the page. The tilt comes from the photo id, so a
+   print keeps its angle from one render to the next instead of twitching. */
+const tilt=(id,max)=>{let h=0;for(const c of id)h=(h*31+c.charCodeAt(0))|0;return ((h>>>0)%(max*20+1))/10-max;};
+/* act and val say what a press does: on the page a print opens the plant's
+   photos, in the gallery it opens that one photo. */
+function snapHTML(x,name,cls='',act='gallery',val=x.plant){
+  const when=x.date?niceDate(x.date):'';
+  return `<button class="snap ${cls}" data-act="${act}" data-val="${esc(val)}" style="--tilt:${tilt(x.id,4).toFixed(1)}deg"
+    aria-label="${act==='gallery'?`All photos of ${esc(name)}, newest ${esc(when)}`:`Photo of ${esc(name)}${when?', '+esc(when):''}`}">
+    <img src="${photoURL(x.id)}" alt="" loading="lazy" decoding="async"><span class="cap">${esc(when)}</span></button>`;
+}
+/* The plant page keeps every print in one pile, newest on top. Two more peek
+   out behind it so the pile reads as a pile; the viewer walks the rest. */
+function stackHTML(p){
+  const list=plantPhotos(shown(PHOTOS),p.id);
+  if(!list.length)return '';
+  return `<div class="stack">
+    <div class="pile">${list.slice(1,3).reverse().map((x,i)=>`<span class="under u${i}" aria-hidden="true">
+      <img src="${photoURL(x.id)}" alt="" loading="lazy"></span>`).join('')}
+      ${snapHTML(list[0],p.name,'top')}</div>
+    ${list.length>1?`<button class="stack-n" data-act="gallery" data-val="${esc(p.id)}">See all ${list.length} photos</button>`:''}
+  </div>`;
 }
 
 /* Four rows: what it is and where it is in the season, when it was watered,
-   what it is doing now, and what to do about it. */
+   what it is doing now, and what to do about it. The newest photo is taped on
+   beside the two sentences. */
 function plantRowHTML(p){
   const care=(careDoc&&careDoc.plants&&careDoc.plants[p.id])||null;
   const status=p.observations||'';
-  return `<article class="prow ${touched.has(p.id)?'touched':''}">
+  const latest=plantPhotos(shown(PHOTOS),p.id)[0];
+  return `<article class="prow ${touched.has(p.id)?'touched':''} ${latest?'has-snap':''}" data-pid="${esc(p.id)}">
     <div class="phead">
       <button class="pname" data-act="plant" data-val="${esc(p.id)}">
         <span class="art">${avatarFor(p.id)}</span>
-        <b>${esc(p.name)}</b><em>${esc(p.stage)}</em>
+        <b>${esc(p.name)}</b>${phaseTagHTML(p)}
       </button>
       <div class="chart">${monthScaleHTML()}${seasonBarHTML(p)}</div>
     </div>
-    <p class="status"><b class="lbl">Status${status?readAgo():''}</b><span>${
+    <div class="pbody">
+    ${latest?snapHTML(latest,p.name):''}
+    <p class="status"><b class="lbl">Status</b><span>${
       status?esc(status):'No reading yet.'}</span></p>
-    <p class="guide"><b class="lbl">Care</b><span>${care&&care.guidance?esc(care.guidance)
+    <p class="guide"><b class="lbl">Care</b><span>${
+      care&&care.guidance?esc(care.guidance)
       :'No guidance yet. Add a note, or wait for tonight\'s update.'}</span></p>
+    </div>
     <div class="wline"><b class="lbl">Water</b><span>
+      ${readAgo()}
       <span class="water">${esc(waterLabel(p.last,todayISO()))}</span>
-      <button class="waterbtn" data-act="water" data-val="${esc(p.id)}">💧 Water now</button>
+      <button class="waterbtn" data-act="water" data-val="${esc(p.id)}"><span class="drop">💧</span> Log water</button>
     </span></div>
   </article>`;
 }
@@ -1666,24 +1961,28 @@ function plantRowHTML(p){
    plant page it is that plant's own record. Either way it hangs off a spine
    tinted with the phase the plant was in, so the season reads down the page. */
 function phaseAt(pid,date){
-  const row=SEASON.find(r=>r.key===KEY_BY_ID[pid]);
-  const st=statusDoc.plants[pid]||{};
-  const spans=seasonSpans(row?row.ph:[],st.history||[],upcomingFor(pid),WIN.end,
-    {stage:st.stage,date:todayISO()});
+  /* The same spans the bars draw, so the spine and the bar agree. */
+  const p=plantById(pid);
+  const spans=p?plantSpans(p,WIN.end):[];
   const hit=spans.find(([,f,t])=>date>=f&&date<=t);
   return hit?hit[0]:'';
 }
 
 function tagsHTML(plants){
   return plants.map(t=>`<button class="ptag" data-act="plant" data-val="${esc(t.plantId)}"
-    title="Open ${esc(t.label)}"><span class="av">${avatarFor(t.plantId)}</span>${esc(t.label)}</button>`).join(' ');
+    ><span class="av">${avatarFor(t.plantId)}</span>${esc(t.label)}</button>`).join(' ');
 }
 
 function entryBodyHTML(e){
   const mentions=(e.assigned||[]).filter(a=>a.mention).map(a=>({
     plantId:a.plantId,mention:a.mention,label:shortName((plantById(a.plantId)||{}).name||a.plantId)}));
   const segs=tagEntryText(e.text,mentions);
-  return segs.map(sg=>sg.type==='tags'?tagsHTML(sg.plants):esc(sg.text)).join('');
+  /* A plant tagged by hand is not named in the words, so its tag goes after them. */
+  const inText=new Set(segs.filter(sg=>sg.type==='tags').flatMap(sg=>sg.plants.map(t=>t.plantId)));
+  const extra=(e.assigned||[]).filter(a=>!inText.has(a.plantId)&&plantById(a.plantId)).map(a=>({
+    plantId:a.plantId,label:shortName(plantById(a.plantId).name)}));
+  return segs.map(sg=>sg.type==='tags'?tagsHTML(sg.plants):esc(sg.text)).join('')+
+    (extra.length?` <span class="handtags">${tagsHTML(extra)}</span>`:'');
 }
 
 function shotsHTML(ids){
@@ -1695,7 +1994,8 @@ function shotsHTML(ids){
 
 function journalItemHTML(it){
   const editing_=editing&&editing.kind===it.kind&&editing.id===it.id;
-  return `<li class="jent ${it.phase?'ph-'+it.phase:''}">
+  const fresh=it.id===lastEntryId&&Date.now()-savedAt<1500;
+  return `<li class="jent ${it.phase?'ph-'+it.phase:''}${fresh?' fresh':''}">
     <div class="jdate">${dayLabel(it.date)}</div>
     <div class="jbody">
       ${editing_?editBoxHTML(it.kind,it.id,it.plantId,it.raw)
@@ -1708,15 +2008,14 @@ function journalItemHTML(it){
             <button class="lnk" data-act="${it.kind}-del"
               data-val="${esc(it.kind==='entry'?it.id:it.plantId)}" data-note="${esc(it.id)}">Delete</button>
           </div>`}
-      ${it.gapAfter?`<div class="jgap">${esc(it.gapAfter)}</div>`:''}
     </div></li>`;
 }
 
 function journalHTML(items,count){
   const groups=journalGroups(items);
   return `<div class="hd"><h2>Journal</h2><span class="meta">${count}</span></div>
-    ${groups.length?groups.map(g=>`<div class="jmonth">${esc(g.label)}</div>
-      <ol class="jlist">${g.entries.map(journalItemHTML).join('')}</ol>`).join('')
+    ${groups.length?`<div class="jwrap">${groups.map(g=>`<div class="jmonth">${esc(g.label)}</div>
+      <ol class="jlist">${g.entries.map(journalItemHTML).join('')}</ol>`).join('')}</div>`
       :'<div class="none">Nothing written yet. The box at the top is where it starts.</div>'}`;
 }
 
@@ -1770,31 +2069,6 @@ function wxAlertHTML(date){
     <b>${esc(a.ico)} ${esc(a.what)}</b><span>${esc(a.why)}</span></p>`).join('')}</div>`;
 }
 
-/* ---- what you wrote, and what the model made of it ---- */
-function entryHTML(e){
-  const who=(e.assigned||[]).map(a=>plantById(a.plantId)).filter(Boolean);
-  const shots=shown(PHOTOS.filter(x=>(e.photoIds||[]).includes(x.id)));
-  return `<article class="entry ${e.status==='pending'?'live':''}">
-    <p class="said">${esc(e.text)}</p>
-    ${e.status==='pending'?'<div class="none">Reading your note...</div>':''}
-    ${who.map(p=>{
-      const note=(p.notes||[]).find(n=>(e.assigned||[]).some(a=>a.noteId===n.id));
-      return `<div class="read"><span class="art">${avatarFor(p.id)}</span>
-        <span><b>${esc(p.name)}</b><span>${esc(note?note.text:'')}</span></span></div>`;}).join('')}
-    ${e.status==='unsorted'?`<div class="chips-row">
-      <span class="none">No plant recognised.</span>
-      ${(e.suggestions||[]).map(pid=>{const p=plantById(pid);return p?
-        `<button class="tick" data-act="assign" data-val="${esc(e.id)}" data-plant="${esc(pid)}">${esc(p.name)}</button>`:'';}).join('')}
-      <button class="tick" data-act="assign-pick" data-val="${esc(e.id)}">Choose a plant...</button></div>`:''}
-    ${shots.length?`<div class="shots">${shots.map(x=>`<button data-act="view" data-val="${esc(x.id)}">
-      <img src="${photoURL(x.id)}" alt="" loading="lazy"></button>`).join('')}</div>`:''}
-    <div class="entry-acts">
-      <button class="lnk" data-act="entry-edit" data-val="${esc(e.id)}">Edit</button>
-      <button class="lnk" data-act="entry-del" data-val="${esc(e.id)}">Delete</button>
-    </div>
-  </article>`;
-}
-
 /* The page is the list, so the list needs no heading of its own.
    One card level only: the plant. The area is a heading on the page above
    its grid, and the forecast is a block of its own above the balcony grid.
@@ -1816,78 +2090,65 @@ function allPlantsHTML(){
 /* The page works out the plant's season once and hands the same spans to the
    chart and to the dated list under it, so the two can never disagree. Same
    call, same arguments, as the small bar on the list page. */
-function pfullSpans(p){
-  const row=SEASON.find(r=>r.key===KEY_BY_ID[p.id]);
-  return seasonSpans(row?row.ph:[],(statusDoc.plants[p.id]||{}).history||[],
-    upcomingFor(p.id),WIN.end,{stage:p.stage,date:todayISO()});
-}
+function pfullSpans(p){ return plantSpans(p,WIN.end); }
 
-/* Which phases actually happened. A stage change I wrote down dates its phase,
-   and the stage the plant carries today is a recorded fact as well, since a
-   plant that never changed stage has no history at all. Everything else on the
-   chart is a guess: the variety table's, or tonight's guidance. */
-function pfullRecordedPhases(p){
-  const T=todayISO(),done=new Set();
-  for(const h of (statusDoc.plants[p.id]||{}).history||[]){
-    const ph=phaseOfStage(h.stage);
-    if(ph&&h.date&&h.date<=T)done.add(ph);
-  }
-  const now=phaseOfStage(p.stage);
-  if(now)done.add(now);
-  return done;
-}
-
-/* Dates read as they do everywhere else, with the year added only when it is
-   not this one, because a bar can run over new year. */
-const pfullDate=d=>niceDate(d)+(d.slice(0,4)===todayISO().slice(0,4)?'':' '+d.slice(0,4));
-
-/* The list bar is 6px because twenty of them share a page. There is one here,
-   so it gets the height to carry its own phase names, and the part of a phase
-   that has not happened yet is hatched as well as faded: colour on its own
-   never says "expected". */
+/* The list ribbon is nine pixels because fourteen of them share a page. There
+   is one bar here, so it gets the height to carry its own phase names, and
+   the part of a phase that has not happened yet is a pale tint. The dated
+   list below says it in words, because colour on its own never says
+   "expected". */
 const readAgo=()=>careDoc&&careDoc.generatedAt
-  ? `<i class="ago">read ${esc(relTime(careDoc.generatedAt))}</i>` : '';
+  ? `<i class="ago">Updated ${esc(relTime(careDoc.generatedAt))}</i>` : '';
 
-function pfullChartHTML(spans){
-  const T=todayISO(),t=wpos(T);
-  const seg=([c,f,to])=>{
-    const l=wpos(f),w=wpos(to)-l;
-    if(w<=0)return '';
-    const fl=f>=T?0:(wpos(T)-l)/w*100;
-    const tip=`${PHASE_LABEL[c]||c}, ${pfullDate(f)} to ${pfullDate(to)}`;
-    return `<i class="pfull-seg ${c}" style="left:${l}%;width:${w}%"
-      data-tip="${esc(tip)}" title="${esc(tip)}">${to>T?
-      `<i class="pfull-fut" style="left:${fl}%;width:${100-fl}%"></i>`:''}${w>=3?
+/* The coloured run is rounded at its own two ends, wherever it starts and
+   stops, rather than the grey track behind it being rounded at the window's
+   edges. Otherwise a season ending in early December ends square. */
+const runEnds=(i,n)=>(i===0?' first':'')+(i===n-1?' last':'');
+
+function pfullChartHTML(p,spans){
+  const T=todayISO(),t=wpos(T),rec=recordedPhases(p);
+  const seg=([c,f,to],i)=>{
+    const l=wpos(f),w=Math.max(wpos(to)-l,0);
+    const tip=spanTip(p,c,f,to,spanSolidTo(c,f,to,rec,T));
+    return `<i class="pfull-seg ${c}${runEnds(i,spans.length)}" style="left:${l}%;width:${w}%"
+      data-tip="${esc(tip)}">${w>=3?
       `<b><span class="lg">${esc(PHASE_LABEL[c]||c)}</span><span class="sm">${
         esc(PHASE_SHORT[c]||c)}</span></b>`:''}</i>`;
   };
-  const on=t>=0&&t<=100;
+  const on=inWindow(T);
   return `<div class="pfull-chart">${monthScaleHTML()}
-    <div class="pfull-track">${spans.map(seg).join('')}${on?
+    <div class="pfull-track">${spans.map(seg).join('')}${p.started&&inWindow(p.started)?
+      `<i class="pfull-startmk" style="left:${wpos(p.started)}%" data-tip="${
+        esc(cap(spanDate(p,p.started)))}"></i>`:''}${on?
       `<i class="pfull-today" style="left:${t}%"></i>`:''}</div>
     <div class="pfull-axis">${on?
       `<b class="pfull-todaylbl" style="left:${Math.min(Math.max(t,4),96)}%">Today</b>`:''}</div></div>`;
 }
 
 /* The same phases again, this time with their dates spelled out and each one
-   said to be recorded or expected, because a hatch is not a sentence. */
+   said to be recorded or expected, because a tint is not a sentence. The
+   recorded test is the one the bars draw from, so a row cannot say expected
+   next to a band drawn solid. */
 function pfullStagesHTML(p,spans){
   if(!spans.length)return '<p class="pfull-none">No season worked out for this one yet.</p>';
-  const T=todayISO(),done=pfullRecordedPhases(p);
-  /* One phase is now, never two. Where one span ends the day the next begins,
-     the plant's own stage settles which of them today belongs to. */
-  const nowPh=phaseOfStage(p.stage);
-  let at=spans.findIndex(([c,f,to])=>f<=T&&to>=T&&c===nowPh);
-  if(at<0)at=spans.findIndex(([,f,to])=>f<=T&&to>=T);
-  return `<ol class="pfull-stages">${spans.map(([c,f,to],i)=>{
-    const rec=f<=T&&done.has(c);
+  const T=todayISO(),done=recordedPhases(p);
+  /* One phase is now, never two: the same span the title word names. */
+  const at=spans.indexOf(currentSpan(p,spans));
+  const rows=`<ol class="pfull-stages">${spans.map(([c,f,to],i)=>{
+    /* Three honest words, not two: something logged, something already over
+       that nobody logged so its dates are the table's guess, and something
+       still to come. A finished phase is never called expected. */
+    const kind=f<=T&&done.has(c)?'recorded':to<=T?'estimated':'expected';
     return `<li class="pfull-stage">
       <i class="sw ${c}"></i>
       <span class="pfull-name">${esc(PHASE_LABEL[c]||c)}</span>
       ${i===at?'<em class="pfull-nowtag">now</em>':''}
-      <span class="pfull-when">${esc(pfullDate(f))} to ${esc(pfullDate(to))}</span>
-      <em class="pfull-mark ${rec?'recorded':'expected'}">${rec?'Recorded':'Expected'}</em>
+      <span class="pfull-when">${esc(cap(spanDate(p,f)))} to ${esc(chartDate(to))}</span>
+      <em class="pfull-mark ${kind}">${kind[0].toUpperCase()+kind.slice(1)}</em>
     </li>`;}).join('')}</ol>`;
+  /* A plant resting outside every phase has nothing marked now. Say so in
+     the bar's own terms rather than leaving the reader to spot it. */
+  return rows+(at<0?'<p class="pfull-none">Nothing on the bar is marked now.</p>':'');
 }
 
 function plantHTML(p){
@@ -1897,19 +2158,24 @@ function plantHTML(p){
   return `<div class="lgd-row">${legendHTML()}</div>
     <section class="sect pfull">
       <div class="hd"><span class="pfull-art">${avatarFor(p.id)}</span>
-        <h2>${esc(p.name)}</h2>
-        <span class="meta">${p.area==='indoor'?'Indoor':'Balcony'} · ${esc(p.stage)}</span></div>
-      ${pfullChartHTML(spans)}
+        <h2>${esc(p.name)}</h2>${phaseTagHTML(p)}
+        <span class="meta">${p.area==='indoor'?'Indoor':'Balcony'}</span></div>
+      ${pfullChartHTML(p,spans)}
       ${pfullStagesHTML(p,spans)}
+      <div class="pfull-body">
       <div class="pfull-say">
-        <p class="status"><b class="lbl">Status${p.observations?readAgo():''}</b><span>${
+        <p class="status"><b class="lbl">Status</b><span>${
           p.observations?esc(p.observations):'No reading yet.'}</span></p>
-        <p class="guide"><b class="lbl">Care</b><span>${care&&care.guidance?esc(care.guidance)
+        <p class="guide"><b class="lbl">Care</b><span>${
+          care&&care.guidance?esc(care.guidance)
           :'No guidance yet. Add a note, or wait for tonight\'s update.'}</span></p>
       </div>
+      ${stackHTML(p)}
+      </div>
       <div class="wline"><b class="lbl">Water</b><span>
+        ${readAgo()}
         <span class="water">${esc(waterLabel(p.last,todayISO()))}</span>
-        <button class="waterbtn" data-act="water" data-val="${esc(p.id)}">💧 Water now</button>
+        <button class="waterbtn" data-act="water" data-val="${esc(p.id)}"><span class="drop">💧</span> Log water</button>
       </span></div>
     </section>
 
@@ -1977,7 +2243,6 @@ function renderAll(){
           Combines plant photos, logs, and local weather data with AI to forecast
           needs and provide timely care guidance.</p>
       </div>
-      <span class="fresh">${careDoc&&careDoc.generatedAt?'Guidance updated '+relTime(careDoc.generatedAt):'No guidance yet'}</span>
      </header>
      ${navBar()}
      ${dockHTML()}
@@ -2012,40 +2277,106 @@ function wireFooter(){
 }
 
 
+/* ================= life ================= */
+/* Everything that moves asks this first. */
+const calm=matchMedia('(prefers-reduced-motion: reduce)');
+const rnd=(a,b)=>a+Math.random()*(b-a);
+/* A handful of drops or leaves from the middle of an element. They live on
+   the body, not the page, so a re-render underneath cannot cut them short. */
+function burst(el,kind){
+  if(calm.matches||!el||!el.isConnected)return;
+  const r=el.getBoundingClientRect(),x=r.left+r.width/2,y=r.top+r.height/2;
+  const n=kind==='water'?7:6;
+  for(let i=0;i<n;i++){
+    const d=document.createElement('i');d.className='fx fx-'+kind;document.body.appendChild(d);
+    const at=`translate(${x}px,${y}px)`;
+    const frames=kind==='water'
+      ? (()=>{const dx=(i-(n-1)/2)*9+rnd(-4,4);return [
+          {transform:`${at} translate(-50%,-50%) scale(.5)`,opacity:0},
+          {transform:`${at} translate(calc(-50% + ${dx*.35}px),calc(-50% - ${rnd(10,18)}px)) scale(1)`,opacity:1,offset:.2},
+          {transform:`${at} translate(calc(-50% + ${dx}px),calc(-50% + ${rnd(26,44)}px)) scale(.7)`,opacity:0}];})()
+      : (()=>{const dx=rnd(-46,46),rot=rnd(-240,240);return [
+          {transform:`${at} translate(-50%,-50%) rotate(0) scale(.4)`,opacity:0},
+          {transform:`${at} translate(calc(-50% + ${dx*.4}px),calc(-50% - 26px)) rotate(${rot*.4}deg) scale(1)`,opacity:1,offset:.25},
+          {transform:`${at} translate(calc(-50% + ${dx}px),calc(-50% - ${rnd(60,90)}px)) rotate(${rot}deg) scale(.8)`,opacity:0}];})();
+    d.animate(frames,{duration:kind==='water'?rnd(650,850):rnd(1000,1300),
+      easing:kind==='water'?'cubic-bezier(.3,.1,.6,1)':'cubic-bezier(.2,.7,.3,1)',delay:i*18}).onfinish=()=>d.remove();
+  }
+}
+/* A card that was just watered soaks it up, without waiting for a re-render. */
+function soak(pid){
+  const c=document.querySelector(`.plist .prow[data-pid="${CSS.escape(pid)}"]`);if(!c)return;
+  c.classList.remove('wet');void c.offsetWidth;c.classList.add('wet');
+  setTimeout(()=>c.isConnected&&c.classList.remove('wet'),1700);
+}
+/* What arrives on screen after a load or a change of plant, in reading order. */
+const arrivals=()=>[...document.querySelectorAll('#page > .areahd, #page > .lgd-row, .plist .prow, #page > .sect')];
+/* The first visit: cards come up one after another, their season bars grow
+   from the left and their prints are laid down. Runs once, after the data
+   has arrived, so a re-render cannot restart it halfway. */
+function playIntro(){
+  document.documentElement.classList.remove('pre');
+  if(calm.matches)return;
+  const ease='cubic-bezier(.2,.7,.2,1)';
+  arrivals().forEach((el,i)=>{
+    const delay=Math.min(i,12)*55;
+    el.animate([{opacity:0,transform:'translateY(16px)'},{opacity:1,transform:'none'}],{duration:540,delay,easing:ease,fill:'backwards'});
+    el.querySelectorAll('.track,.pfull-track').forEach(t=>t.animate(
+      [{clipPath:'inset(0 100% 0 0)'},{clipPath:'inset(0 0 0 0)'}],{duration:900,delay:delay+220,easing:'cubic-bezier(.4,0,.2,1)',fill:'backwards'}));
+    el.querySelectorAll('.pbody > .snap, .pile').forEach(sn=>{
+      const t=sn.classList.contains('pile')?'0deg':sn.style.getPropertyValue('--tilt')||'0deg';
+      sn.animate([{opacity:0,transform:`translateY(-18px) rotate(calc(${t} - 12deg)) scale(1.08)`},
+        {opacity:1,transform:`rotate(${t})`}],{duration:560,delay:delay+360,easing:'cubic-bezier(.3,1.4,.5,1)',fill:'backwards'});
+    });
+  });
+}
+/* Changing plant: the new content fades up, quicker than the first visit. */
+function turnPage(){
+  if(calm.matches)return;
+  arrivals().forEach((el,i)=>el.animate([{opacity:0,transform:'translateY(10px)'},{opacity:1,transform:'none'}],
+    {duration:320,delay:Math.min(i,8)*35,easing:'cubic-bezier(.2,.7,.2,1)',fill:'backwards'}));
+}
+
 /* ================= the note ================= */
-/* One composer, at the top of the page. A note carries the plant the nav has
-   selected, so the distiller is told the subject instead of guessing it. */
+/* One composer, at the top of the page. A note carries the plants it is
+   tagged with, the one the nav has selected and any named with @, so the
+   distiller is not asked to guess them. */
 const staged={top:[],watered:false};
 let draft='';
-let lastEntryId=null;
-function clearDraft(){staged.top.forEach(s=>URL.revokeObjectURL(s.url));staged.top=[];staged.watered=false;draft='';}
+let lastEntryId=null,savedAt=0;
+function clearDraft(){staged.top.forEach(s=>URL.revokeObjectURL(s.url));staged.top=[];staged.watered=false;draft='';closeMention();}
 async function saveEntry(){
   const text=draft.trim();
   if(!text&&!staged.top.length)return;
-  const date=todayISO(),plantId=V.plant||null;
+  const date=todayISO(),tags=noteTags();
   const btn=document.querySelector('[data-act="save"]');if(btn)btn.disabled=true;
   /* The watering is written BEFORE the entry. Posting the entry kicks off a
      re-plan that reads status:garden and writes it back, so a watering saved
      after the post is read stale and overwritten. */
-  if(staged.watered&&plantId){
-    const rw=await apiWrite('PUT','/api/status/'+encodeURIComponent(plantId),
-      JSON.stringify({lastWatered:date}),'application/json');
-    if(!rw||!rw.ok){toast('Could not save. Try again.');if(btn)btn.disabled=false;return;}
+  if(staged.watered&&tags.length){
+    for(const id of tags){
+      const rw=await apiWrite('PUT','/api/status/'+encodeURIComponent(id),
+        JSON.stringify({lastWatered:date}),'application/json');
+      if(!rw||!rw.ok){toast('Could not save. Try again.');if(btn)btn.disabled=false;return;}
+    }
     await loadStatus();
   }
   const photoIds=[];
   for(const s of staged.top){
-    const rec=await uploadOne(s.blob,date,s.plantId||plantId||'');
+    /* One tag says what the photo shows. Several leave it for the server to
+       sort out among just those plants. */
+    const rec=await uploadOne(s.blob,date,tags.length===1?tags[0]:'');
     if(!rec){if(btn)btn.disabled=false;return;}
     photoIds.push(rec.id);
   }
   const r=await apiWrite('POST','/api/entries',
-    JSON.stringify({date,text,photoIds,...(plantId?{plantId}:{})}),'application/json');
+    JSON.stringify({date,text,photoIds,...(tags.length?{plantIds:tags,mentions:noteMentions(text)}:{})}),'application/json');
   if(!r||!r.ok){toast('Could not save. Try again.');if(btn)btn.disabled=false;return;}
   const entry=await r.json();
   entriesDoc={...entriesDoc,entries:[...entriesDoc.entries,entry]};
   store.set('entriesDoc',entriesDoc);
-  lastEntryId=entry.id;
+  lastEntryId=entry.id;savedAt=Date.now();
+  burst(document.querySelector('[data-act="save"]'),'leaf');
   clearDraft();renderAll();refreshSoon();
 }
 
@@ -2054,54 +2385,95 @@ let fileMode=null;
 const ACTIONS={
   plant:pid=>{goTo(pid,true);window.scrollTo({top:0,behavior:'smooth'});},
   all:()=>goTo(null,true),
-  month:v=>{view.m+=+v;
-    if(view.m<0){view.m=11;view.y--;} if(view.m>11){view.m=0;view.y++;}
-    renderAll();},
-  fold:()=>{V.dockMin=!V.dockMin;renderAll();if(!V.dockMin)setTimeout(()=>$('#ctext')?.focus(),30);},
   save:()=>saveEntry(),
   attach:()=>{$('#ph-input').click();},
   unstage:i=>{URL.revokeObjectURL(staged.top[i].url);staged.top.splice(i,1);renderAll();},
-  filter:v=>{V.feedFilter=v;renderAll();},
   view:id=>viewPhoto(id),
-  water:async id=>{
+  gallery:pid=>openGallery(pid),
+  gview:id=>viewPhoto(id,plantPhotos(shown(PHOTOS),galPlant).map(x=>x.id)),
+  water:async (id,el)=>{
+    burst(el,'water');
     const r=await apiWrite('PUT','/api/status/'+encodeURIComponent(id),
       JSON.stringify({lastWatered:todayISO()}),'application/json');
     if(!r||!r.ok){toast('Could not save. Try again.');return;}
-    await loadStatus();renderAll();
+    await loadStatus();renderAll();soak(id);
   },
-  'watered-chk':(_,el)=>{staged.watered=el.checked;},
+  'watered-chk':(_,el)=>{staged.watered=el.checked;if(el.checked)burst(el,'water');},
+  'mention-pick':id=>pickMention(id),
   'entry-del':id=>deleteEntry(id),
   'entry-edit':id=>{editing={kind:'entry',id};renderAll();focusEdit();},
   'note-del':(pid,el)=>deleteNote(pid,el.dataset.note),
   'note-edit':(id,el)=>{editing={kind:'note',id,plantId:el.dataset.plant};renderAll();focusEdit();},
   'edit-cancel':()=>{editing=null;renderAll();},
   'edit-save':(id,el)=>saveEdit(el.dataset.kind,id,el.dataset.plant),
-  assign:(id,el)=>assignEntry(id,[el.dataset.plant],el),
-  'assign-pick':async id=>{const pid=await pickPlant('Which plant is this note about?');if(pid)assignEntry(id,[pid]);},
-  'entry-retry':id=>retryEntry(id),
   cover:()=>openCover(),
   escape:()=>{setBusy('');renderAll();},
 };
-/* One tooltip element follows the pointer over any bar that carries a tip. */
+document.addEventListener('keyup',e=>{
+  if(e.target.id==='ctext'&&(e.key==='ArrowLeft'||e.key==='ArrowRight'||e.key==='Home'||e.key==='End'))updateMention(e.target);
+});
+document.addEventListener('focusout',e=>{if(e.target.id==='ctext')setTimeout(closeMention,120);});
+/* A press on the list must not take focus from the note first. */
+document.addEventListener('pointerdown',e=>{if(e.target.closest('#mpop'))e.preventDefault();});
+/* One tooltip for the page. Over a chart it follows the pointer and answers
+   at once, because a chart is read by moving across it. Over a button it
+   waits a beat, then sits under the button; once one tip is up, the next
+   one along answers at once, the way toolbars usually behave. Keyboard
+   focus shows a button's tip too. */
 const tipEl=()=>document.getElementById('tip');
-document.addEventListener('pointerover',e=>{
-  const b=e.target.closest('[data-tip]');const el=tipEl();if(!el)return;
-  if(!b){el.classList.remove('on');return;}
-  el.textContent=b.dataset.tip;el.classList.add('on');
-  placeTip(e.clientX,e.clientY);
-});
-document.addEventListener('pointermove',e=>{
-  const el=tipEl();if(el&&el.classList.contains('on'))placeTip(e.clientX,e.clientY);
-});
-document.addEventListener('pointerout',e=>{
-  if(e.target.closest('[data-tip]'))tipEl()?.classList.remove('on');
-});
+let tipFor=null,tipTimer=0,tipWarmUntil=0;
+const pinned=b=>b.matches('button,[role="button"]');
+function showTip(b,x,y){
+  const el=tipEl();if(!el||!b.isConnected)return;
+  tipFor=b;el.textContent=b.dataset.tip;
+  el.classList.toggle('dark',!!b.closest('#viewer'));
+  el.classList.toggle('pin',pinned(b));
+  if(pinned(b))pinTip(b);else placeTip(x,y);
+  el.classList.add('on');
+}
+function hideTip(){
+  clearTimeout(tipTimer);tipFor=null;
+  const el=tipEl();
+  if(el&&el.classList.contains('on')){el.classList.remove('on');tipWarmUntil=Date.now()+500;}
+}
+function pinTip(b){
+  const el=tipEl(),r=b.getBoundingClientRect(),w=el.offsetWidth,h=el.offsetHeight;
+  const below=r.bottom+h+14<innerHeight,cx=r.left+r.width/2;
+  const left=Math.max(6,Math.min(cx-w/2,innerWidth-w-6));
+  el.dataset.side=below?'below':'above';
+  el.style.setProperty('--ax',(cx-left)+'px');
+  el.style.left=left+'px';el.style.top=(below?r.bottom+10:r.top-h-10)+'px';
+}
 function placeTip(x,y){
   const el=tipEl();if(!el)return;
   const w=el.offsetWidth,h=el.offsetHeight;
+  el.dataset.side='above';el.style.removeProperty('--ax');
   el.style.left=Math.max(6,Math.min(x+14,innerWidth-w-6))+'px';
   el.style.top=Math.max(6,y-h-12)+'px';
 }
+document.addEventListener('pointerover',e=>{
+  const b=e.target.closest('[data-tip]');
+  if(b===tipFor)return;
+  if(!b){hideTip();return;}
+  clearTimeout(tipTimer);
+  const x=e.clientX,y=e.clientY,warm=tipEl()?.classList.contains('on')||Date.now()<tipWarmUntil;
+  if(!pinned(b)||warm)showTip(b,x,y);
+  else{tipFor=b;tipTimer=setTimeout(()=>{if(tipFor===b)showTip(b,x,y);},380);}
+});
+document.addEventListener('pointermove',e=>{
+  const el=tipEl();if(el&&el.classList.contains('on')&&!el.classList.contains('pin'))placeTip(e.clientX,e.clientY);
+});
+document.addEventListener('pointerout',e=>{
+  const b=e.target.closest('[data-tip]');
+  if(b&&!(e.relatedTarget&&b.contains(e.relatedTarget)))hideTip();
+});
+document.addEventListener('focusin',e=>{
+  const b=e.target.closest&&e.target.closest('[data-tip]');
+  if(b&&pinned(b)&&b.matches(':focus-visible'))showTip(b);
+});
+document.addEventListener('focusout',hideTip);
+document.addEventListener('pointerdown',hideTip,true);
+addEventListener('scroll',hideTip,{passive:true,capture:true});
 document.addEventListener('click',e=>{
   const el=e.target.closest('[data-act]');if(!el)return;
   if(busy&&el.dataset.act!=='escape')return;      /* the lock answers, nothing else */
@@ -2114,16 +2486,18 @@ document.addEventListener('click',e=>{
 document.addEventListener('input',e=>{
   if(!e.target.dataset.ta)return;
   draft=e.target.value;
+  if(e.target.id==='ctext'){updateMention(e.target);syncWatered();}
   const b=document.querySelector('[data-act="save"]');
   if(b){b.disabled=!draft.trim()&&!staged.top.length;b.classList.toggle('on',!!draft.trim());}
   const d=document.querySelector('.dock');if(d)d.classList.toggle('tall',!!draft.trim());
 });
 document.addEventListener('keydown',e=>{
+  if(mentionKey(e)){e.preventDefault();e.stopPropagation();return;}
   if(e.key==='Escape'){
     if($('#unlock').classList.contains('open'))closeUnlock(null);
     else if($('#coverpick').classList.contains('open'))closeCover();
     else if($('#picker').classList.contains('open'))closePicker(null);
-    else if($('#viewer').classList.contains('on'))closeViewer();
+    else if(viewerOn()||galPlant)stepBack();
     else if(!busy&&V.plant){goTo(null,true);}
     return;
   }
@@ -2145,23 +2519,27 @@ $('#ph-input').onchange=async e=>{
   }
   for(const f of files){
     const blob=await shrink(f);
-    staged.top.push({blob,url:URL.createObjectURL(blob),plantId:V.plant||''});
+    staged.top.push({blob,url:URL.createObjectURL(blob)});
   }
   renderAll();
 };
 
 /* ================= go ================= */
 V.plant=plantFromPath();
+if(!calm.matches)document.documentElement.classList.add('pre');
 renderAll();
-if(!forecast||forecast.fetched!==todayISO())loadWx();
-loadStatus().then(async()=>{
-  await seedStatus();
-  if(V.plant&&!plantById(V.plant)){V.plant=null;history.replaceState({},'','/');}
-  syncTitle();renderAll();
-});
-loadPlan().then(renderAll);
-loadEntries().then(renderAll);
-loadPhotos();loadCover();
+const loading=[
+  !forecast||forecast.fetched!==todayISO()?loadWx():null,
+  loadStatus().then(async()=>{
+    await seedStatus();
+    if(V.plant&&!plantById(V.plant)){V.plant=null;history.replaceState({},'','/');}
+    syncTitle();renderAll();
+  }),
+  loadPlan().then(renderAll),
+  loadEntries().then(renderAll),
+  loadPhotos(),loadCover()];
+/* The intro waits for the data, but never longer than a moment. */
+Promise.race([Promise.allSettled(loading),new Promise(r=>setTimeout(r,1400))]).then(playIntro);
 addEventListener('visibilitychange',()=>{
   if(document.hidden)return;
   Promise.all([loadEntries(),loadStatus()]).then(refreshUI);

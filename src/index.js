@@ -2,7 +2,7 @@
 // Viewing photos is public; adding / editing / deleting requires the UPLOAD_PASS secret.
 
 import { readStatus, writeStatus, KEYS, upsertPlant, applyNoteOp, readCare, dropDerivedNotes } from './garden.js';
-import { readEntries, writeEntries, addEntry, assignEntry, editEntry, deleteEntry } from './entries.js';
+import { readEntries, writeEntries, addEntry, assignEntry, editEntry, deleteEntry, taggedPlantIds, handNoteText } from './entries.js';
 import { readSeed } from './seed.js';
 import { replan } from './planner.js';
 import { distill } from './distill.js';
@@ -181,8 +181,17 @@ async function handleEntries(req, env, ctx, url) {
     const doc = addEntry(await readEntries(env), body, Date.now());
     await writeEntries(env, doc);
     const entry = doc.entries[doc.entries.length - 1];
-    // A plant-page entry already knows its plant, so it skips the model entirely.
-    if (body.plantId) ctx.waitUntil(assignByHand(env, entry, [body.plantId]).then(() => replan(env, { trigger: 'entry' })));
+    // A tagged entry already knows its plants, so its words skip the model. With
+    // several tags the photos still need sorting, but only among those plants.
+    const tagged = taggedPlantIds(body);
+    if (tagged.length) ctx.waitUntil((async () => {
+      await assignByHand(env, entry, tagged, Array.isArray(body.mentions) ? body.mentions : []);
+      if (tagged.length > 1 && entry.photoIds.length) {
+        const pool = (await roster(env)).filter((p) => tagged.includes(p.id));
+        await distill(env, entry.id, pool, { photosOnly: true });
+      }
+      await replan(env, { trigger: 'entry' });
+    })());
     else ctx.waitUntil(distill(env, entry.id, await roster(env)));
     return json(entry, 201);
   }
@@ -193,15 +202,15 @@ async function handleEntries(req, env, ctx, url) {
     const doc = await readEntries(env);
     const entry = doc.entries.find((e) => e.id === id);
     if (!entry) return new Response('Not found', { status: 404 });
-    if (body.plantIds) {                       // the gardener picked the plants themselves
-      await unlinkNotes(env, entry);
-      await assignByHand(env, entry, body.plantIds);
-      ctx.waitUntil(replan(env, { trigger: 'entry' }));
-      return json((await readEntries(env)).entries.find((e) => e.id === id));
-    }
     await unlinkNotes(env, entry);
     const next = editEntry(doc, id, body, Date.now());
     await writeEntries(env, next);
+    const tagged = taggedPlantIds({ mentions: body.mentions });
+    if (tagged.length) {                       // reworded with @names: those plants, no guessing
+      await assignByHand(env, next.entries.find((e) => e.id === id), tagged, body.mentions);
+      ctx.waitUntil(replan(env, { trigger: 'entry' }));
+      return json((await readEntries(env)).entries.find((e) => e.id === id));
+    }
     ctx.waitUntil(distill(env, id, await roster(env)));
     return json(next.entries.find((e) => e.id === id));
   }
@@ -238,17 +247,22 @@ async function unlinkNotes(env, entry) {
 
 // Assignment without the model: the entry's own words go straight onto the chosen plants.
 // Writes only — the caller schedules the replan, which must never block the response.
-async function assignByHand(env, entry, plantIds) {
+// mentions ({plantId, mention}) are the @names as typed, kept so the journal can tag them.
+async function assignByHand(env, entry, plantIds, mentions = []) {
   const now = Date.now();
+  const said = Object.fromEntries(mentions.filter((m) => m && typeof m.mention === 'string'
+    && entry.text.includes(m.mention)).map((m) => [m.plantId, m.mention]));
+  const text = handNoteText(entry.text, Object.values(said).map((mention) => ({ mention })));
   const status = await readStatus(env);
   const plants = { ...status.plants };
   const assigned = [];
   plantIds.filter((pid) => plants[pid]).forEach((pid, i) => {
-    if (!entry.text) { assigned.push({ plantId: pid, noteId: null }); return; }   // photo-only entry
+    const tag = said[pid] ? { mention: said[pid] } : {};
+    if (!entry.text) { assigned.push({ plantId: pid, noteId: null, ...tag }); return; }   // photo-only entry
     const noteId = `note-${now}-${i}`;
     plants[pid] = { ...plants[pid], updatedAt: now,
-      notes: [...(plants[pid].notes || []), { id: noteId, date: entry.date, text: entry.text, createdAt: now, entryId: entry.id }] };
-    assigned.push({ plantId: pid, noteId });
+      notes: [...(plants[pid].notes || []), { id: noteId, date: entry.date, text, createdAt: now, entryId: entry.id }] };
+    assigned.push({ plantId: pid, noteId, ...tag });
   });
   await writeStatus(env, { ...status, updatedAt: now, plants });
   await writeEntries(env, assignEntry(await readEntries(env), entry.id, { assigned }, now));

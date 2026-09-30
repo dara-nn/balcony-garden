@@ -55,3 +55,19 @@ export function deleteEntry(doc, id, now) {
   if (!doc.entries.some((e) => e.id === id)) throw new Error('unknown entry');
   return { ...doc, updatedAt: now, entries: doc.entries.filter((e) => e.id !== id) };
 }
+
+/* The plants the gardener tagged: @-mentions in the text, plus the plant page's
+   own plant. `plantId` and `plantIds` are the older forms, still read. */
+export function taggedPlantIds(body) {
+  const list = Array.isArray(body?.plantIds) ? body.plantIds : [];
+  const named = Array.isArray(body?.mentions) ? body.mentions.map((m) => m?.plantId) : [];
+  return [...new Set([...list, body?.plantId, ...named].filter((x) => typeof x === 'string' && x))];
+}
+
+/* What lands on each plant from an @-tagged note: the words as written, with
+   the @ taken off each name so the note reads as plain text on the plant page. */
+export function handNoteText(text, mentions) {
+  let out = text || '';
+  for (const m of mentions || []) if (m?.mention) out = out.split(m.mention).join(m.mention.replace(/^@/, ''));
+  return out;
+}

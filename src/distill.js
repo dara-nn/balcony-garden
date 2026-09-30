@@ -128,8 +128,10 @@ async function tagPhoto(env, photoId, plantId) {
   await env.PHOTOS.put('photo:' + photoId, cur.value, { metadata: { ...(cur.metadata || {}), plant: plantId } });
 }
 
-/* Runs in ctx.waitUntil after the entry is already saved, so it must never throw. */
-export async function distill(env, entryId, roster) {
+/* Runs in ctx.waitUntil after the entry is already saved, so it must never throw.
+   photosOnly: the gardener already tagged the plants, so only the photos are
+   sorted; the notes, the entry and the replan are left to the caller. */
+export async function distill(env, entryId, roster, { photosOnly = false } = {}) {
   try {
     const entriesDoc = await readEntries(env);
     const entry = entriesDoc.entries.find((e) => e.id === entryId);
@@ -146,6 +148,7 @@ export async function distill(env, entryId, roster) {
       if (part) untagged.push({ id: pid, part });
     }
 
+    if (photosOnly && !untagged.length) return;
     const body = buildDistillBody(entry, roster, untagged);
     const url = `https://generativelanguage.googleapis.com/v1beta/models/${MODEL}:generateContent`;
     let res;
@@ -153,14 +156,19 @@ export async function distill(env, entryId, roster) {
       res = await fetch(url, { method: 'POST',
         headers: { 'content-type': 'application/json', 'x-goog-api-key': env.GEMINI_API_KEY },
         body: JSON.stringify(body) });
-    } catch { return void await markFailed(env, entryId, 'network'); }
-    if (!res.ok) return void await markFailed(env, entryId, 'model ' + res.status);
+    } catch { return void (photosOnly || await markFailed(env, entryId, 'network')); }
+    if (!res.ok) return void (photosOnly || await markFailed(env, entryId, 'model ' + res.status));
 
     let result;
     try { result = parseDistillResponse(await res.json()); }
-    catch (e) { return void await markFailed(env, entryId, e.message); }
+    catch (e) { return void (photosOnly || await markFailed(env, entryId, e.message)); }
 
     const merged = mergeDistill(status, entriesDoc, entry, result, Date.now(), untagged.map((p) => p.id));
+    if (photosOnly) {
+      const pool = new Set(roster.map((p) => p.id));
+      for (const t of merged.photoTags) if (pool.has(t.plantId)) await tagPhoto(env, t.photoId, t.plantId);
+      return;
+    }
     await writeStatus(env, merged.status);
     await writeEntries(env, merged.entries);
     for (const t of merged.photoTags) await tagPhoto(env, t.photoId, t.plantId);

@@ -1,6 +1,6 @@
 import { test } from 'node:test';
 import assert from 'node:assert/strict';
-import { readEntries, ENTRY_KEY, addEntry, assignEntry, editEntry, deleteEntry } from '../src/entries.js';
+import { readEntries, ENTRY_KEY, addEntry, assignEntry, editEntry, deleteEntry, taggedPlantIds, handNoteText } from '../src/entries.js';
 
 function fakeKV(initial = {}) {
   const m = new Map(Object.entries(initial));
@@ -87,4 +87,22 @@ test('operations on an unknown entry throw', () => {
   assert.throws(() => assignEntry(empty(), 'nope', { assigned: [] }, 1), /unknown entry/);
   assert.throws(() => editEntry(empty(), 'nope', { text: 'x' }, 1), /unknown entry/);
   assert.throws(() => deleteEntry(empty(), 'nope', 1), /unknown entry/);
+});
+
+test('taggedPlantIds merges the old single plantId with the new list, no repeats', () => {
+  assert.deepEqual(taggedPlantIds({ plantId: 'a' }), ['a']);
+  assert.deepEqual(taggedPlantIds({ plantIds: ['a', 'b'], plantId: 'a' }), ['a', 'b']);
+  assert.deepEqual(taggedPlantIds({ plantIds: ['b', '', null, 'b'] }), ['b']);
+  assert.deepEqual(taggedPlantIds({}), []);
+  assert.deepEqual(taggedPlantIds({ plantIds: 'a' }), []);
+});
+
+test('taggedPlantIds also reads the @mentions', () => {
+  assert.deepEqual(taggedPlantIds({ plantId: 'a', mentions: [{ plantId: 'b', mention: '@B' }, { plantId: 'a' }] }), ['a', 'b']);
+});
+
+test('handNoteText drops the @ from each mention, keeps the name', () => {
+  assert.equal(handNoteText('@Basil 1 and @Mint need water', [{ mention: '@Basil 1' }, { mention: '@Mint' }]),
+    'Basil 1 and Mint need water');
+  assert.equal(handNoteText('plain', []), 'plain');
 });
