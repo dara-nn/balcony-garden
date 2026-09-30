@@ -91,7 +91,11 @@
      for a different face, and the leading closes to the 1.11 of the specimen. */
   .mast h1{font-family:var(--display);font-size:clamp(var(--t7),3vw,var(--t8));
     font-weight:400;line-height:1.12;letter-spacing:0}
-  .mast .where{font-size:var(--t3);color:var(--dim)}
+  /* The title and the sentence under it are one block, so the freshness note
+     still sits at the far end of the row rather than under the paragraph. */
+  .mast .mtitle{flex:1 1 32ch;min-width:0}
+  .mast .blurb{margin:var(--s2) 0 0;max-width:58ch;font-size:var(--t3);
+    line-height:1.5;color:var(--dim)}
   .mast .fresh{margin-left:auto;font-size:var(--t2);color:var(--dim)}
 
   /* ---- a section is a card ---- */
@@ -202,20 +206,40 @@
   .plist .wline .lbl{display:none}
   .plist .wline > span{flex:1}
   .plist .waterbtn{margin-left:auto}
+  /* The water row's top margin is auto, which collapses to nothing once the
+     card is full, so the last paragraph was landing on the rule. This is the
+     floor under it, whether care or status is the one that ends the card. */
+  .plist .prow > p:last-of-type{margin-bottom:var(--s4)}
   /* The area name labels the grid under it from the page itself: no box, no
      rule, nothing that would read as a second card around the plants. */
   .areahd{display:flex;align-items:baseline;gap:var(--s2);flex-wrap:wrap;
-    margin:0 0 var(--s3);font-family:var(--display);font-size:var(--t6);
+    margin:0 0 var(--s3)}
+  .areahd h2{font-family:var(--display);font-size:var(--t6);
     font-weight:400;line-height:1.2;letter-spacing:0}
   /* The count is a label, not a title, so it goes back to the UI face. */
-  .areahd span{font-family:var(--ui);font-size:var(--t3);font-weight:400;letter-spacing:0;color:var(--dim)}
+  .areahd > span{font-family:var(--ui);font-size:var(--t3);font-weight:400;letter-spacing:0;color:var(--dim)}
+  /* The forecast is a card in the grid, not a banner over it: the reading and
+     the warning it produced sit in one box, at the same level as the plants
+     they apply to. It takes its own height rather than stretching to match a
+     plant card that has three paragraphs in it. */
+  .plist .wxcard{grid-column:1 / -1;flex-direction:row;align-items:center;
+    gap:var(--s4);padding:var(--s3) var(--s4)}
+  .wxcard .warn{flex:1}
+  .wxcard .wxnow{flex:none}
+  .wxnow{display:flex;align-items:baseline;gap:var(--s3);
+    flex-wrap:wrap;font-size:var(--t3);color:var(--dim)}
+  .wxnow .deg{font-family:var(--display);font-size:var(--t8);font-weight:400;
+    line-height:1.1;letter-spacing:0;color:var(--ink)}
+  .wxnow .deg.hot{color:var(--tomato)} .wxnow .cold{color:var(--water)}
   /* The forecast reads for the balcony only, so it stands on its own above
      the balcony plants instead of boxing them in. */
-  .wxblock{margin:0 0 var(--s4)}
-  .wxblock .wx{padding:0;margin:0;border-bottom:0}
+  /* Only as wide as it needs to be, so a one line warning does not draw a
+     band across the page. */
+  .wxcard .warn{margin:0}
+  @container (max-width:640px){ .plist .wxcard{flex-direction:column;align-items:stretch} }
   /* The legend is reference, not content: once at the top, flush with the
      cards now that no card padding is left to line it up with. */
-  .lgd-row .legend{margin:0 0 var(--s5);padding:0}
+  .lgd-row .legend{margin:0 0 var(--s3);padding:0}
   /* A tooltip that answers straight away, rather than the browser's slow one. */
   #tip{position:fixed;z-index:60;pointer-events:none;opacity:0;transition:opacity .08s;
     background:var(--ink);color:var(--paper);font-size:var(--t2);line-height:1.3;
@@ -427,24 +451,17 @@
     font-size:var(--t2);padding:var(--s2) var(--s3);cursor:pointer;white-space:nowrap;flex:none}
   .task.done .tick{background:var(--leaf);color:var(--field);border-color:var(--leaf)}
 
-  /* ---- weather ---- */
-  .wx{padding:0 0 var(--s3);margin-bottom:var(--s3);border-bottom:1px solid var(--rule)}
-  .wx .read{display:flex;gap:var(--s3);align-items:baseline;flex-wrap:wrap;font-size:var(--t3);color:var(--dim)}
-  /* The temperature is the one number worth looking at, so it takes the
-     display face. Single weight, no faux bold, no sans tracking. */
-  .wx .read .deg{font-family:var(--display);font-size:var(--t7);font-weight:400;
-    line-height:1.15;color:var(--ink);letter-spacing:0}
-  .wx .read .deg.hot{color:var(--tomato)} .wx .read .cold{color:var(--water)}
-  /* The alert is a line, not a card. The warning and the reason sit on the
-     same line and wrap together, so a cold night costs two rows of page
-     instead of a block. */
-  .wx .warn{margin-top:var(--s2);background:color-mix(in srgb,var(--tomato) 10%,transparent);
+  /* ---- weather ----
+     The reading rides the area heading (see .wxnow). All that is left here is
+     the alert: a line, not a card. The warning and the reason sit on the same
+     line and wrap together, so a cold night costs one row instead of a block. */
+  .warn{background:color-mix(in srgb,var(--tomato) 10%,transparent);
     border-radius:var(--r-sm);padding:var(--s1) var(--s3);font-size:var(--t3);line-height:1.4}
-  .wx .warn.cold{background:color-mix(in srgb,var(--water) 12%,transparent)}
-  .wx .warn b{font-weight:600;color:var(--tomato)}
-  .wx .warn.cold b{color:var(--water)}
-  .wx .warn span{color:var(--dim)}
-  .wx .warn span::before{content:' '}
+  .warn.cold{background:color-mix(in srgb,var(--water) 12%,transparent)}
+  .warn b{font-weight:600;color:var(--tomato)}
+  .warn.cold b{color:var(--water)}
+  .warn span{color:var(--dim)}
+  .warn span::before{content:' '}
 
   /* ---- segmented control ---- */
   .segs{display:flex;gap:var(--s1);background:var(--paper);border-radius:var(--r-pill);padding:var(--s1)}
@@ -561,7 +578,6 @@
     .row.axis .art,.row.axis .who,.row.axis .now{display:none}
     .row.head .bars,.row.axis .bars{padding-left:50px}
     .sect{padding:var(--s3)}
-    .wx{padding:var(--s3)}
   }
 
   /* ---- the lock ---- */
@@ -701,7 +717,11 @@
     border-radius:var(--r-sm);box-shadow:inset 0 0 0 1px color-mix(in srgb,var(--ink) 8%,transparent)}
   /* A short phase drops its name rather than showing a syllable of it. The
      dated list under the chart says the same thing in full anyway. */
-  @container pseg (max-width:96px){ .pfull-seg b{display:none} }
+  @container pseg (max-width:112px){
+    .pfull-seg b{font-size:0;padding:3px 7px}
+    .pfull-seg b::after{content:attr(data-s);font-size:var(--t1)}
+  }
+  @container pseg (max-width:52px){ .pfull-seg b{display:none} }
   .pfull-seg.grow{background:var(--ph-grow)} .pfull-seg.flower{background:var(--ph-flower)}
   .pfull-seg.fruit{background:var(--ph-fruit)} .pfull-seg.harvest{background:var(--ph-harvest)}
   /* The name sits on a wash of the card colour so it stays readable on every
@@ -1526,7 +1546,7 @@ function dockHTML(){
       <div class="in">
         <label class="vhid" for="ctext">New note</label>
         <textarea id="ctext" data-ta="1"
-          placeholder="${p?`How is ${esc(shortName(p.name))} doing?`:'What is happening on the balcony?'}">${esc(draft)}</textarea>
+          placeholder="${p?`How is ${esc(shortName(p.name))} doing?`:'What is happening in the garden?'}">${esc(draft)}</textarea>
         ${staged.top.length?`<div class="cshots">${staged.top.map((s,i)=>`<div class="cshot">
           <img src="${s.url}" alt="">
           <button class="rm" data-act="unstage" data-val="${i}" aria-label="Remove photo">×</button>
@@ -1565,6 +1585,8 @@ const wpos=d=>{
 };
 
 const PHASE_LABEL={grow:'Growing',flower:'Flowering',fruit:'Green fruit',harvest:'Harvest'};
+/* What a narrow segment says instead, so a short phase is still named. */
+const PHASE_SHORT={grow:'Grow',flower:'Flower',fruit:'Fruit',harvest:'Crop'};
 const niceDate=d=>{const x=new Date(d+'T00:00:00Z');
   return `${x.getUTCDate()} ${['Jan','Feb','Mar','Apr','May','Jun','Jul','Aug','Sep','Oct','Nov','Dec'][x.getUTCMonth()]}`;};
 
@@ -1715,19 +1737,22 @@ function plantJournalHTML(p){
 }
 
 /* ---- tasks and weather ---- */
-function wxHTML(date){
+/* The forecast is four numbers, so it rides the end of the area heading
+   rather than taking a row of its own. The alert keeps its own line, since
+   the reason is the useful half and hiding it would cost more than the row. */
+function wxCardHTML(date){
   const w=wxOf(date);if(!w)return'';
   const al=weatherAlerts(date,w,plants());   // the rule keeps this to outdoor plants
-  return `<div class="wx">
-    <div class="read">
+  return `<article class="prow wxcard">
+    <div class="wxnow">
       <span class="deg ${w.tmax>=27?'hot':''}">${wxIcon(w)} ${Math.round(w.tmax)}°</span>
       <span>night <span class="${w.tmin<=10?'cold':''}">${Math.round(w.tmin)}°</span></span>
       <span>rain ${w.pop}%</span>
       <span>${date===todayISO()?'today':dayLabel(date)}</span>
     </div>
-    ${al.map(a=>`<div class="warn ${a.key.startsWith('cold')?'cold':''}">
-      <b>${esc(a.ico)} ${esc(a.what)}</b><span>${esc(a.why)}</span></div>`).join('')}
-  </div>`;
+    ${al.map(a=>`<p class="warn ${a.key.startsWith('cold')?'cold':''}">
+      <b>${esc(a.ico)} ${esc(a.what)}</b><span>${esc(a.why)}</span></p>`).join('')}
+  </article>`;
 }
 
 /* ---- what you wrote, and what the model made of it ---- */
@@ -1763,11 +1788,11 @@ function entryHTML(e){
 const count=(n,one,many)=>`${n} ${n===1?one:(many||one+'s')}`;
 function allPlantsHTML(){
   const T=todayISO(),all=plants();
-  return `<div class="lgd-row">${legendHTML()}</div>
-    ${groupByArea(all).map(g=>`
-      <h2 class="areahd">${esc(g.label)}<span>${count(g.plants.length,'plant')}</span></h2>
-      ${g.area==='balcony'?`<div class="wxblock">${wxHTML(T)}</div>`:''}
-      <div class="plist">${g.plants.map(plantRowHTML).join('')}</div>`).join('')}
+  return `${groupByArea(all).map((g,i)=>`
+      <div class="areahd"><h2>${esc(g.label)}</h2><span>${count(g.plants.length,'plant')}</span></div>
+      ${i===0?`<div class="lgd-row">${legendHTML()}</div>`:''}
+      <div class="plist">${g.area==='balcony'?wxCardHTML(T):''}${
+        g.plants.map(plantRowHTML).join('')}</div>`).join('')}
     <section class="sect">${gardenJournalHTML()}</section>`;
 }
 
@@ -1816,8 +1841,8 @@ function pfullChartHTML(spans){
     const tip=`${PHASE_LABEL[c]||c}, ${pfullDate(f)} to ${pfullDate(to)}`;
     return `<i class="pfull-seg ${c}" style="left:${l}%;width:${w}%"
       data-tip="${esc(tip)}" title="${esc(tip)}">${to>T?
-      `<i class="pfull-fut" style="left:${fl}%;width:${100-fl}%"></i>`:''}${w>=7?
-      `<b>${esc(PHASE_LABEL[c]||c)}</b>`:''}</i>`;
+      `<i class="pfull-fut" style="left:${fl}%;width:${100-fl}%"></i>`:''}${w>=3?
+      `<b data-s="${esc(PHASE_SHORT[c]||c)}">${esc(PHASE_LABEL[c]||c)}</b>`:''}</i>`;
   };
   const on=t>=0&&t<=100;
   return `<div class="pfull-chart">${monthScaleHTML()}
@@ -1929,8 +1954,13 @@ function renderAll(){
   const a=document.activeElement,keep=a&&a.dataset&&a.dataset.ta?a.selectionStart:null;
   $('#page').innerHTML=
     `<header class="mast">
-      <h1>Dara's Balcony Garden</h1>
-      <span class="where">Tampere, glazed balcony</span>
+      <div class="mtitle">
+        <h1>Dara's Balcony Garden</h1>
+        <p class="blurb">A record of the plants in my tiny home garden. I add notes
+          and photos as I go, and an AI reads them alongside the forecast and what
+          I have logged about each plant to draft a status line and some care
+          guidance. The notes and photos stay as a journal either way.</p>
+      </div>
       <span class="fresh">${careDoc&&careDoc.generatedAt?'Guidance updated '+relTime(careDoc.generatedAt):'No guidance yet'}</span>
      </header>
      ${navBar()}
