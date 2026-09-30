@@ -93,8 +93,8 @@
     font-weight:400;line-height:1.12;letter-spacing:0}
   /* The title and the sentence under it are one block, so the freshness note
      still sits at the far end of the row rather than under the paragraph. */
-  .mast .mtitle{flex:1 1 32ch;min-width:0}
-  .mast .blurb{margin:var(--s2) 0 0;max-width:58ch;font-size:var(--t3);
+  .mast .mtitle{flex:1 1 48ch;min-width:0}
+  .mast .blurb{margin:var(--s2) 0 0;max-width:80ch;font-size:var(--t3);
     line-height:1.5;color:var(--dim)}
   .mast .fresh{margin-left:auto;font-size:var(--t2);color:var(--dim)}
 
@@ -161,7 +161,9 @@
   .sw{width:14px;height:6px;border-radius:3px;display:inline-block}
   .sw.grow{background:var(--ph-grow)} .sw.flower{background:var(--ph-flower)}
   .sw.fruit{background:var(--ph-fruit)} .sw.harvest{background:var(--ph-harvest)}
-  .sw.future{background:var(--dim);opacity:.4}
+  .sw.future{background:var(--dim);opacity:.62;
+    background-image:repeating-linear-gradient(135deg,
+      color-mix(in srgb,var(--field) 80%,transparent) 0 2px,transparent 2px 5px)}
   .chart{min-width:0}
   .prow.solo .phead{grid-template-columns:1fr}
   /* Two plants to a row. A plant needs a name, a bar and two short paragraphs,
@@ -263,11 +265,15 @@
      instead of a row of separate lozenges. */
   .prow .track{position:relative;height:9px;border-radius:var(--r-pill);
     background:var(--rule);overflow:hidden}
-  .prow .track .bar.future{opacity:.4}
   .sect>.prow:first-of-type{padding-top:0}
   .prow .track .bar{position:absolute;top:0;height:100%}
   .prow .track .bar.grow{background:var(--ph-grow)} .prow .track .bar.flower{background:var(--ph-flower)}
   .prow .track .bar.fruit{background:var(--ph-fruit)} .prow .track .bar.harvest{background:var(--ph-harvest)}
+  /* Declared after the phase colours, because those set the background
+     shorthand and would wipe the hatch out. */
+  .prow .track .bar.future{opacity:.62;
+    background-image:repeating-linear-gradient(135deg,
+      color-mix(in srgb,var(--field) 80%,transparent) 0 3px,transparent 3px 7px)}
   /* Today overshoots the track top and bottom by 2px so it is readable
      against a pale phase as well as a dark one. */
   .prow .track .tline{position:absolute;top:-2px;width:2px;height:13px;background:var(--ink)}
@@ -723,11 +729,6 @@
     border-radius:var(--r-sm);box-shadow:inset 0 0 0 1px color-mix(in srgb,var(--ink) 8%,transparent)}
   /* A short phase drops its name rather than showing a syllable of it. The
      dated list under the chart says the same thing in full anyway. */
-  @container pseg (max-width:112px){
-    .pfull-seg b{font-size:0;padding:3px 7px}
-    .pfull-seg b::after{content:attr(data-s);font-size:var(--t1)}
-  }
-  @container pseg (max-width:52px){ .pfull-seg b{display:none} }
   .pfull-seg.grow{background:var(--ph-grow)} .pfull-seg.flower{background:var(--ph-flower)}
   .pfull-seg.fruit{background:var(--ph-fruit)} .pfull-seg.harvest{background:var(--ph-harvest)}
   /* The name sits on a wash of the card colour so it stays readable on every
@@ -735,6 +736,12 @@
   .pfull-seg b{position:relative;z-index:1;margin:0 var(--s2) var(--s2);padding:var(--s1) var(--s2);
     border-radius:var(--r-pill);background:color-mix(in srgb,var(--field) 80%,transparent);
     color:var(--ink);font-size:var(--t2);font-weight:600;white-space:nowrap;overflow:hidden}
+  .pfull-seg b .sm{display:none}
+  @container pseg (max-width:112px){
+    .pfull-seg b .lg{display:none}
+    .pfull-seg b .sm{display:inline}
+  }
+  @container pseg (max-width:52px){ .pfull-seg b{display:none} }
   .pfull-fut{position:absolute;top:0;height:100%;border-radius:0 var(--r-sm) var(--r-sm) 0;
     background:repeating-linear-gradient(135deg,
       color-mix(in srgb,var(--field) 62%,transparent) 0 6px,transparent 6px 13px)}
@@ -1851,7 +1858,8 @@ function pfullChartHTML(spans){
     return `<i class="pfull-seg ${c}" style="left:${l}%;width:${w}%"
       data-tip="${esc(tip)}" title="${esc(tip)}">${to>T?
       `<i class="pfull-fut" style="left:${fl}%;width:${100-fl}%"></i>`:''}${w>=3?
-      `<b data-s="${esc(PHASE_SHORT[c]||c)}">${esc(PHASE_LABEL[c]||c)}</b>`:''}</i>`;
+      `<b><span class="lg">${esc(PHASE_LABEL[c]||c)}</span><span class="sm">${
+        esc(PHASE_SHORT[c]||c)}</span></b>`:''}</i>`;
   };
   const on=t>=0&&t<=100;
   return `<div class="pfull-chart">${monthScaleHTML()}
@@ -1886,7 +1894,7 @@ function plantHTML(p){
   const key=KEY_BY_ID[p.id],pr=PROFILE[key]||{t:p.name,body:[],src:''};
   const care=(careDoc&&careDoc.plants&&careDoc.plants[p.id])||null;
   const spans=pfullSpans(p);
-  return `${legendHTML()}
+  return `<div class="lgd-row">${legendHTML()}</div>
     <section class="sect pfull">
       <div class="hd"><span class="pfull-art">${avatarFor(p.id)}</span>
         <h2>${esc(p.name)}</h2>
