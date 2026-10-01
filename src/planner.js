@@ -1,7 +1,9 @@
 import { readStatus, writeStatus, writeCare, recordStage } from './garden.js';
 import { readSeed } from './seed.js';
 
-const STAGES_HINT = 'Use only the plant\'s allowed stages.';
+// The stage words the season bar knows. A word outside this list gets no band.
+const STAGES = ['seedling', 'settling', 'growing', 'flowering', 'fruiting', 'harvesting', 'dormant'];
+const STAGES_HINT = `stage and upcoming[].stage use only these words: ${STAGES.join(', ')}.`;
 
 export function selectPhotos(list, plantId, date, cap = 3) {
   return list
@@ -52,6 +54,7 @@ const CARE_SCHEMA = {
           },
           observations: { type: 'string' },
           stage: { type: 'string' },
+          stageSince: { type: 'string' },
           guidance: { type: 'string' },
           upcoming: {
             type: 'array',
@@ -69,8 +72,23 @@ const CARE_SCHEMA = {
   required: ['plants'],
 };
 
+/* What the model gets per plant. The gardener's notes are the facts, newest first.
+   The model's own last description is handed back labelled as exactly that, so it
+   reads as something to check against the notes, not as the current state to copy. */
+export function planContext(plants) {
+  return Object.values(plants || {}).map((p) => {
+    const { notes, observations, health, updatedAt, ...rest } = p;
+    const out = { ...rest,
+      notes: [...(notes || [])]
+        .sort((a, b) => (b.date || '').localeCompare(a.date || '') || (b.createdAt || 0) - (a.createdAt || 0))
+        .map((n) => ({ date: n.date, text: n.text })) };
+    if (observations || health?.label) out.previousRead = { observations: observations || '', health: health?.label || '' };
+    return out;
+  });
+}
+
 export function buildGeminiBody(statusDoc, forecast, today, photoPartsByPlant) {
-  const context = { today, plants: statusDoc.plants, forecast: forecast.days };
+  const context = { today, plants: planContext(statusDoc.plants), forecast: forecast.days };
   const parts = [{ text: 'GARDEN CONTEXT (JSON):\n' + JSON.stringify(context) }];
   for (const [plantId, imgParts] of Object.entries(photoPartsByPlant)) {
     if (imgParts.length) parts.push({ text: `Photos for plant ${plantId} (taken today):` }, ...imgParts);
@@ -82,10 +100,19 @@ export function buildGeminiBody(statusDoc, forecast, today, photoPartsByPlant) {
         'Given each plant\'s status, recent notes, same-day photos, and the 14-day forecast, ' +
         'write current care guidance for every plant. EVERY plant in the context MUST appear as ' +
         'an entry in plants[] (with its exact id), even if healthy. ' +
+        'notes are the gardener\'s own first-hand reports, newest first, and they are the most ' +
+        'reliable thing you have. previousRead is what you wrote last time; it may be out of date. ' +
+        'When a note is newer than what previousRead describes, the note wins: if it says the plant ' +
+        'is fruiting or being harvested, observations, health and stage must say so too. Never ' +
+        'carry a detail over from previousRead that a newer note contradicts. ' +
+        'stage is the stage the plant is in today, taken from the newest note that says, else ' +
+        'from what you see, else unchanged. ' +
+        'stageSince is the date (YYYY-MM-DD) that stage began, read from the notes ("harvesting ' +
+        'since late August" means a date in late August); give today when the notes do not say. ' +
         'observations is one or two sentences saying what the plant is doing right now, in plain ' +
         'words, as the status line under its chart. Describe what you can see, not what to do. ' +
         'upcoming is the stage changes you expect over the next three months, each with the date ' +
-        'you expect it, earliest first. Use the plant\'s allowed stages. Give an empty array when ' +
+        'you expect it, earliest first. Give an empty array when ' +
         'you expect no change, and never repeat a stage the plant is already in. ' +
         'guidance is two to four short sentences of plain advice for right now: how often to ' +
         'water it at the moment, what to feed it, what to watch for. Never give a date, a day ' +
@@ -114,6 +141,10 @@ export function parsePlanResponse(geminiJson) {
   return JSON.parse(text).plants || [];
 }
 
+// When the notes say a stage began earlier ("harvesting since late August"), the
+// bar should start it there. Anything that is not a plain past date means today.
+const sinceDate = (d, today) => (/^\d{4}-\d{2}-\d{2}$/.test(d || '') && d <= today ? d : today);
+
 // aiPlants is an ARRAY of {id, health, observations, stage?, guidance}.
 export function mergePlan(statusDoc, aiPlants, today, now) {
   const plants = { ...statusDoc.plants };
@@ -125,7 +156,7 @@ export function mergePlan(statusDoc, aiPlants, today, now) {
       health: r.health ?? prev.health,
       observations: r.observations ?? prev.observations,
       stage: r.stage ?? prev.stage,
-      history: recordStage(prev, r.stage, today),
+      history: recordStage(prev, r.stage, sinceDate(r.stageSince, today)),
       updatedAt: now };
     if (r.guidance) {
       const upcoming = (r.upcoming || [])

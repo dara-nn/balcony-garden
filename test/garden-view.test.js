@@ -1,6 +1,6 @@
 import { test } from 'node:test';
 import assert from 'node:assert/strict';
-import { groupByArea, daysSince, waterLabel, phaseOfStage, seasonSpans, withStart, chartWindow, monthTicks, tagEntryText, journalGroups, plantPhotos, findMentions, mentionQuery } from '../public/garden-view.js';
+import { groupByArea, daysSince, waterLabel, phaseOfStage, seasonSpans, withStart, chartWindow, monthTicks, tagEntryText, journalGroups, plantPhotos, findMentions, mentionQuery, mentionSegments } from '../public/garden-view.js';
 
 const p = (id, area) => ({ id, name: id, area });
 
@@ -600,4 +600,13 @@ test('a start date stretches an existing seedling band back rather than adding a
   assert.deepEqual(withStart(spans, '2026-04-12'), [
     ['seed', '2026-04-12', '2026-09-30'], ['grow', '2026-09-30', '2026-10-26'],
   ]);
+});
+
+test('mentionSegments marks every @name, case-insensitive, and keeps the rest as text', () => {
+  assert.deepEqual(mentionSegments('hi @basil and @Takalan 12, @BASIL!', LABELS), [
+    { text: 'hi ' }, { text: '@basil', plantId: 'b' }, { text: ' and ' },
+    { text: '@Takalan 12', plantId: 't12' }, { text: ', ' }, { text: '@BASIL', plantId: 'b' }, { text: '!' },
+  ]);
+  assert.deepEqual(mentionSegments('@Basilisk', LABELS), [{ text: '@Basilisk' }]);
+  assert.deepEqual(mentionSegments('', LABELS), []);
 });

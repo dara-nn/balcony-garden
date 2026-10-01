@@ -1,6 +1,6 @@
 import { test } from 'node:test';
 import assert from 'node:assert/strict';
-import { selectPhotos, parseForecast, parsePlanResponse, mergePlan, bytesToBase64 } from '../src/planner.js';
+import { selectPhotos, parseForecast, parsePlanResponse, mergePlan, bytesToBase64, planContext, buildGeminiBody } from '../src/planner.js';
 
 test('selectPhotos filters by plant+date and caps', () => {
   const list = [
@@ -122,4 +122,63 @@ test('an expected change with no date is dropped', () => {
     upcoming: [{ stage: 'fruiting' }, { stage: 'harvesting', date: '2026-12-01' }] }];
   const out = mergePlan(status, ai, '2026-09-29', 1000);
   assert.deepEqual(out.care.plants.a.upcoming, [{ stage: 'harvesting', date: '2026-12-01' }]);
+});
+
+/* ---- what the model is given ---- */
+
+const PLANT = { id: 'tomato-2', name: 'Noire', species: 'tomato', area: 'balcony', stage: 'flowering',
+  lastWatered: '2026-09-30', history: [], updatedAt: 1,
+  health: { label: 'cold stalled', tone: 'watch', issues: [] },
+  observations: 'Flower clusters remain unopened.',
+  notes: [
+    { id: 'n1', date: '2026-08-11', text: 'Tied it up.', createdAt: 1 },
+    { id: 'n2', date: '2026-09-30', text: 'Fruiting well, several harvests since late August.', createdAt: 2 },
+  ] };
+
+test('the gardener\'s notes go to the model newest first, with their dates', () => {
+  const c = planContext({ 'tomato-2': PLANT });
+  assert.deepEqual(c[0].notes, [
+    { date: '2026-09-30', text: 'Fruiting well, several harvests since late August.' },
+    { date: '2026-08-11', text: 'Tied it up.' },
+  ]);
+});
+
+test('the previous read is labelled as such, not passed off as the current state', () => {
+  const c = planContext({ 'tomato-2': PLANT })[0];
+  assert.equal(c.observations, undefined);
+  assert.equal(c.health, undefined);
+  assert.deepEqual(c.previousRead, { observations: 'Flower clusters remain unopened.', health: 'cold stalled' });
+});
+
+test('a plant never read before has no previous read', () => {
+  const c = planContext({ a: { id: 'a', stage: 'growing', notes: [] } })[0];
+  assert.equal(c.previousRead, undefined);
+});
+
+test('the prompt puts the notes above the previous read and lists the stage words', () => {
+  const body = buildGeminiBody({ plants: { 'tomato-2': PLANT } }, { days: {} }, '2026-09-30', {});
+  const sys = body.system_instruction.parts[0].text;
+  assert.match(sys, /notes/i);
+  assert.match(sys, /previousRead/);
+  for (const w of ['seedling', 'growing', 'flowering', 'fruiting', 'harvesting']) assert.match(sys, new RegExp(w));
+  const ctx = JSON.parse(body.contents[0].parts[0].text.replace(/^[^{]*/, ''));
+  assert.equal(ctx.plants[0].previousRead.observations, 'Flower clusters remain unopened.');
+});
+
+test('a stage change is dated from when the notes say it began', () => {
+  const status = { updatedAt: 0, plants: { a: { id: 'a', stage: 'flowering', notes: [], history: [] } } };
+  const ai = [{ id: 'a', stage: 'harvesting', stageSince: '2026-08-28', guidance: 'g',
+    health: { label: 'f', tone: 'good', issues: [] }, observations: '' }];
+  const out = mergePlan(status, ai, '2026-09-30', 1000);
+  assert.deepEqual(out.status.plants.a.history, [{ date: '2026-08-28', stage: 'harvesting' }]);
+});
+
+test('a missing, malformed or future stageSince falls back to today', () => {
+  const status = { updatedAt: 0, plants: { a: { id: 'a', stage: 'flowering', notes: [], history: [] } } };
+  for (const since of [undefined, 'late August', '2026-12-01']) {
+    const ai = [{ id: 'a', stage: 'harvesting', stageSince: since, guidance: 'g',
+      health: { label: 'f', tone: 'good', issues: [] }, observations: '' }];
+    const out = mergePlan(status, ai, '2026-09-30', 1000);
+    assert.deepEqual(out.status.plants.a.history, [{ date: '2026-09-30', stage: 'harvesting' }], String(since));
+  }
 });

@@ -346,3 +346,28 @@ export function mentionQuery(text, caret) {
   const m = /(^|\s)@([^\s@]*)$/.exec((text || '').slice(0, caret));
   return m ? { start: m.index + m[1].length, q: m[2] } : null;
 }
+
+/* The note split into plain runs and @name runs, every occurrence, so the
+   composer can draw each tag as a chip under the text. At each @ the longest
+   name that fits wins, so @Takalan 12 is never read as @Takalan 1. */
+export function mentionSegments(text, labels) {
+  const src = text || '';
+  const low = src.toLowerCase();
+  const byLen = [...(labels || [])].sort((a, b) => b.label.length - a.label.length);
+  const out = [];
+  let plain = '', i = 0;
+  while (i < src.length) {
+    const hit = src[i] === '@' && byLen.find(({ label }) => {
+      const needle = '@' + label.toLowerCase();
+      return low.startsWith(needle, i) && !/[\p{L}\p{N}_]/u.test(low[i + needle.length] || '');
+    });
+    if (hit) {
+      if (plain) { out.push({ text: plain }); plain = ''; }
+      const n = hit.label.length + 1;
+      out.push({ text: src.slice(i, i + n), plantId: hit.id });
+      i += n;
+    } else { plain += src[i]; i += 1; }
+  }
+  if (plain) out.push({ text: plain });
+  return out;
+}

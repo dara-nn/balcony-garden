@@ -8,15 +8,19 @@ A personal tool, customized for my needs. I write notes and take photos of the p
 
 ## Features
 
-- **One list of plants.** Every plant shows its stage, how it is doing in the AI's words, when I last watered it, its season bar and its current care guidance.
+- **One list of plants.** Every plant shows its stage, how it is doing in the AI's words, when I last watered it, its season bar, its current care guidance and its newest photo, taped on like a print.
 - **AI care guidance.** I write a free-text note (a pest, a wilting leaf, "repotted today"), and a Gemini-powered adviser folds it, together with same-day photos and the forecast, into an updated health read and fresh guidance. See [Architecture](#architecture) below.
+- **Tagging plants with @.** Typing `@` in the note box opens a list of plants to pick from, and each tag shows as a chip. A tagged note goes straight onto those plants in my own words. A note with no tags is sorted by the AI. On a plant page the box starts with that plant's tag, which I can remove.
+- **After a note.** The page waits while the AI reads the note and rewrites the guidance, then shows what changed, plant by plant, with a button that takes me to each one. If it could not tell which plant I meant, it offers its best guess and a picker.
 - **Indoor and balcony.** Plants are grouped by where they live. The forecast and the cold-night alert only apply to the balcony group, so an indoor plant never gets told to close the glazing.
-- **Season bar.** Each plant's growing, flowering, fruiting and harvest spans at a glance. The species table supplies the expectation, and where a real stage change has been recorded, that date replaces the default and the bar redraws around it.
-- **Watering, recorded not managed.** A small droplet button, or a "watered today" tick in the note box. It only ever answers "when did I last water this", never nags.
-- **One history.** Notes and photos in one stream, newest first, for the whole garden or for one plant. A note the AI could not place lands under "Unsorted" so I can assign it myself.
+- **Season bar.** Each plant's seedling, growing, flowering, fruiting and harvest spans at a glance, starting from the day it was sown. The species table supplies the expectation, and where a real stage change has been recorded, that date replaces the default and the bar redraws around it.
+- **Watering, recorded not managed.** A small droplet button on each plant. One note can name several plants, so watering is never read off a tag: I log it per plant. It only ever answers "when did I last water this", never nags.
+- **One history.** Notes and photos in one stream, newest first, for the whole garden or for one plant. A note the AI could not place is marked, with a link to choose the plant myself.
+- **Photos.** A plant page keeps that plant's photos in a pile. It opens all of them, grouped by month, and any one of them full screen. The back button (or a back swipe) steps out one layer at a time.
 - **A page per plant, with its own address.** `/p/<id>` is bookmarkable and shareable, and the back button walks the tabs. The page carries the full version of everything the list summarises.
 - **About this variety.** A short lead on what the variety is and its quirks, then a fact table: family, habit, height, sowing, light, warmth, pot, water, harvest, frost, crop, and where I bought it, linked to the shop. The prose and the table do not repeat each other. Beside them, a photo of the whole plant, and for anything that fruits, a second photo of the crop.
 - **Light and dark theme.**
+- **Small animations.** Water drops when I log a watering, leaves when I save a note, and cards and season bars come in on the first visit. All of it is off when my system asks for reduced motion.
 
 ## Architecture
 
@@ -36,7 +40,7 @@ Two KV docs, one job each:
 
 There is no third store any more. The done-log and the client state blob (`progress:garden`) went with the task list, and `lastWatered` now lives server-side only.
 
-**The re-plan** ([`replan()`](src/planner.js) in `src/planner.js`) runs server-side: it reads `status:garden`, fetches the 14-day Open-Meteo forecast, gathers each plant's same-day photos from the `PHOTOS` KV namespace, and sends it all as one Gemini `generateContent` REST call. The result is merged back into `status:garden` (health, observations, stage) and written fresh to `care:garden`. It runs on two triggers: the daily cron (`scheduled()` in `src/index.js`, `0 3 * * *` from [`wrangler.jsonc`](wrangler.jsonc)) and right after any note or status write (`ctx.waitUntil(replan(...))`, so a fresh note reshapes the guidance within seconds without blocking the write's response).
+**The re-plan** ([`replan()`](src/planner.js) in `src/planner.js`) runs server-side: it reads `status:garden`, fetches the 14-day Open-Meteo forecast, gathers each plant's same-day photos from the `PHOTOS` KV namespace, and sends it all as one Gemini `generateContent` REST call. The result is merged back into `status:garden` (health, observations, stage) and written fresh to `care:garden`. My notes count as the facts, newest first; the AI's own previous read is handed back only as something to check against them, and when a note says a plant changed stage, the date it gives is recorded as the start of that stage. It runs on two triggers: the daily cron (`scheduled()` in `src/index.js`, `0 3 * * *` from [`wrangler.jsonc`](wrangler.jsonc)) and right after any note or status write (`ctx.waitUntil(replan(...))`, so a fresh note reshapes the guidance within seconds without blocking the write's response).
 
 **When the AI has not run yet, or the call failed**, the plant says so plainly and the stores are left untouched. There is no invented fallback advice. There used to be a deterministic interval engine underneath; it is gone, because there are no dated tasks left for it to fill in.
 
@@ -61,8 +65,8 @@ All reads are public. All writes need `Authorization: Bearer <UPLOAD_PASS>`.
 | `/api/status/:id` | `PUT` | Upsert fields on one plant (`{stage}`, `{lastWatered}`). Auth. Triggers a background re-plan. |
 | `/api/care` | `GET` | Current `care:garden` doc (`{generatedAt, plants}`), or `{}` if none yet. |
 | `/api/notes` | `POST` | Add, edit or delete a note on a plant. Auth. Triggers a background re-plan. |
-| `/api/entries` | `GET`/`POST` | The raw free-text entries, exactly as typed. `POST` needs auth and runs the distiller. |
-| `/api/entries/:id` | `PATCH`/`DELETE` | Reword an entry (re-runs the distiller) or remove it. Auth. |
+| `/api/entries` | `GET`/`POST` | The raw free-text entries, exactly as typed. `POST` needs auth. With `plantIds` (and the `mentions` as typed) the words go straight onto those plants and the AI only sorts any photos among them; without, the distiller decides. |
+| `/api/entries/:id` | `PATCH`/`DELETE` | File an entry onto plants by hand (`{plantIds}`), reword it (re-runs the distiller, or files it onto its @ tags), or remove it. Auth. |
 | `/api/photos` | `GET`/`POST` | List photo metadata, or upload one (auth, query params `date`/`plant`). |
 | `/api/photos/:id` | `GET`/`PATCH`/`DELETE` | Stream one image; re-tag its plant (auth); delete it (auth). |
 | `/api/cover` | `GET`/`PUT` | Read or set the whole-garden cover photo id (`PUT` auth; empty id = default). |
@@ -87,4 +91,4 @@ Reads are public, no passphrase needed: status, care, entries, photos, cover. Wr
 
 ## Tests
 
-`npm test` runs `node --test`. The pure modules are covered: the store helpers and stage history, the planner's merge and parsing, the care rules, the view logic (area grouping, watering labels, the history stream, season spans), and the 3D scene's layout and art. Rendering and layout are checked by hand with `npx wrangler dev`.
+`npm test` runs `node --test`. The pure modules are covered: the store helpers and stage history, the planner's merge and parsing, the care rules, the view logic (area grouping, watering labels, the history stream, season spans, @ tag parsing, photo order), and the 3D scene's layout and art. Rendering and layout are checked by hand with `npx wrangler dev`.

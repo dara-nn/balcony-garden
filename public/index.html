@@ -252,38 +252,43 @@
   /* The warning hangs off the reading it came from: right aligned under it,
      with a tail up into it, so it reads as the forecast speaking rather than
      as a banner that turned up on its own. */
-  .wxalerts{display:flex;flex-direction:column;align-items:flex-end;
-    gap:var(--s2);margin:10px 0 var(--s4)}
-  .wxalerts .warn{position:relative;max-width:min(100%,68ch);margin:0}
-  .wxalerts .warn::before{content:'';position:absolute;top:-7px;right:var(--s5);
-    border-left:9px solid transparent;border-right:9px solid transparent;
-    border-bottom:7px solid var(--bub)}
+  .wxalerts{position:relative;display:flex;flex-direction:column;align-items:flex-end;
+    gap:var(--s2);margin:var(--s2) 0 var(--s3)}
+  .wxalerts .warn{position:relative;max-width:min(100%,56ch);margin:0}
   @container (max-width:640px){
     .wxnow{margin-left:0;width:100%}
-    .wxalerts{align-items:stretch}
-    .wxalerts .warn::before{right:auto;left:var(--s4)}
+    .wxalerts{align-items:flex-start}
+    .wxalerts .warn,.wtyping{border-radius:4px 16px 16px 16px}
+    .wtyping{right:auto;left:0}
   }
   /* The legend is reference, not content: once at the top, flush with the
      cards now that no card padding is left to line it up with. */
   .lgd-row .legend{margin:0 0 var(--s3);padding:0 0 0 var(--s4)}
-  /* One tooltip for the whole page, in place of the browser's slow grey one.
-     Over a chart it follows the pointer; over a button it sits under it
-     with a small arrow pointing back. It eases in from the side it points
-     to, and on the dark photo view it turns light so it can still be seen. */
+  /* One tooltip for the whole page, in place of the browser's slow grey one,
+     and one shape for it: a small rounded box with an arrow pointing at what
+     it describes. Over a chart it sits centred above the pointer and follows
+     it; over a button it hangs under the button. A season segment puts its own
+     colour in a dot at the front, so the bubble says which phase before it
+     says a word. It pops out of its tail with a little overshoot, and on the
+     dark photo view it turns light so it can still be seen. */
   #tip{position:fixed;left:0;top:0;z-index:60;pointer-events:none;opacity:0;
+    display:flex;align-items:center;gap:6px;max-width:240px;
     background:var(--ink);color:var(--paper);font-size:var(--t2);line-height:1.3;
-    padding:var(--s1) var(--s2);border-radius:var(--r-sm);white-space:nowrap;
-    box-shadow:0 4px 14px rgba(0,0,0,.18);transform:translateY(4px) scale(.96);
-    transform-origin:var(--ax,50%) 100%;transition:opacity .12s ease,transform .14s ease}
-  #tip[data-side="below"]{transform:translateY(-4px) scale(.96);transform-origin:var(--ax,50%) 0}
+    padding:var(--s1) var(--s2);border-radius:var(--r-sm);
+    box-shadow:0 6px 18px rgba(0,0,0,.18);transform-origin:0 100%;transform:translateY(4px) scale(.7);
+    transition:opacity .1s ease,transform .22s cubic-bezier(.34,1.56,.64,1)}
   #tip.on{opacity:1;transform:none}
-  #tip.pin{padding:var(--s1) var(--s3)}
+  #tip .dot{flex:none;width:9px;height:9px;border-radius:50%;background:var(--dot);
+    box-shadow:0 0 0 2px color-mix(in srgb,var(--paper) 30%,transparent)}
+  #tip.pin{padding:var(--s1) var(--s3);transform-origin:var(--ax,50%) 0;transform:translateY(-4px) scale(.7)}
+  #tip.pin[data-side="above"]{transform-origin:var(--ax,50%) 100%;transform:translateY(4px) scale(.7)}
+  #tip.pin.on{transform:none}
   #tip.pin::after{content:"";position:absolute;left:var(--ax,50%);width:8px;height:8px;background:inherit;
     border-radius:1px;transform:translateX(-50%) rotate(45deg)}
   #tip.pin[data-side="below"]::after{top:-4px}
   #tip.pin[data-side="above"]::after{bottom:-4px}
-  #tip.dark{background:#EAF0EA;color:#0B0F0C;box-shadow:0 4px 14px rgba(0,0,0,.5)}
-  @media (prefers-reduced-motion:reduce){ #tip,#tip[data-side="below"]{transform:none;transition:opacity .08s} }
+  #tip.dark{background:#EAF0EA;color:#0B0F0C;box-shadow:0 6px 18px rgba(0,0,0,.5)}
+  @media (prefers-reduced-motion:reduce){ #tip,#tip.pin,#tip.pin[data-side="above"]{transform:none;transition:opacity .08s} }
   .prow .track .bar{cursor:default}
   /* The scale is the chart's label, so it is read at full strength rather
      than ghosted under it. */
@@ -312,7 +317,6 @@
     background:var(--ink);border-radius:2px;box-shadow:0 0 0 2px var(--field);z-index:1}
 
   .striplabel{align-self:center;padding:0 var(--s2);font-size:var(--t2);color:var(--dim)}
-  .wchk{display:flex;align-items:center;gap:var(--s2);font-size:var(--t2);color:var(--dim)}
   /* Every other breakpoint in here asks the page container, not the window,
      so these do too: the phone preview is then the same page a phone gets. */
   @container (max-width:760px){
@@ -454,13 +458,29 @@
      The reading rides the area heading (see .wxnow). All that is left here is
      the alert: a line, not a card. The warning and the reason sit on the same
      line and wrap together, so a cold night costs one row instead of a block. */
-  .warn{--bub:color-mix(in srgb,var(--tomato) 10%,transparent);background:var(--bub);
-    border-radius:var(--r-md);padding:var(--s2) var(--s3);font-size:var(--t3);line-height:1.4}
-  .warn.cold{--bub:color-mix(in srgb,var(--water) 12%,transparent)}
-  .warn b{font-weight:600;color:var(--tomato)}
-  .warn.cold b{color:var(--water)}
-  .warn span{color:var(--dim)}
-  .warn span::before{content:' '}
+  /* The alert is the forecast talking: a chat bubble under the reading, its
+     one sharp corner the tail pointing up at it, with the weather as the
+     sender's avatar. The headline is in the journal's hand, the reason under
+     it a size down, so a cold night is two short lines, not a banner. */
+  /* A stronger tint than the page's own washes plus a hairline in the same
+     hue, so the bubble stands off the paper instead of melting into it. */
+  .warn{--hue:var(--tomato);--bub:color-mix(in srgb,var(--hue) 22%,var(--field));
+    display:flex;align-items:flex-start;gap:var(--s2);background:var(--bub);
+    border:1px solid color-mix(in srgb,var(--hue) 40%,transparent);
+    border-radius:16px 4px 16px 16px;padding:8px 14px 9px 8px;font-size:var(--t2);line-height:1.4;
+    box-shadow:0 3px 10px color-mix(in srgb,var(--hue) 18%,transparent)}
+  .warn.cold{--hue:var(--water)}
+  .warn .wav{flex:none;width:26px;height:26px;border-radius:50%;background:var(--field);
+    display:grid;place-items:center;font-size:14px;line-height:1;box-shadow:0 1px 3px rgba(0,0,0,.12)}
+  .warn .wmsg{margin:0;min-width:0}
+  .warn b{display:block;font-family:var(--hand);font-size:var(--t3);font-weight:600;line-height:1.3;
+    color:color-mix(in srgb,var(--hue) 80%,var(--ink))}
+  .warn .wmsg span{display:block;margin-top:1px;color:color-mix(in srgb,var(--ink) 75%,var(--hue))}
+  /* The "typing" bubble the forecast shows before it speaks, first visit only. */
+  .wtyping{position:absolute;top:0;right:0;display:flex;gap:4px;padding:11px 13px;
+    background:color-mix(in srgb,var(--water) 22%,var(--field));border:1px solid color-mix(in srgb,var(--water) 40%,transparent);
+    border-radius:16px 4px 16px 16px}
+  .wtyping i{width:6px;height:6px;border-radius:50%;background:var(--dim)}
 
   /* ---- photos ---- */
   .shots{display:grid;grid-template-columns:repeat(auto-fill,minmax(84px,1fr));gap:var(--s2)}
@@ -567,6 +587,17 @@
      Tags come from @names in the text. A small list under the caret offers
      the names to pick from. */
   .mwrap{position:relative}
+  /* The chip layer: the text box's twin, sitting exactly under it. Every
+     property that moves a letter has to match the box, or the chips drift
+     off their words. The chips grow with a shadow, not padding, for the same
+     reason: padding would push the letters after them along. */
+  .mback{position:absolute;left:0;right:0;top:0;bottom:0;overflow:hidden;pointer-events:none;
+    font-family:var(--hand);font-size:var(--t4);line-height:1.6;letter-spacing:normal;
+    padding:0 0 var(--s2);white-space:pre-wrap;overflow-wrap:break-word;color:transparent}
+  .mback .mtag{color:transparent;background:color-mix(in srgb,var(--leaf) 20%,transparent);
+    border-radius:6px;box-shadow:0 0 0 2px color-mix(in srgb,var(--leaf) 20%,transparent);
+    -webkit-box-decoration-break:clone;box-decoration-break:clone}
+  .dock textarea{position:relative;z-index:1}
   .mpop{position:absolute;left:0;top:100%;z-index:20;min-width:240px;max-width:100%;
     background:var(--field);border:1px solid var(--rule);border-radius:var(--r-md);
     box-shadow:0 8px 24px rgba(22,40,28,.16);padding:var(--s1);display:flex;flex-direction:column}
@@ -591,7 +622,8 @@
   #lock.on{display:flex}
   .waiting{width:min(430px,100%);background:var(--field);border-radius:var(--r-lg);
     padding:var(--s4) var(--s4) var(--s3);box-shadow:0 20px 54px rgba(16,32,22,.24)}
-  .waiting .said{font-family:var(--prose);font-size:var(--t5);line-height:1.45;margin:0 0 var(--s3)}
+  .waiting .said{font-family:var(--hand);font-size:var(--t5);line-height:1.5;margin:0 0 var(--s3)}
+  .waiting .said .ptag{cursor:default}
   .waiting .steps{display:flex;gap:var(--s1);margin-bottom:var(--s2)}
   .waiting .steps i{flex:1;height:5px;background:var(--paper);border-radius:var(--r-pill);
     overflow:hidden;position:relative}
@@ -608,6 +640,49 @@
   .waiting .out{margin-top:var(--s3);border:none;background:none;color:var(--dim);cursor:pointer;
     font-size:var(--t2);text-decoration:underline;padding:var(--s2) 0}
   body.locked{overflow:hidden}
+  /* The lock's last state: what the note changed. Same card, so the wait
+     turns into the answer in place rather than jumping somewhere else. */
+  .waiting.done{width:min(480px,100%);max-height:calc(100dvh - 2 * var(--s4));overflow-y:auto}
+  .donehd{display:flex;align-items:center;gap:var(--s2);margin-bottom:var(--s2)}
+  .donehd b{font-family:var(--display);font-weight:400;font-size:var(--t5)}
+  .tickmark{width:26px;height:26px;border-radius:50%;background:var(--leaf);color:#fff;
+    display:grid;place-items:center;font-size:var(--t3);font-weight:700;flex:none}
+  .waiting .said.small{font-size:var(--t4);color:var(--ink);margin:0 0 var(--s3);
+    display:-webkit-box;-webkit-line-clamp:2;-webkit-box-orient:vertical;overflow:hidden}
+  .changes{list-style:none;margin:0;padding:0;display:flex;flex-direction:column;gap:var(--s2)}
+  .changes li{display:flex;align-items:flex-start;gap:var(--s3);padding:var(--s3);
+    background:var(--wash);border-radius:var(--r-md)}
+  .changes .art{width:30px;height:30px;flex:none;border-radius:50%;overflow:hidden;background:var(--field)}
+  .changes .art svg{width:100%;height:100%;display:block}
+  .changes .what{flex:1;min-width:0;display:flex;flex-direction:column;gap:2px;font-size:var(--t2);line-height:1.4}
+  .changes .what b{font-size:var(--t3);font-weight:600}
+  .changes .filed{font-family:var(--prose);font-size:var(--t3);color:var(--ink)}
+  .changes .moved{color:var(--water);font-weight:600}
+  .changes .status-new{color:var(--dim)}
+  .changes .goto{flex:none;align-self:center;border:1px solid var(--rule);background:var(--field);color:var(--ink);
+    border-radius:var(--r-pill);padding:var(--s1) var(--s3);font-size:var(--t2);cursor:pointer}
+  .changes .goto:hover{border-color:var(--leaf);color:var(--pine)}
+  .note-end{margin:var(--s3) 0 0;font-size:var(--t2);color:var(--dim)}
+  .guesses{display:flex;flex-wrap:wrap;gap:var(--s2);margin-top:var(--s2)}
+  .guess{display:inline-flex;align-items:center;gap:var(--s2);border:1px solid var(--leaf);background:var(--field);
+    color:var(--pine);border-radius:var(--r-pill);padding:var(--s1) var(--s3) var(--s1) var(--s1);
+    font-size:var(--t3);font-weight:600;cursor:pointer}
+  .guess:hover{background:var(--wash)}
+  .guess .av{width:24px;height:24px;border-radius:50%;overflow:hidden;flex:none}
+  .guess .av svg{width:100%;height:100%;display:block}
+  .note-end:empty{display:none}
+  .doneacts{display:flex;justify-content:flex-end;align-items:center;gap:var(--s3);margin-top:var(--s3)}
+  .doneacts .primary{border:0;background:var(--leaf);color:#fff;border-radius:var(--r-pill);
+    padding:var(--s2) var(--s4);font-size:var(--t3);font-weight:600;cursor:pointer}
+  @media (prefers-reduced-motion:no-preference){
+    @keyframes donein{from{opacity:.4;transform:scale(.97)}to{opacity:1;transform:none}}
+    .waiting.done{animation:donein .3s cubic-bezier(.2,.8,.2,1)}
+    @keyframes tickpop{0%{transform:scale(.3)}60%{transform:scale(1.15)}100%{transform:none}}
+    .tickmark{animation:tickpop .45s cubic-bezier(.34,1.56,.64,1)}
+    .changes li{animation:sprout .4s cubic-bezier(.2,.8,.2,1) backwards}
+    .changes li:nth-child(2){animation-delay:.06s} .changes li:nth-child(3){animation-delay:.12s}
+    .changes li:nth-child(n+4){animation-delay:.18s}
+  }
   @media(prefers-reduced-motion:reduce){.prow.touched{animation:none}}
 
   /* ---- pieces the live site needs on top of the prototype's system ---- */
@@ -707,6 +782,21 @@
     .pname:hover b{color:var(--pine)}
     .shots button img{transition:transform .25s ease}
     .shots button:hover img{transform:scale(1.05)}
+    /* The weather avatar wobbles when you reach for it; the typing dots hop. */
+    @keyframes wobble{0%,100%{transform:rotate(0)}25%{transform:rotate(-14deg) scale(1.1)}60%{transform:rotate(10deg)}}
+    .warn:hover .wav{animation:wobble .7s ease-in-out}
+    @keyframes hop{0%,60%,100%{transform:translateY(0);opacity:.5}30%{transform:translateY(-4px);opacity:1}}
+    .wtyping i{animation:hop 1s ease-in-out infinite}
+    .wtyping i:nth-child(2){animation-delay:.15s} .wtyping i:nth-child(3){animation-delay:.3s}
+    /* A line whose fact just changed rolls its new words up into place and
+       flashes the colour of what changed it: water for a watering, leaf for
+       a fresh reading from the model. */
+    @keyframes tickup{from{opacity:0;transform:translateY(70%)}to{opacity:1;transform:none}}
+    @keyframes flashwater{0%,45%{color:var(--water)}100%{color:var(--dim)}}
+    @keyframes flashleaf{0%,45%{color:var(--leaf)}100%{color:var(--dim)}}
+    .water.justnow,.ago.justnow{display:inline-block}
+    .water.justnow{animation:tickup .45s cubic-bezier(.2,.8,.2,1),flashwater 1.8s ease-out}
+    .ago.justnow{animation:tickup .45s cubic-bezier(.2,.8,.2,1),flashleaf 1.8s ease-out}
     /* The drop in the water button bobs as if about to fall. */
     @keyframes bob{0%,100%{transform:translateY(0)}50%{transform:translateY(-3px)}}
     .waterbtn:hover .drop{animation:bob .9s ease-in-out infinite}
@@ -995,7 +1085,7 @@ stored on this device only, so it is asked once.</p>
 <script src="/garden-data.js"></script>
 <script type="module">
 import { weatherAlerts, normalizeHealth } from '/care-rules.js';
-import { groupByArea, waterLabel, seasonSpans, withStart, phaseOfStage, chartWindow, monthTicks, tagEntryText, journalGroups, plantPhotos, findMentions, mentionQuery } from '/garden-view.js';
+import { groupByArea, waterLabel, seasonSpans, withStart, phaseOfStage, chartWindow, monthTicks, tagEntryText, journalGroups, plantPhotos, findMentions, mentionQuery, mentionSegments } from '/garden-view.js';
 
 /* ================= basics ================= */
 const $=s=>document.querySelector(s);
@@ -1037,9 +1127,14 @@ let _poll=null,busy='';
 /* Saving kicks off two model calls back to back: the distiller sorts the note,
    then the planner rebuilds the schedule. Watch for BOTH, or the task list stops
    refreshing seconds before the new plan actually arrives. */
-function refreshSoon(){
-  clearTimeout(_poll);
+/* focus: the entry to report on when it is not a pending one, as when a
+   note is filed onto a plant by hand. */
+function refreshSoon(focus){
+  clearTimeout(_poll);lockDone=null;
   const planBefore=careDoc&&careDoc.generatedAt;
+  /* What every plant looked like before, so the end can say what moved. */
+  const before=Object.fromEntries(plants().map(p=>[p.id,{obs:p.observations||'',stage:p.stage,last:p.last||''}]));
+  const watch=focus?[focus]:entriesDoc.entries.filter(e=>e.status==='pending').map(e=>e.id);
   let n=0;
   setBusy('read');
   const tick=async()=>{
@@ -1052,7 +1147,13 @@ function refreshSoon(){
     const pending=entriesDoc.entries.some(e=>e.status==='pending');
     const planFresh=(careDoc&&careDoc.generatedAt)!==planBefore;
     const stuck=entriesDoc.entries.some(e=>wasPending.includes(e.id)&&e.status==='unsorted');
-    if((!pending&&planFresh)||stuck||++n>=20){setBusy('');renderAll();return;}   // ~60s ceiling
+    const late=++n>=20;                                                            // ~60s ceiling
+    if((!pending&&planFresh)||stuck||late){
+      lockDone=noteSummary(watch,before,{fresh:planFresh,stuck,late:late&&!(planFresh&&!pending)});
+      setBusy('');renderAll();
+      if(lockDone.late)waitForGuidance(planBefore);
+      return;
+    }
     setBusy(pending?'read':'plan');
     _poll=setTimeout(tick,3000);
   };
@@ -1646,14 +1747,14 @@ function syncTitle(){
 }
 function goTo(pid,push){
   const was=V.plant;
-  V.plant=pid;staged.watered=false;
+  V.plant=pid;
   if(push&&location.pathname!==pathOf(pid))history.pushState({plant:pid},'',pathOf(pid));
   syncTitle();renderAll();
   if(was!==pid)turnPage();
 }
 addEventListener('popstate',()=>{
   const was=V.plant;
-  V.plant=plantFromPath();staged.watered=false;syncTitle();renderAll();
+  V.plant=plantFromPath();syncTitle();renderAll();
   if(was!==V.plant)turnPage();
 });
 let touched=new Set(),busyAt=0;
@@ -1677,21 +1778,42 @@ function navBar(){
 }
 
 /* ---- the note ---- */
-/* A plant is tagged by writing @ and its name. The plant page's own plant is
-   always tagged, and the placeholder names it, so nothing else has to. */
+/* A plant is tagged by writing @ and its name, and the tags in the words are
+   the whole truth: on a plant page its own tag is written in for you when the
+   box opens, so it can be seen and taken out like any other. Only a note of
+   photos alone, with no words to carry a tag, falls back to the page's plant. */
 const mentionLabels=()=>plants().map(p=>({id:p.id,label:shortName(p.name)}));
 const noteMentions=text=>findMentions(text,mentionLabels());
-const noteTags=()=>[...new Set([V.plant,...noteMentions(draft).map(m=>m.plantId)])].filter(id=>id&&plantById(id));
+const noteTags=()=>{
+  const named=noteMentions(draft).map(m=>m.plantId).filter(id=>plantById(id));
+  if(named.length)return [...new Set(named)];
+  return V.plant&&!noteWords(draft)&&plantById(V.plant)?[V.plant]:[];
+};
+/* The words of a note with its tags taken out: a box holding only tags has
+   nothing to say yet. */
+const noteWords=text=>mentionSegments(text||'',mentionLabels()).filter(sg=>!sg.plantId).map(sg=>sg.text).join('').trim();
+const selfTag=()=>V.plant&&plantById(V.plant)?'@'+shortName(plantById(V.plant).name)+' ':'';
+/* A text box cannot colour part of its own text, so the tags are drawn on a
+   copy of it underneath: same font, same wrapping, words invisible, only the
+   chip behind each @name showing through. The box stays a real text box. */
+const mbackHTML=text=>mentionSegments(text,mentionLabels()).map(sg=>sg.plantId
+  ?`<mark class="mtag">${esc(sg.text)}</mark>`:esc(sg.text)).join('')+'\u200b';
+function syncMback(t){
+  const b=t&&t.parentElement.querySelector('.mback');if(!b)return;
+  b.innerHTML=mbackHTML(t.value);
+  b.style.width=t.clientWidth+'px';b.scrollTop=t.scrollTop;
+}
 function dockHTML(){
   const p=V.plant?plantById(V.plant):null;
   const tags=noteTags();
-  const can=!!draft.trim()||staged.top.length>0;
+  const can=!!noteWords(draft)||staged.top.length>0;
   return `<div class="dock ${draft.trim()?'tall':''}">
     <div class="box">
       <div class="top"><span>New note · ${shortDate(todayISO())}</span></div>
       <div class="in">
         <label class="vhid" for="ctext">New note</label>
         <div class="mwrap">
+        <div class="mback" aria-hidden="true">${mbackHTML(draft)}</div>
         <textarea id="ctext" data-ta="1" aria-autocomplete="list" aria-controls="mpop"
           placeholder="${p?`How is ${esc(shortName(p.name))} doing? Type @ to tag another plant.`
             :'What is happening in the garden? Type @ to tag a plant.'}">${esc(draft)}</textarea>
@@ -1704,8 +1826,6 @@ function dockHTML(){
         <div class="acts">
           <button class="photobtn" data-act="attach">📷 Add a photo</button>
           <span class="sp"></span>
-          <label class="wchk" ${tags.length?'':'hidden'}><input type="checkbox" data-act="watered-chk"
-            ${staged.watered?'checked':''}> watered today</label>
           <button class="save ${can?'on':''}" data-act="save" ${can?'':'disabled'}>Save</button>
         </div>
       </div>
@@ -1715,9 +1835,6 @@ function dockHTML(){
 /* The @ list. It is drawn straight into the dock rather than through
    renderAll, which would rebuild the page under the caret on every key. */
 let mq=null;          // {start,q,list,idx} while an @name is being typed
-function syncWatered(){
-  const w=document.querySelector('.dock .wchk');if(w)w.hidden=!noteTags().length;
-}
 function updateMention(t){
   const hit=mentionQuery(t.value,t.selectionStart);
   const pop=$('#mpop');if(!pop)return;
@@ -1761,8 +1878,13 @@ function pickMention(id){
   t.value=t.value.slice(0,mq.start)+word+t.value.slice(end);
   const at=mq.start+word.length;
   t.focus();t.setSelectionRange(at,at);
-  draft=t.value;closeMention();syncWatered();
+  draft=t.value;closeMention();
   t.dispatchEvent(new Event('input',{bubbles:true}));
+  /* The chip just made pops in. */
+  const marks=[...t.parentElement.querySelectorAll('.mback .mtag')];
+  const idx=mentionSegments(t.value.slice(0,at),mentionLabels()).filter(sg=>sg.plantId).length-1;
+  if(!calm.matches&&marks[idx])marks[idx].animate([{transform:'scale(.6)',opacity:0},{transform:'scale(1.08)',opacity:1,offset:.6},{transform:'none'}],
+    {duration:320,easing:'cubic-bezier(.34,1.56,.64,1)'});
 }
 /* Keys the list answers while it is open. true = handled. */
 function mentionKey(e){
@@ -1950,7 +2072,7 @@ function plantRowHTML(p){
     </div>
     <div class="wline"><b class="lbl">Water</b><span>
       ${readAgo()}
-      <span class="water">${esc(waterLabel(p.last,todayISO()))}</span>
+      ${waterHTML(p)}
       <button class="waterbtn" data-act="water" data-val="${esc(p.id)}"><span class="drop">💧</span> Log water</button>
     </span></div>
   </article>`;
@@ -2000,7 +2122,8 @@ function journalItemHTML(it){
     <div class="jbody">
       ${editing_?editBoxHTML(it.kind,it.id,it.plantId,it.raw)
         :`<p class="prose">${it.html}</p>
-          ${it.aside?`<p class="aside">${esc(it.aside)}</p>`:''}
+          ${it.aside?`<p class="aside">${esc(it.aside)}${it.pickId?` <button class="lnk" data-act="assign-pick"
+            data-val="${esc(it.pickId)}">Choose a plant</button>`:''}</p>`:''}
           ${shotsHTML(it.photoIds||[])}
           <div class="entry-acts">
             <button class="lnk" data-act="${it.kind}-edit" data-val="${esc(it.id)}"
@@ -2026,6 +2149,7 @@ function gardenJournalHTML(){
     photoIds:(e.photoIds||[]).filter(id=>shown(PHOTOS).some(x=>x.id===id)),
     phase:(e.assigned||[])[0]?phaseAt(e.assigned[0].plantId,e.date):'',
     aside:e.status==='unsorted'?'No plant recognised yet.':'',
+    pickId:e.status==='unsorted'?e.id:'',
   }));
   const loose=shown(PHOTOS).filter(p=>!items.some(i=>(i.photoIds||[]).includes(p.id)));
   for(const p of loose)items.push({kind:'photo',id:p.id,date:p.date,html:'',photoIds:[p.id],phase:''});
@@ -2065,8 +2189,9 @@ function wxAlertHTML(date){
   const w=wxOf(date);if(!w)return'';
   const al=weatherAlerts(date,w,plants());   // the rule keeps this to outdoor plants
   if(!al.length)return'';
-  return `<div class="wxalerts">${al.map(a=>`<p class="warn ${a.key.startsWith('cold')?'cold':''}">
-    <b>${esc(a.ico)} ${esc(a.what)}</b><span>${esc(a.why)}</span></p>`).join('')}</div>`;
+  return `<div class="wxalerts">${al.map(a=>`<div class="warn ${a.key.startsWith('cold')?'cold':''}" role="note">
+    <span class="wav" aria-hidden="true">${esc(a.ico)}</span>
+    <p class="wmsg"><b>${esc(a.what)}</b><span>${esc(a.why)}</span></p></div>`).join('')}</div>`;
 }
 
 /* The page is the list, so the list needs no heading of its own.
@@ -2097,8 +2222,18 @@ function pfullSpans(p){ return plantSpans(p,WIN.end); }
    the part of a phase that has not happened yet is a pale tint. The dated
    list below says it in words, because colour on its own never says
    "expected". */
+/* What each changing line said the last time it was drawn, so the render
+   in which it changes can mark it. Keyed on the fact, not the words: the
+   minutes in "3 min ago" tick over on their own and that is not news. */
+const drawn=new Map();
+function changed(key,val){
+  const had=drawn.has(key),prev=drawn.get(key);drawn.set(key,val);
+  return had&&prev!==val;
+}
+let careTick=false;           // set once per render, since every card prints the same line
 const readAgo=()=>careDoc&&careDoc.generatedAt
-  ? `<i class="ago">Updated ${esc(relTime(careDoc.generatedAt))}</i>` : '';
+  ? `<i class="ago${careTick?' justnow':''}">Updated ${esc(relTime(careDoc.generatedAt))}</i>` : '';
+const waterHTML=p=>`<span class="water${changed('w:'+p.id,p.last||'')?' justnow':''}">${esc(waterLabel(p.last,todayISO()))}</span>`;
 
 /* The coloured run is rounded at its own two ends, wherever it starts and
    stops, rather than the grey track behind it being rounded at the window's
@@ -2174,7 +2309,7 @@ function plantHTML(p){
       </div>
       <div class="wline"><b class="lbl">Water</b><span>
         ${readAgo()}
-        <span class="water">${esc(waterLabel(p.last,todayISO()))}</span>
+        ${waterHTML(p)}
         <button class="waterbtn" data-act="water" data-val="${esc(p.id)}"><span class="drop">💧</span> Log water</button>
       </span></div>
     </section>
@@ -2212,13 +2347,15 @@ function editBoxHTML(kind,id,plantId,text){
 /* ---- the lock ---- */
 function renderLock(){
   const el=$('#lock');
+  if(!busy&&lockDone){el.className='on';document.body.classList.add('locked');
+    el.innerHTML=summaryHTML(lockDone);el.querySelector('.primary')?.focus();return;}
   if(!busy){el.className='';el.innerHTML='';document.body.classList.remove('locked');return;}
   const secs=Math.round((Date.now()-busyAt)/1000);
   const e=shown(entriesDoc.entries).slice().sort((a,b)=>(a.createdAt||0)-(b.createdAt||0)).at(-1)||{text:''};
   const who=(e.assigned||[]).map(a=>plantById(a.plantId)).filter(Boolean);
   el.className='on';document.body.classList.add('locked');
   el.innerHTML=`<div class="waiting">
-    <p class="said">${esc(e.text)}</p>
+    <p class="said">${saidHTML(e)}</p>
     <div class="steps"><i><b style="width:${busy==='read'?Math.min(95,secs*9):100}%"></b></i>
       <i><b style="width:${busy==='plan'?Math.min(95,(secs-10)*5):0}%"></b></i></div>
     <div class="stage">${busy==='read'?'1/2 · Reading your note':'2/2 · Writing the guidance'}</div>
@@ -2231,9 +2368,120 @@ function renderLock(){
   </div>`;
 }
 
+/* Your note in the lock and in the summary, drawn the way the journal draws
+   it: your own hand, with each plant it names as a chip. The chips here are
+   labels, not links, since the page underneath is out of reach. The model's
+   mentions are used once it has read the note; before that, the @names. */
+function saidHTML(e){
+  const text=e.text||'';
+  let ms=(e.assigned||[]).filter(a=>a.mention&&plantById(a.plantId));
+  if(!ms.length)ms=noteMentions(text);
+  const mentions=ms.map(m=>({plantId:m.plantId,mention:m.mention,label:shortName(plantById(m.plantId).name)}));
+  return tagEntryText(text,mentions).map(sg=>sg.type==='tags'
+    ?sg.plants.map(t=>`<span class="ptag"><span class="av">${avatarFor(t.plantId)}</span>${esc(t.label)}</span>`).join(' ')
+    :esc(sg.text)).join('');
+}
+
+/* ---- what the note changed ----
+   The lock does not just vanish when the work is done: everything it waited
+   for is spread down a long page, and a return to the top shows none of it.
+   So it turns into a short account instead: each plant the note landed on,
+   what was filed under it, what else moved (stage, watering, its status),
+   and a button that goes to that plant and flashes it. */
+let lockDone=null;
+function noteSummary(watch,before,{fresh,stuck,late}){
+  const e=entriesDoc.entries.filter(x=>watch.includes(x.id)).sort((a,b)=>(b.createdAt||0)-(a.createdAt||0))[0]
+    ||entriesDoc.entries.slice().sort((a,b)=>(b.createdAt||0)-(a.createdAt||0))[0]||{};
+  const rows=[],seen=new Set();
+  const row=(pid,note,named=true)=>{
+    const p=plantById(pid),b=before[pid];if(!p||seen.has(pid))return;
+    const moved=[];
+    if(b&&b.stage!==p.stage)moved.push(`Stage: ${p.stage}`);
+    if(b&&b.last!==(p.last||'')&&p.last)moved.push(waterLabel(p.last,todayISO()));
+    const status=named&&b&&b.obs!==(p.observations||'')?p.observations||'':'';
+    if(named?!note&&!moved.length&&!status:!moved.length)return;
+    seen.add(pid);rows.push({pid,note,moved,status});
+  };
+  for(const a of e.assigned||[]){
+    const p=plantById(a.plantId);
+    const n=p&&(p.notes||[]).find(x=>x.id===a.noteId);
+    row(a.plantId,n?n.text:'');
+  }
+  /* The guidance run rewrites every plant's status, so a plant the note never
+     named only counts when something real moved: its stage or its watering. */
+  for(const p of plants())row(p.id,'',false);
+  return {entryId:e.id,text:e.text||'',said:saidHTML(e),rows,fresh,stuck,late,
+    guesses:(e.suggestions||[]).filter(pid=>plantById(pid))};
+}
+function summaryHTML(d){
+  const head=d.stuck?'Saved, but no plant recognised'
+    :d.rows.length?`Done · ${count(d.rows.length,'plant')} updated`:'Saved';
+  return `<div class="waiting done" role="dialog" aria-label="What your note changed">
+    <div class="donehd"><span class="tickmark" aria-hidden="true">${d.stuck?'?':'✓'}</span><b>${head}</b></div>
+    ${d.text?`<p class="said small">${d.said}</p>`:''}
+    ${d.rows.length?`<ul class="changes">${d.rows.map(r=>{const p=plantById(r.pid);return `<li>
+      <span class="art">${avatarFor(r.pid)}</span>
+      <span class="what"><b>${esc(p.name)}</b>
+        ${r.note?`<span class="filed">${esc(r.note)}</span>`:''}
+        ${r.moved.length?`<span class="moved">${r.moved.map(esc).join(' · ')}</span>`:''}
+        ${r.status?`<span class="status-new">Status: ${esc(r.status)}</span>`:''}</span>
+      <button class="goto" data-act="lock-go" data-val="${esc(r.pid)}">Show</button></li>`;}).join('')}</ul>`:''}
+    ${d.stuck?`<p class="note-end">${d.guesses.length?'It might be about one of these. Pick it and the note is filed straight away.'
+        :'Pick the plant and the note is filed straight away.'}</p>
+      ${d.guesses.length?`<div class="guesses">${d.guesses.map(pid=>`<button class="guess" data-act="lock-assign"
+        data-val="${esc(d.entryId)}" data-plant="${esc(pid)}"><span class="av">${avatarFor(pid)}</span>${
+        esc(plantById(pid).name)}</button>`).join('')}</div>`:''}
+      <div class="doneacts"><button class="lnk" data-act="lock-close">Later</button>
+        <button class="${d.guesses.length?'lnk':'primary'}" data-act="lock-pick" data-val="${esc(d.entryId||'')}">${
+          d.guesses.length?'Another plant…':'Choose a plant'}</button></div>`
+    :`<p class="note-end">${d.late?'The care guidance is still being written. The page will update on its own.'
+        :d.fresh?'Care guidance is refreshed for every plant.':''}</p>
+      <div class="doneacts"><button class="primary" data-act="lock-close">Back to the garden</button></div>`}
+  </div>`;
+}
+function closeSummary(){lockDone=null;renderLock();}
+/* File a note onto plants by hand, from the summary or the journal. */
+async function assignEntry(id,plantIds){
+  setBusy('plan');
+  const r=await apiWrite('PATCH','/api/entries/'+encodeURIComponent(id),JSON.stringify({plantIds}),'application/json');
+  if(!r||!r.ok){setBusy('');toast('Could not save. Try again.');return;}
+  await Promise.all([loadEntries(),loadStatus()]);
+  refreshUI();
+  refreshSoon(id);        // the guidance is rewritten behind this; the summary reports it
+}
+/* The guidance can take longer than the lock is willing to hold the page.
+   The summary promises it will turn up, so keep looking, quietly, for a few
+   more minutes: when it lands the cards redraw (and say so), and an open
+   summary changes its last line. */
+function waitForGuidance(planBefore){
+  let n=0;
+  const look=async()=>{
+    await Promise.all([loadPlan(),loadStatus()]);
+    if((careDoc&&careDoc.generatedAt)!==planBefore){
+      if(lockDone&&lockDone.late){lockDone={...lockDone,late:false,fresh:true};}
+      refreshUI();renderLock();return;
+    }
+    if(++n<36)_poll=setTimeout(look,5000);              // ~3 more minutes
+  };
+  _poll=setTimeout(look,4000);
+}
+/* Go to a plant from the summary: its card on the list, or its page. */
+function showChanged(pid){
+  closeSummary();
+  if(V.plant&&V.plant!==pid){goTo(pid,true);window.scrollTo({top:0,behavior:'smooth'});return;}
+  const el=V.plant?document.querySelector('.pfull'):document.querySelector(`.plist .prow[data-pid="${CSS.escape(pid)}"]`);
+  if(!el)return;
+  el.scrollIntoView({behavior:calm.matches?'auto':'smooth',block:'center'});
+  el.classList.remove('touched');void el.offsetWidth;el.classList.add('touched');
+  setTimeout(()=>el.isConnected&&el.classList.remove('touched'),2600);
+}
+
+$('#lock').addEventListener('click',e=>{if(lockDone&&e.target.id==='lock')closeSummary();});
+
 /* ---- put the page together ---- */
 function renderAll(){
   refreshWindow();
+  careTick=changed('care',careDoc&&careDoc.generatedAt||0);
   const a=document.activeElement,keep=a&&a.dataset&&a.dataset.ta?a.selectionStart:null;
   $('#page').innerHTML=
     `<header class="mast">
@@ -2317,17 +2565,48 @@ const arrivals=()=>[...document.querySelectorAll('#page > .areahd, #page > .lgd-
 function playIntro(){
   document.documentElement.classList.remove('pre');
   if(calm.matches)return;
+  introAlerts();
   const ease='cubic-bezier(.2,.7,.2,1)';
   arrivals().forEach((el,i)=>{
     const delay=Math.min(i,12)*55;
     el.animate([{opacity:0,transform:'translateY(16px)'},{opacity:1,transform:'none'}],{duration:540,delay,easing:ease,fill:'backwards'});
-    el.querySelectorAll('.track,.pfull-track').forEach(t=>t.animate(
-      [{clipPath:'inset(0 100% 0 0)'},{clipPath:'inset(0 0 0 0)'}],{duration:900,delay:delay+220,easing:'cubic-bezier(.4,0,.2,1)',fill:'backwards'}));
+    /* The rail stays; the phases are drawn onto it from the left. Each piece
+       starts when the sweep reaches its left edge and takes as long as the
+       sweep takes to cross it, so together they read as one stroke. */
+    el.querySelectorAll('.track,.pfull-track').forEach(t=>{
+      const W=t.offsetWidth||1,T=900;
+      t.querySelectorAll('.bar,.pfull-seg,.pfull-fut').forEach(b=>{
+        const l=b.offsetLeft/W,w=Math.max(b.offsetWidth/W,.02);
+        b.animate([{clipPath:'inset(0 100% 0 0)'},{clipPath:'inset(0 0 0 0)'}],
+          {duration:w*T,delay:delay+220+l*T,easing:'linear',fill:'backwards'});
+      });
+      t.querySelectorAll('.tline,.pfull-today,.pfull-startmk').forEach(m=>m.animate(
+        [{opacity:0,transform:m.classList.contains('pfull-startmk')?'scale(.3)':'scaleY(.2)'},{opacity:1,transform:'none'}],
+        {duration:260,delay:delay+220+(m.offsetLeft/W)*T,easing:'cubic-bezier(.34,1.56,.64,1)',fill:'backwards'}));
+    });
     el.querySelectorAll('.pbody > .snap, .pile').forEach(sn=>{
       const t=sn.classList.contains('pile')?'0deg':sn.style.getPropertyValue('--tilt')||'0deg';
       sn.animate([{opacity:0,transform:`translateY(-18px) rotate(calc(${t} - 12deg)) scale(1.08)`},
         {opacity:1,transform:`rotate(${t})`}],{duration:560,delay:delay+360,easing:'cubic-bezier(.3,1.4,.5,1)',fill:'backwards'});
     });
+  });
+}
+/* The forecast types for a moment, then its message pops out of the tail. */
+function introAlerts(){
+  document.querySelectorAll('.wxalerts').forEach(box=>{
+    const warns=[...box.querySelectorAll('.warn')];if(!warns.length)return;
+    const narrow=getComputedStyle(warns[0]).borderTopLeftRadius==='4px';
+    const typing=document.createElement('div');typing.className='wtyping';typing.setAttribute('aria-hidden','true');
+    typing.innerHTML='<i></i><i></i><i></i>';box.prepend(typing);
+    const origin=narrow?'0 0':'100% 0';
+    typing.style.transformOrigin=origin;
+    typing.animate([{opacity:0,transform:'scale(.4)'},{opacity:1,transform:'none'}],
+      {duration:260,delay:200,easing:'cubic-bezier(.34,1.56,.64,1)',fill:'backwards'});
+    warns.forEach((w,i)=>{w.style.transformOrigin=origin;
+      w.animate([{opacity:0,transform:'scale(.5) translateY(-6px)'},{opacity:1,transform:'none'}],
+        {duration:420,delay:1150+i*160,easing:'cubic-bezier(.34,1.56,.64,1)',fill:'backwards'});});
+    typing.animate([{opacity:1},{opacity:0,transform:'scale(.6)'}],{duration:160,delay:1050,fill:'forwards'})
+      .onfinish=()=>typing.remove();
   });
 }
 /* Changing plant: the new content fades up, quicker than the first visit. */
@@ -2341,26 +2620,16 @@ function turnPage(){
 /* One composer, at the top of the page. A note carries the plants it is
    tagged with, the one the nav has selected and any named with @, so the
    distiller is not asked to guess them. */
-const staged={top:[],watered:false};
+const staged={top:[]};
 let draft='';
 let lastEntryId=null,savedAt=0;
-function clearDraft(){staged.top.forEach(s=>URL.revokeObjectURL(s.url));staged.top=[];staged.watered=false;draft='';closeMention();}
+function clearDraft(){staged.top.forEach(s=>URL.revokeObjectURL(s.url));staged.top=[];draft='';closeMention();}
 async function saveEntry(){
-  const text=draft.trim();
+  /* A box holding only the page's own tag and some photos is a photo note. */
+  const text=noteWords(draft)?draft.trim():'';
   if(!text&&!staged.top.length)return;
   const date=todayISO(),tags=noteTags();
   const btn=document.querySelector('[data-act="save"]');if(btn)btn.disabled=true;
-  /* The watering is written BEFORE the entry. Posting the entry kicks off a
-     re-plan that reads status:garden and writes it back, so a watering saved
-     after the post is read stale and overwritten. */
-  if(staged.watered&&tags.length){
-    for(const id of tags){
-      const rw=await apiWrite('PUT','/api/status/'+encodeURIComponent(id),
-        JSON.stringify({lastWatered:date}),'application/json');
-      if(!rw||!rw.ok){toast('Could not save. Try again.');if(btn)btn.disabled=false;return;}
-    }
-    await loadStatus();
-  }
   const photoIds=[];
   for(const s of staged.top){
     /* One tag says what the photo shows. Several leave it for the server to
@@ -2398,7 +2667,6 @@ const ACTIONS={
     if(!r||!r.ok){toast('Could not save. Try again.');return;}
     await loadStatus();renderAll();soak(id);
   },
-  'watered-chk':(_,el)=>{staged.watered=el.checked;if(el.checked)burst(el,'water');},
   'mention-pick':id=>pickMention(id),
   'entry-del':id=>deleteEntry(id),
   'entry-edit':id=>{editing={kind:'entry',id};renderAll();focusEdit();},
@@ -2408,11 +2676,33 @@ const ACTIONS={
   'edit-save':(id,el)=>saveEdit(el.dataset.kind,id,el.dataset.plant),
   cover:()=>openCover(),
   escape:()=>{setBusy('');renderAll();},
+  'lock-close':()=>closeSummary(),
+  'lock-go':pid=>showChanged(pid),
+  'lock-assign':(id,el)=>{const pid=el.dataset.plant;closeSummary();assignEntry(id,[pid]);},
+  'lock-pick':async id=>{closeSummary();const pid=await pickPlant('Which plant is this note about?');if(pid)assignEntry(id,[pid]);},
+  'assign-pick':async id=>{const pid=await pickPlant('Which plant is this note about?');if(pid)assignEntry(id,[pid]);},
 };
 document.addEventListener('keyup',e=>{
   if(e.target.id==='ctext'&&(e.key==='ArrowLeft'||e.key==='ArrowRight'||e.key==='Home'||e.key==='End'))updateMention(e.target);
 });
 document.addEventListener('focusout',e=>{if(e.target.id==='ctext')setTimeout(closeMention,120);});
+/* On a plant page, opening an empty box writes that plant's tag in first. */
+document.addEventListener('focusin',e=>{
+  const t=e.target;if(t.id!=='ctext'||t.value||!selfTag())return;
+  t.value=selfTag();t.setSelectionRange(t.value.length,t.value.length);
+  draft=t.value;syncMback(t);t.dispatchEvent(new Event('input',{bubbles:true}));
+  const m=t.parentElement.querySelector('.mback .mtag');
+  if(m&&!calm.matches)m.animate([{transform:'scale(.6)',opacity:0},{transform:'scale(1.08)',opacity:1,offset:.6},{transform:'none'}],
+    {duration:320,easing:'cubic-bezier(.34,1.56,.64,1)'});
+});
+/* Left with nothing but that tag, the box goes back to its placeholder. */
+document.addEventListener('focusout',e=>{
+  const t=e.target;if(t.id!=='ctext'||!selfTag()||t.value.trim()!==selfTag().trim()||staged.top.length)return;
+  /* A redraw swaps the box out from under the focus; that is not leaving it. */
+  setTimeout(()=>{if(document.activeElement===t||!t.isConnected)return;
+    t.value='';draft='';syncMback(t);t.dispatchEvent(new Event('input',{bubbles:true}));},150);
+});
+document.addEventListener('scroll',e=>{if(e.target.id==='ctext')syncMback(e.target);},true);
 /* A press on the list must not take focus from the note first. */
 document.addEventListener('pointerdown',e=>{if(e.target.closest('#mpop'))e.preventDefault();});
 /* One tooltip for the page. Over a chart it follows the pointer and answers
@@ -2425,9 +2715,14 @@ let tipFor=null,tipTimer=0,tipWarmUntil=0;
 const pinned=b=>b.matches('button,[role="button"]');
 function showTip(b,x,y){
   const el=tipEl();if(!el||!b.isConnected)return;
-  tipFor=b;el.textContent=b.dataset.tip;
+  tipFor=b;
+  /* A season segment leads with its own colour. */
+  const col=b.matches('.bar,.pfull-seg,.pfull-fut')?getComputedStyle(b).backgroundColor:'';
+  el.innerHTML=(col&&col!=='rgba(0, 0, 0, 0)'?`<i class="dot" style="--dot:${col}"></i>`:'')+`<span>${esc(b.dataset.tip)}</span>`;
   el.classList.toggle('dark',!!b.closest('#viewer'));
-  el.classList.toggle('pin',pinned(b));
+  /* Every tip has the same shape, arrow and all; only a chart's follows the pointer. */
+  el.classList.add('pin');
+  el.classList.toggle('follow',!pinned(b));
   if(pinned(b))pinTip(b);else placeTip(x,y);
   el.classList.add('on');
 }
@@ -2447,9 +2742,12 @@ function pinTip(b){
 function placeTip(x,y){
   const el=tipEl();if(!el)return;
   const w=el.offsetWidth,h=el.offsetHeight;
-  el.dataset.side='above';el.style.removeProperty('--ax');
-  el.style.left=Math.max(6,Math.min(x+14,innerWidth-w-6))+'px';
-  el.style.top=Math.max(6,y-h-12)+'px';
+  /* Centred over the pointer, arrow pointing down at it. */
+  const left=Math.max(6,Math.min(x-w/2,innerWidth-w-6));
+  el.dataset.side='above';
+  el.style.setProperty('--ax',Math.max(10,Math.min(x-left,w-10))+'px');
+  el.style.left=left+'px';
+  el.style.top=Math.max(6,y-h-14)+'px';
 }
 document.addEventListener('pointerover',e=>{
   const b=e.target.closest('[data-tip]');
@@ -2461,7 +2759,7 @@ document.addEventListener('pointerover',e=>{
   else{tipFor=b;tipTimer=setTimeout(()=>{if(tipFor===b)showTip(b,x,y);},380);}
 });
 document.addEventListener('pointermove',e=>{
-  const el=tipEl();if(el&&el.classList.contains('on')&&!el.classList.contains('pin'))placeTip(e.clientX,e.clientY);
+  const el=tipEl();if(el&&el.classList.contains('on')&&el.classList.contains('follow'))placeTip(e.clientX,e.clientY);
 });
 document.addEventListener('pointerout',e=>{
   const b=e.target.closest('[data-tip]');
@@ -2486,14 +2784,31 @@ document.addEventListener('click',e=>{
 document.addEventListener('input',e=>{
   if(!e.target.dataset.ta)return;
   draft=e.target.value;
-  if(e.target.id==='ctext'){updateMention(e.target);syncWatered();}
+  if(e.target.id==='ctext'){updateMention(e.target);syncMback(e.target);}
   const b=document.querySelector('[data-act="save"]');
-  if(b){b.disabled=!draft.trim()&&!staged.top.length;b.classList.toggle('on',!!draft.trim());}
+  const has=!!noteWords(draft)||staged.top.length>0;
+  if(b){b.disabled=!has;b.classList.toggle('on',has);}
   const d=document.querySelector('.dock');if(d)d.classList.toggle('tall',!!draft.trim());
 });
+/* Backspace right after a tag takes the whole tag, the way chat apps do. */
+function tagBackspace(e){
+  const t=e.target;
+  if(e.key!=='Backspace'||t.id!=='ctext'||t.selectionStart!==t.selectionEnd)return false;
+  const at=t.selectionStart;let pos=0,hit=null;
+  for(const sg of mentionSegments(t.value,mentionLabels())){
+    if(sg.plantId&&pos+sg.text.length===at){hit={from:pos,to:at};break;}
+    pos+=sg.text.length;if(pos>at)break;
+  }
+  if(!hit)return false;
+  t.setRangeText('',hit.from,hit.to,'end');
+  t.dispatchEvent(new Event('input',{bubbles:true}));
+  return true;
+}
 document.addEventListener('keydown',e=>{
   if(mentionKey(e)){e.preventDefault();e.stopPropagation();return;}
+  if(tagBackspace(e)){e.preventDefault();return;}
   if(e.key==='Escape'){
+    if(lockDone){closeSummary();return;}
     if($('#unlock').classList.contains('open'))closeUnlock(null);
     else if($('#coverpick').classList.contains('open'))closeCover();
     else if($('#picker').classList.contains('open'))closePicker(null);

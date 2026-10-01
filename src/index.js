@@ -202,6 +202,12 @@ async function handleEntries(req, env, ctx, url) {
     const doc = await readEntries(env);
     const entry = doc.entries.find((e) => e.id === id);
     if (!entry) return new Response('Not found', { status: 404 });
+    if (Array.isArray(body.plantIds) && body.text === undefined) {   // the gardener picked the plants themselves
+      await unlinkNotes(env, entry);
+      await assignByHand(env, entry, body.plantIds);
+      ctx.waitUntil(replan(env, { trigger: 'entry' }));
+      return json((await readEntries(env)).entries.find((e) => e.id === id));
+    }
     await unlinkNotes(env, entry);
     const next = editEntry(doc, id, body, Date.now());
     await writeEntries(env, next);
