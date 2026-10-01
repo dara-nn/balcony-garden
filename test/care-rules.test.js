@@ -1,14 +1,9 @@
 import { test } from 'node:test';
 import assert from 'node:assert/strict';
-import { weatherAlerts, normalizeHealth } from '../public/care-rules.js';
+import { weatherAlerts } from '../public/care-rules.js';
 
 const balcony = (interval) => ({ id: 'p', name: 'Tigerella', area: 'balcony', interval });
 const indoor = (interval) => ({ id: 'm', name: 'Monstera', area: 'indoor', interval });
-
-
-
-
-
 
 test('a hot day warns about venting and names the balcony plants', () => {
   const out = weatherAlerts('2026-08-07', { tmax: 28, tmin: 16 }, [balcony(2), indoor(7)]);
@@ -41,25 +36,4 @@ test('a mild day gets no weather alerts', () => {
 
 test('a day with no forecast gets no weather alerts', () => {
   assert.deepEqual(weatherAlerts('2026-08-07', undefined, [balcony(2)]), []);
-});
-
-test('a health read keeps the words the model chose', () => {
-  const h = normalizeHealth({ label: 'bouncing back', tone: 'good', issues: [] });
-  assert.equal(h.label, 'bouncing back');
-  assert.equal(h.tone, 'good');
-});
-
-test('an old fixed-list health read still renders', () => {
-  assert.deepEqual(normalizeHealth({ overall: 'thriving', issues: [] }), { label: 'thriving', tone: 'good', issues: [] });
-  assert.equal(normalizeHealth({ overall: 'steady' }).tone, 'watch');
-  assert.equal(normalizeHealth({ overall: 'struggling' }).tone, 'bad');
-});
-
-test('an unknown tone falls back to the neutral one', () => {
-  assert.equal(normalizeHealth({ label: 'odd', tone: 'sideways' }).tone, 'watch');
-});
-
-test('nothing to report reads as nothing', () => {
-  assert.equal(normalizeHealth(null), null);
-  assert.equal(normalizeHealth({}), null);
 });

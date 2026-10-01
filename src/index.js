@@ -1,18 +1,20 @@
 // Balcony garden — Worker: serves the static site + a small shared-photo API backed by KV.
 // Viewing photos is public; adding / editing / deleting requires the UPLOAD_PASS secret.
 
-import { readStatus, writeStatus, KEYS, upsertPlant, applyNoteOp, readCare, dropDerivedNotes } from './garden.js';
-import { readEntries, writeEntries, addEntry, assignEntry, editEntry, deleteEntry, taggedPlantIds, handNoteText } from './entries.js';
+import { readStatus, writeStatus, upsertPlant, applyNoteOp, readCare, isRealDate } from './garden.js';
+import { readEntries, writeEntries, addEntry, editEntry, deleteEntry, taggedPlantIds,
+  fileByHand, unlinkEntry, unlinkNote } from './entries.js';
 import { readSeed } from './seed.js';
-import { replan } from './planner.js';
-import { distill } from './distill.js';
+import { replan, inventoryOf, STAGES } from './planner.js';
+import { distill, markFailed, tagPhoto } from './distill.js';
+import { scheduleReplan } from './schedule.js';
 
 const json = (data, status = 200) =>
   new Response(JSON.stringify(data), { status, headers: { 'content-type': 'application/json' } });
 
 const MAX_BYTES = 20 * 1024 * 1024; // 20 MB safety cap (photos are shrunk to ~1000px client-side)
 
-// Writes (add / re-tag / delete / set cover) require the UPLOAD_PASS secret as a bearer token.
+// Writes (add / re-tag / delete) require the UPLOAD_PASS secret as a bearer token.
 const isAuthed = (req, env) => {
   const h = req.headers.get('authorization') || '';
   return !!env.UPLOAD_PASS && h === 'Bearer ' + env.UPLOAD_PASS;
@@ -21,26 +23,6 @@ const isAuthed = (req, env) => {
 export default {
   async fetch(req, env, ctx) {
     const url = new URL(req.url);
-    // The 3D balcony lives at /3d and is served from public/scene.html.
-    // Ask ASSETS for '/scene', not '/scene.html': the assets binding rewrites
-    // .html paths to their extensionless form and would answer with a 307.
-    if (url.pathname === '/3d' || url.pathname === '/3d/') {
-      return env.ASSETS.fetch(new Request(new URL('/scene', url), req));
-    }
-    if (url.pathname === '/api/cover') {
-      if (req.method === 'GET') {
-        const id = await env.PHOTOS.get('meta:cover');
-        return json({ id: id || '' });
-      }
-      if (req.method === 'PUT') {
-        if (!isAuthed(req, env)) return new Response('Unauthorized', { status: 401 });
-        const id = url.searchParams.get('id') || '';
-        if (id) await env.PHOTOS.put('meta:cover', id);
-        else await env.PHOTOS.delete('meta:cover'); // '' = green default
-        return json({ id });
-      }
-      return new Response('Method not allowed', { status: 405 });
-    }
     if (url.pathname === '/api/photos' || url.pathname.startsWith('/api/photos/')) {
       return handlePhotos(req, env, url);
     }
@@ -62,9 +44,14 @@ export default {
       if (!plantId) return new Response('Missing plant id', { status: 400 });
       let fields;
       try { fields = await req.json(); } catch { return new Response('Bad JSON', { status: 400 }); }
-      const doc = upsertPlant(await readStatus(env), plantId, fields, Date.now());
+      const seeding = url.searchParams.get('seed') === '1';
+      const bad = statusFieldsError(fields, seeding);
+      if (bad) return new Response(bad, { status: 400 });
+      const current = await readStatus(env);
+      if (!seeding && !current.plants[plantId]) return new Response('Not found', { status: 404 });
+      const doc = upsertPlant(current, plantId, fields, Date.now());
       await writeStatus(env, doc);
-      if (url.searchParams.get('seed') !== '1') ctx.waitUntil(replan(env, { trigger: 'note' }));
+      if (!seeding) ctx.waitUntil(scheduleReplan(env));
       return new Response(JSON.stringify(doc.plants[plantId]), { headers: { 'content-type': 'application/json' } });
     }
     if (url.pathname === '/api/entries' || url.pathname.startsWith('/api/entries/')) {
@@ -74,11 +61,17 @@ export default {
       if (!isAuthed(req, env)) return new Response('Unauthorized', { status: 401 });
       let body;
       try { body = await req.json(); } catch { return new Response('Bad JSON', { status: 400 }); }
+      const now = Date.now();
+      const before = await readStatus(env);
       let doc;
-      try { doc = applyNoteOp(await readStatus(env), body, Date.now()); }
+      try { doc = applyNoteOp(before, body, now); }
       catch (e) { return new Response(e.message, { status: 400 }); }
+      // A deleted note also comes off its journal entry (see unlinkNote).
+      const gone = body.op === 'delete' && (before.plants[body.plantId].notes || []).find((n) => n.id === body.id);
+      const unlinked = gone && gone.entryId ? unlinkNote(await readEntries(env), gone.entryId, body.plantId, now) : null;
       await writeStatus(env, doc);
-      ctx.waitUntil(replan(env, { trigger: 'note' }));
+      if (unlinked && unlinked.changed) await writeEntries(env, unlinked.entries);
+      ctx.waitUntil(scheduleReplan(env));
       return new Response(JSON.stringify(doc.plants[body.plantId]), { headers: { 'content-type': 'application/json' } });
     }
     // Every plant is its own address. The site is one document, so any '/p/'
@@ -89,7 +82,7 @@ export default {
     return env.ASSETS.fetch(req); // everything else = the static site
   },
   async scheduled(event, env, ctx) {
-    ctx.waitUntil(replan(env, { trigger: 'cron' }));
+    ctx.waitUntil(replan(env));   // the nightly run needs no coalescing
   },
 };
 
@@ -159,8 +152,39 @@ async function handlePhotos(req, env, url) {
   return new Response('Method not allowed', { status: 405 });
 }
 
+// A note's date: a real YYYY-MM-DD (no 31 February), not absurdly old, not in the future.
+// A day of slack, since the page counts days in Tampere and this Worker in UTC.
+export function validNoteDate(d) {
+  if (!isRealDate(d) || d < '2000-01-01') return false;
+  return d <= new Date(Date.now() + 864e5).toISOString().slice(0, 10);
+}
+
+/* What PUT /api/status/:id may set. The page sets lastWatered (the water
+   button); stage is a known stage word. Seeding (?seed=1) also sends the
+   plant's name and species. Anything else, or a bad value, is refused, and the
+   reason is returned; null means the fields are fine. */
+export function statusFieldsError(fields, seeding = false) {
+  if (!fields || typeof fields !== 'object' || Array.isArray(fields)) return 'Bad fields';
+  const allowed = seeding ? ['stage', 'lastWatered', 'name', 'species'] : ['stage', 'lastWatered'];
+  for (const k of Object.keys(fields)) if (!allowed.includes(k)) return 'Unknown field: ' + k;
+  if ('stage' in fields && !STAGES.includes(fields.stage)) return 'Bad stage';
+  if ('lastWatered' in fields && !validNoteDate(fields.lastWatered)) return 'Bad date';
+  for (const k of ['name', 'species']) if (k in fields && typeof fields[k] !== 'string') return 'Bad ' + k;
+  return null;
+}
+
+// photoIds, when sent, is a list of photo ids: never a single string to walk through.
+const badPhotoIds = (v) => v !== undefined && !(Array.isArray(v) && v.every((x) => typeof x === 'string'));
+
+// Text that is only whitespace counts as no text at all.
+const cleanText = (t) => (typeof t === 'string' && t.trim() ? t : '');
+
 // Freestyle entries: saved raw and answered immediately, then sorted onto plants
 // by the distiller in the background. Reads are public, writes need the passphrase.
+//
+// Each request writes each KV document at most once: filing by hand, unlinking
+// old notes and the entry change are all worked out in memory first. A care run
+// is asked for (scheduleReplan) only when the plants' notes actually changed.
 async function handleEntries(req, env, ctx, url) {
   const id = url.pathname.startsWith('/api/entries/')
     ? decodeURIComponent(url.pathname.slice('/api/entries/'.length)) : '';
@@ -176,24 +200,37 @@ async function handleEntries(req, env, ctx, url) {
   if (req.method === 'POST' && !id) {
     let body;
     try { body = await req.json(); } catch { return new Response('Bad JSON', { status: 400 }); }
-    if (!body.date) return new Response('Missing date', { status: 400 });
-    if (!body.text && !(body.photoIds || []).length) return new Response('Empty entry', { status: 400 });
-    const doc = addEntry(await readEntries(env), body, Date.now());
-    await writeEntries(env, doc);
-    const entry = doc.entries[doc.entries.length - 1];
-    // A tagged entry already knows its plants, so its words skip the model. With
-    // several tags the photos still need sorting, but only among those plants.
+    if (!validNoteDate(body.date)) return new Response('Bad date', { status: 400 });
+    if (badPhotoIds(body.photoIds)) return new Response('Bad photoIds', { status: 400 });
+    const text = cleanText(body.text);
+    if (!text && !(body.photoIds || []).length) return new Response('Empty entry', { status: 400 });
+    const now = Date.now();
+    let doc = addEntry(await readEntries(env), { ...body, text }, now);
+    const entryId = doc.entries[doc.entries.length - 1].id;
+    // A tagged entry already knows its plants, so its words skip the model and it
+    // is filed before answering. With several tags the photos still need sorting,
+    // but only among those plants.
     const tagged = taggedPlantIds(body);
-    if (tagged.length) ctx.waitUntil((async () => {
-      await assignByHand(env, entry, tagged, Array.isArray(body.mentions) ? body.mentions : []);
-      if (tagged.length > 1 && entry.photoIds.length) {
-        const pool = (await roster(env)).filter((p) => tagged.includes(p.id));
-        await distill(env, entry.id, pool, { photosOnly: true });
-      }
-      await replan(env, { trigger: 'entry' });
-    })());
-    else ctx.waitUntil(distill(env, entry.id, await roster(env)));
-    return json(entry, 201);
+    if (tagged.length) {
+      const filed = fileByHand(await readStatus(env), doc, entryId, tagged,
+        Array.isArray(body.mentions) ? body.mentions : [], now);
+      if (filed.changed) await writeStatus(env, filed.status);
+      await writeEntries(env, doc = filed.entries);
+      const entry = doc.entries.find((e) => e.id === entryId);
+      ctx.waitUntil((async () => {
+        try {
+          if (tagged.length > 1 && entry.photoIds.length) {
+            const pool = (await roster(env)).filter((p) => tagged.includes(p.id));
+            await distill(env, entryId, pool, { photosOnly: true });
+          }
+          if (entry.status === 'sorted') await scheduleReplan(env);
+        } catch { await markFailed(env, entryId, 'internal'); }
+      })());
+      return json(entry, 201);
+    }
+    await writeEntries(env, doc);
+    ctx.waitUntil(distillThenPlan(env, entryId, false));
+    return json(doc.entries.find((e) => e.id === entryId), 201);
   }
 
   if (req.method === 'PATCH' && id) {
@@ -202,22 +239,44 @@ async function handleEntries(req, env, ctx, url) {
     const doc = await readEntries(env);
     const entry = doc.entries.find((e) => e.id === id);
     if (!entry) return new Response('Not found', { status: 404 });
+    if (body.date !== undefined && !validNoteDate(body.date)) return new Response('Bad date', { status: 400 });
+    if (badPhotoIds(body.photoIds)) return new Response('Bad photoIds', { status: 400 });
+    const now = Date.now();
+    const unlinked = unlinkEntry(await readStatus(env), entry, now);
+
     if (Array.isArray(body.plantIds) && body.text === undefined) {   // the gardener picked the plants themselves
-      await unlinkNotes(env, entry);
-      await assignByHand(env, entry, body.plantIds);
-      ctx.waitUntil(replan(env, { trigger: 'entry' }));
-      return json((await readEntries(env)).entries.find((e) => e.id === id));
+      const filed = fileByHand(unlinked.status, doc, id, body.plantIds, [], now, { byHand: true });
+      if (unlinked.changed || filed.changed) await writeStatus(env, filed.status);
+      await writeEntries(env, filed.entries);
+      // One plant picked: the entry's untagged photos are of it too.
+      const plantIds = [...new Set(body.plantIds)];
+      if (plantIds.length === 1 && filed.status.plants[plantIds[0]]) await tagUntagged(env, entry.photoIds, plantIds[0]);
+      ctx.waitUntil(scheduleReplan(env));
+      return json(filed.entries.entries.find((e) => e.id === id));
     }
-    await unlinkNotes(env, entry);
-    const next = editEntry(doc, id, body, Date.now());
+
+    const text = body.text === undefined ? undefined : cleanText(body.text);
+    if (text === '' && !(entry.photoIds || []).length) return new Response('Empty entry', { status: 400 });
+    const next = editEntry(doc, id, { text, date: body.date, assigned: unlinked.kept }, now);
+    const mentions = Array.isArray(body.mentions) ? body.mentions : [];
+    const tagged = taggedPlantIds({ mentions });
+    // Reworded with @names: those plants, no guessing. Reworded with none on an
+    // entry the gardener filed by hand: the same plants again, with the new words.
+    const handPlants = !tagged.length && entry.byHand
+      ? [...new Set((entry.assigned || []).map((a) => a.plantId))] : [];
+    if (tagged.length || handPlants.length) {
+      const filed = tagged.length
+        ? fileByHand(unlinked.status, next, id, tagged, mentions, now)
+        : fileByHand(unlinked.status, next, id, handPlants, [], now, { byHand: true });
+      if (unlinked.changed || filed.changed) await writeStatus(env, filed.status);
+      await writeEntries(env, filed.entries);
+      ctx.waitUntil(scheduleReplan(env));
+      return json(filed.entries.entries.find((e) => e.id === id));
+    }
+    if (unlinked.changed) await writeStatus(env, unlinked.status);
     await writeEntries(env, next);
-    const tagged = taggedPlantIds({ mentions: body.mentions });
-    if (tagged.length) {                       // reworded with @names: those plants, no guessing
-      await assignByHand(env, next.entries.find((e) => e.id === id), tagged, body.mentions);
-      ctx.waitUntil(replan(env, { trigger: 'entry' }));
-      return json((await readEntries(env)).entries.find((e) => e.id === id));
-    }
-    ctx.waitUntil(distill(env, id, await roster(env)));
+    // Old notes were taken off: guidance needs redoing even if the new words land nowhere.
+    ctx.waitUntil(distillThenPlan(env, id, unlinked.changed));
     return json(next.entries.find((e) => e.id === id));
   }
 
@@ -225,54 +284,38 @@ async function handleEntries(req, env, ctx, url) {
     const doc = await readEntries(env);
     const entry = doc.entries.find((e) => e.id === id);
     if (!entry) return new Response('Not found', { status: 404 });
-    await unlinkNotes(env, entry);
-    await writeEntries(env, deleteEntry(doc, id, Date.now()));
-    ctx.waitUntil(replan(env, { trigger: 'entry' }));
+    const now = Date.now();
+    const unlinked = unlinkEntry(await readStatus(env), entry, now);
+    if (unlinked.changed) await writeStatus(env, unlinked.status);
+    await writeEntries(env, deleteEntry(doc, id, now));
+    for (const pid of entry.photoIds || []) await env.PHOTOS.delete('photo:' + pid);
+    ctx.waitUntil(scheduleReplan(env));
     return new Response(null, { status: 204 });
   }
   return new Response('Method not allowed', { status: 405 });
 }
 
-// The model needs to know what it is choosing between, place included.
+/* Matching runs first; a care run is asked for only when the entry landed on a
+   plant (or old notes were taken off), never for one that failed or found nothing. */
+async function distillThenPlan(env, entryId, notesChanged) {
+  const placed = await distill(env, entryId, await roster(env));
+  if (placed || notesChanged) await scheduleReplan(env);
+}
+
+async function tagUntagged(env, photoIds, plantId) {
+  for (const pid of photoIds || []) {
+    const meta = (await env.PHOTOS.getWithMetadata('photo:' + pid, { type: 'stream' }))?.metadata;
+    if (meta && !meta.plant) await tagPhoto(env, pid, plantId);
+  }
+}
+
+// The model needs to know what it is choosing between, place included. Only
+// plants still in the inventory file are offered; one dropped from it is ignored.
 // Identity and place come from the inventory file; condition comes from the store.
 async function roster(env) {
   const status = await readStatus(env);
-  const seed = await readSeed(env);
-  const area = Object.fromEntries((seed?.plants || []).map((p) => [p.id, p.area || 'balcony']));
-  return Object.values(status.plants).map((p) => ({
-    id: p.id, name: p.name, species: p.species, area: area[p.id] || 'balcony', stage: p.stage,
+  const inventory = inventoryOf(await readSeed(env));
+  return Object.values(status.plants).filter((p) => !inventory || inventory.has(p.id)).map((p) => ({
+    id: p.id, name: p.name, species: p.species, area: inventory?.get(p.id)?.area || 'balcony', stage: p.stage,
   }));
 }
-
-// Drop the notes an entry previously produced, so re-sorting cannot leave duplicates behind.
-async function unlinkNotes(env, entry) {
-  if (!(entry.assigned || []).length) return;
-  const status = await readStatus(env);
-  await writeStatus(env, dropDerivedNotes(status, entry.assigned, Date.now()));
-}
-
-// Assignment without the model: the entry's own words go straight onto the chosen plants.
-// Writes only — the caller schedules the replan, which must never block the response.
-// mentions ({plantId, mention}) are the @names as typed, kept so the journal can tag them.
-async function assignByHand(env, entry, plantIds, mentions = []) {
-  const now = Date.now();
-  const said = Object.fromEntries(mentions.filter((m) => m && typeof m.mention === 'string'
-    && entry.text.includes(m.mention)).map((m) => [m.plantId, m.mention]));
-  const text = handNoteText(entry.text, Object.values(said).map((mention) => ({ mention })));
-  const status = await readStatus(env);
-  const plants = { ...status.plants };
-  const assigned = [];
-  plantIds.filter((pid) => plants[pid]).forEach((pid, i) => {
-    const tag = said[pid] ? { mention: said[pid] } : {};
-    if (!entry.text) { assigned.push({ plantId: pid, noteId: null, ...tag }); return; }   // photo-only entry
-    const noteId = `note-${now}-${i}`;
-    plants[pid] = { ...plants[pid], updatedAt: now,
-      notes: [...(plants[pid].notes || []), { id: noteId, date: entry.date, text, createdAt: now, entryId: entry.id }] };
-    assigned.push({ plantId: pid, noteId, ...tag });
-  });
-  await writeStatus(env, { ...status, updatedAt: now, plants });
-  await writeEntries(env, assignEntry(await readEntries(env), entry.id, { assigned }, now));
-}
-
-// Shared garden state (task list) so the user's devices stay in sync.
-// One KV doc; reads public, writes need the passphrase. Whole-blob last-write-wins by updatedAt.

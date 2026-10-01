@@ -1,6 +1,7 @@
 import { test } from 'node:test';
 import assert from 'node:assert/strict';
-import { readEntries, ENTRY_KEY, addEntry, assignEntry, editEntry, deleteEntry, taggedPlantIds, handNoteText } from '../src/entries.js';
+import { readEntries, ENTRY_KEY, addEntry, assignEntry, editEntry, deleteEntry, taggedPlantIds, handNoteText,
+  plantNoteText, fileByHand, unlinkEntry, unlinkNote } from '../src/entries.js';
 
 function fakeKV(initial = {}) {
   const m = new Map(Object.entries(initial));
@@ -105,4 +106,135 @@ test('handNoteText drops the @ from each mention, keeps the name', () => {
   assert.equal(handNoteText('@Basil 1 and @Mint need water', [{ mention: '@Basil 1' }, { mention: '@Mint' }]),
     'Basil 1 and Mint need water');
   assert.equal(handNoteText('plain', []), 'plain');
+});
+
+/* ---- per-plant note text ---- */
+
+const TWO = [{ plantId: 'tig', mention: '@Tigerella' }, { plantId: 'noire', mention: '@Noire' }];
+
+test('a plant\'s own @name goes only when the text starts with it; every other @name reads plain', () => {
+  const text = '@Tigerella fruit splitting after rain, same on @Noire';
+  assert.equal(plantNoteText(text, TWO, 'tig'), 'fruit splitting after rain, same on Noire');
+  assert.equal(plantNoteText(text, TWO, 'noire'), 'Tigerella fruit splitting after rain, same on Noire');
+});
+
+test('an own @name in the middle of the sentence stays, as the plain name', () => {
+  const m = [{ plantId: 'c1', mention: '@Chilli 1' }, { plantId: 'c2', mention: '@Chilli 2' }];
+  const text = 'Pinched the tips of @Chilli 1 and @Chilli 2, both look sturdy';
+  assert.equal(plantNoteText(text, m, 'c1'), 'Pinched the tips of Chilli 1 and Chilli 2, both look sturdy');
+  assert.equal(plantNoteText(text, m, 'c2'), 'Pinched the tips of Chilli 1 and Chilli 2, both look sturdy');
+});
+
+test('a leading comma or space before the own @name is dropped with it', () => {
+  assert.equal(plantNoteText(' , @Mint  needs   water', [{ plantId: 'm', mention: '@Mint' }], 'm'), 'needs water');
+});
+
+test('a longer name is never half-eaten by a shorter one', () => {
+  const m = [{ plantId: 'b', mention: '@Basil' }, { plantId: 'b1', mention: '@Basil 1' }];
+  assert.equal(plantNoteText('@Basil 1 and @Basil need water', m, 'b'), 'Basil 1 and Basil need water');
+  assert.equal(plantNoteText('@Basil 1 and @Basil need water', m, 'b1'), 'and Basil need water');
+});
+
+test('the name left at the start does not leave a stray comma, and a bare name is kept', () => {
+  assert.equal(plantNoteText('@Mint, watered', [{ plantId: 'm', mention: '@Mint' }], 'm'), 'watered');
+  assert.equal(plantNoteText('@Mint', [{ plantId: 'm', mention: '@Mint' }], 'm'), 'Mint');
+  assert.equal(plantNoteText('  plain   words ', [], 'm'), 'plain words');
+});
+
+/* ---- filing by hand, in memory ---- */
+
+const garden = () => ({ updatedAt: 0, plants: {
+  tig: { id: 'tig', notes: [] }, noire: { id: 'noire', notes: [] } } });
+
+test('filing by hand writes each plant its own note and links them on the entry', () => {
+  const doc = addEntry(empty(), { id: 'e1', date: '2026-08-07', text: '@Tigerella  fruit splitting, @Noire too' }, 10);
+  const out = fileByHand(garden(), doc, 'e1', ['tig', 'noire'], TWO, 50);
+  assert.equal(out.status.plants.tig.notes[0].text, 'fruit splitting, Noire too');
+  assert.equal(out.status.plants.noire.notes[0].text, 'Tigerella fruit splitting, Noire too');
+  const e = out.entries.entries[0];
+  assert.equal(e.status, 'sorted');
+  assert.equal(e.byHand, undefined);
+  assert.deepEqual(e.assigned.map((a) => a.mention), ['@Tigerella', '@Noire']);
+  assert.equal(out.changed, true);
+});
+
+test('plants picked by hand mark the entry byHand; an unknown plant is skipped', () => {
+  const out = fileByHand(garden(), withOne(), 'e1', ['tig', 'ghost'], [], 50, { byHand: true });
+  assert.equal(out.entries.entries[0].byHand, true);
+  assert.deepEqual(out.entries.entries[0].assigned.map((a) => a.plantId), ['tig']);
+});
+
+test('picking no plants by hand is not byHand: the entry is simply unsorted', () => {
+  const out = fileByHand(garden(), withOne(), 'e1', [], [], 50, { byHand: true });
+  assert.equal(out.entries.entries[0].status, 'unsorted');
+  assert.equal(out.entries.entries[0].byHand, undefined);
+  assert.equal(out.changed, false);
+});
+
+test('a photo-only entry filed by hand is placed with no note', () => {
+  const doc = addEntry(empty(), { id: 'e1', date: '2026-08-07', text: '', photoIds: ['p1'] }, 10);
+  const out = fileByHand(garden(), doc, 'e1', ['tig'], [], 50);
+  assert.deepEqual(out.entries.entries[0].assigned, [{ plantId: 'tig', noteId: null }]);
+  assert.equal(out.status.plants.tig.notes.length, 0);
+});
+
+test('a later model result clears byHand', () => {
+  let doc = assignEntry(withOne(), 'e1', { assigned: [{ plantId: 'a', noteId: 'n' }], byHand: true }, 20);
+  assert.equal(doc.entries[0].byHand, true);
+  assert.equal(doc.entries[0].filedAt, 20);
+  doc = assignEntry(doc, 'e1', { assigned: [{ plantId: 'a', noteId: 'n2' }] }, 30);
+  assert.equal(doc.entries[0].byHand, undefined);
+});
+
+/* ---- unlinking ---- */
+
+test('unlinking drops the entry\'s notes and keeps only links whose note survived', () => {
+  const status = { updatedAt: 0, plants: { a: { id: 'a', notes: [
+    { id: 'n1', text: 'model', ai: true }, { id: 'n2', text: 'reworded', ai: false }] } } };
+  const entry = { assigned: [{ plantId: 'a', noteId: 'n1' }, { plantId: 'a', noteId: 'n2' }, { plantId: 'a', noteId: null }] };
+  const out = unlinkEntry(status, entry, 5);
+  assert.deepEqual(out.status.plants.a.notes.map((n) => n.id), ['n2']);
+  assert.deepEqual(out.kept, [{ plantId: 'a', noteId: 'n2' }]);
+  assert.equal(out.changed, true);
+  assert.equal(unlinkEntry(status, { assigned: [] }, 5).changed, false);
+});
+
+test('an edit stamps editedAt, clears an old error and takes the surviving links', () => {
+  let doc = assignEntry(withOne(), 'e1', { assigned: [{ plantId: 'a', noteId: 'n' }], error: 'ai' }, 20);
+  doc = editEntry(doc, 'e1', { text: 'new words', assigned: [] }, 30);
+  assert.equal(doc.entries[0].editedAt, 30);
+  assert.equal(doc.entries[0].error, undefined);
+  assert.deepEqual(doc.entries[0].assigned, []);
+});
+
+/* ---- deleting one plant's note ---- */
+
+const linked = (extra = {}) => ({ updatedAt: 0, entries: [{ id: 'e1', date: '2026-08-07', text: 'x', photoIds: [],
+  status: 'sorted', assigned: [{ plantId: 'tig', noteId: 'n1' }, { plantId: 'noire', noteId: 'n2' }], ...extra }] });
+
+test('unlinkNote takes only that plant off the entry', () => {
+  const out = unlinkNote(linked(), 'e1', 'tig', 9);
+  assert.equal(out.changed, true);
+  assert.deepEqual(out.entries.entries[0].assigned, [{ plantId: 'noire', noteId: 'n2' }]);
+  assert.equal(out.entries.entries[0].status, 'sorted');
+});
+
+test('unlinkNote deletes an entry left on no plant when it has no photos', () => {
+  const doc = linked({ assigned: [{ plantId: 'tig', noteId: 'n1' }] });
+  const out = unlinkNote(doc, 'e1', 'tig', 9);
+  assert.deepEqual(out.entries.entries, []);
+});
+
+test('unlinkNote keeps an entry with photos, as unsorted', () => {
+  const doc = linked({ photoIds: ['p1'], assigned: [{ plantId: 'tig', noteId: 'n1' }] });
+  const e = unlinkNote(doc, 'e1', 'tig', 9).entries.entries[0];
+  assert.equal(e.status, 'unsorted');
+  assert.deepEqual(e.assigned, []);
+  assert.deepEqual(e.photoIds, ['p1']);
+});
+
+test('unlinkNote changes nothing for an unknown entry or an unlinked plant', () => {
+  const doc = linked();
+  assert.equal(unlinkNote(doc, 'nope', 'tig', 9).changed, false);
+  assert.equal(unlinkNote(doc, 'e1', 'basil', 9).entries, doc);
 });

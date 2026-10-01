@@ -5,18 +5,6 @@
 
 const isOutdoors = (p) => (p.area || 'balcony') === 'balcony';
 
-/* The model summarises a plant's health in its own words. Only the colour is
-   constrained: `tone` picks the pill, `label` is whatever fits the plant.
-   Reads written before that change carry `overall` from a fixed list instead. */
-const TONE_OF = { thriving: 'good', steady: 'watch', struggling: 'bad' };
-export function normalizeHealth(h) {
-  if (!h) return null;
-  const label = h.label || h.overall;
-  if (!label) return null;
-  const tone = ['good', 'watch', 'bad'].includes(h.tone) ? h.tone : (TONE_OF[h.overall] || 'watch');
-  return { label, tone, issues: h.issues || [] };
-}
-
 export function weatherAlerts(date, wx, plants) {
   if (!wx) return [];
   const outdoor = plants.filter(isOutdoors);

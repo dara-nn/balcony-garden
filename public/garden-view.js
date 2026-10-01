@@ -114,10 +114,12 @@ export function seasonSpans(defaults, history, upcoming, windowEnd, current) {
      the label next to it. Running early is the same problem the other way up:
      a phase it is already in cannot still be waiting to start, so its start
      comes back to today, and so does anything ahead of it that the plant has
-     evidently skipped. A phase the history already dates is left alone. */
+     evidently skipped. A phase the history already dates keeps its start, but
+     it still runs on to today while the plant is in it: a recorded start is no
+     reason to leave today bare. */
   if (nowPhase) {
     const at = spans.findIndex((x) => x[0] === nowPhase);
-    if (at !== -1 && !realStart.has(nowPhase)) {
+    if (at !== -1) {
       if (spans[at][2] < current.date) {
         const shift = dayDiff(spans[at][2], current.date);
         spans[at][2] = current.date;
@@ -125,7 +127,7 @@ export function seasonSpans(defaults, history, upcoming, windowEnd, current) {
           spans[i][1] = addDaysISO(spans[i][1], shift);
           spans[i][2] = addDaysISO(spans[i][2], shift);
         }
-      } else if (spans[at][1] > current.date) {
+      } else if (!realStart.has(nowPhase) && spans[at][1] > current.date) {
         for (let i = at; i >= 0 && spans[i][1] > current.date; i--) spans[i][1] = current.date;
       }
     }
@@ -370,4 +372,21 @@ export function mentionSegments(text, labels) {
   }
   if (plain) out.push({ text: plain });
   return out;
+}
+
+/* The plant's stage record for the season bar: the changes noticed live, plus
+   the ones the model dated from the notes. When both name the same stage within
+   two months of each other they are one event, and it keeps the earlier date:
+   a stage starts at its first sign, and anything later is only when it was
+   noticed. So a run that dates a stage late can never pull the bar back. */
+export function stageRecord(history, noteStages) {
+  const ok = (e) => e && e.date && e.stage;
+  const near = (a, b) => Math.abs(Date.parse(a) - Date.parse(b)) <= 60 * 864e5;
+  const out = [];
+  for (const e of [...(noteStages || []), ...(history || [])].filter(ok)) {
+    const i = out.findIndex((o) => o.stage === e.stage && near(o.date, e.date));
+    if (i < 0) out.push({ date: e.date, stage: e.stage });
+    else if (e.date < out[i].date) out[i] = { date: e.date, stage: e.stage };
+  }
+  return out.sort((a, b) => a.date.localeCompare(b.date));
 }

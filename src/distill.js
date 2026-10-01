@@ -4,7 +4,7 @@
 
 import { readStatus, writeStatus } from './garden.js';
 import { readEntries, writeEntries, assignEntry } from './entries.js';
-import { replan, bytesToBase64 } from './planner.js';
+import { bytesToBase64 } from './planner.js';
 
 const ASSIGNMENT_SCHEMA = {
   type: 'object',
@@ -77,11 +77,13 @@ export function parseDistillResponse(geminiJson) {
   return JSON.parse(text);
 }
 
-/* photoIds is the list handed to the model, in the order it was shown them. */
-export function mergeDistill(statusDoc, entriesDoc, entry, result, now, photoIds = []) {
+/* photoIds is the list handed to the model, in the order it was shown them.
+   allowed: the plant ids the model was offered; anything else it names is ignored. */
+export function mergeDistill(statusDoc, entriesDoc, entry, result, now, photoIds = [], allowed = null) {
   const plants = { ...statusDoc.plants };
+  const ok = (id) => !!plants[id] && (!allowed || allowed.has(id));
   const assigned = [];
-  const known = (result.assignments || []).filter((a) => a && plants[a.plantId]);
+  const known = (result.assignments || []).filter((a) => a && ok(a.plantId));
 
   if (result.confident) {
     known.forEach((a, i) => {
@@ -93,7 +95,8 @@ export function mergeDistill(statusDoc, entriesDoc, entry, result, now, photoIds
           id: noteId, date: entry.date, text: a.text, createdAt: now, entryId: entry.id, ai: true,
           ...(a.quote ? { quote: a.quote } : {}),
         }],
-        ...(a.watered ? { lastWatered: entry.date } : {}),
+        // An older note saying "watered" must not pull the last watering back.
+        ...(a.watered && entry.date > (prev.lastWatered || '') ? { lastWatered: entry.date } : {}),
         updatedAt: now,
       };
       assigned.push({ plantId: a.plantId, noteId, ...(a.mention ? { mention: a.mention } : {}) });
@@ -101,8 +104,13 @@ export function mergeDistill(statusDoc, entriesDoc, entry, result, now, photoIds
   }
 
   const photoTags = (result.photos || [])
-    .filter((p) => p && plants[p.plantId] && photoIds[p.index])
+    .filter((p) => p && ok(p.plantId) && photoIds[p.index])
     .map((p) => ({ photoId: photoIds[p.index], plantId: p.plantId }));
+
+  // A photo-only entry has no words to file, so the plants its photos show are where it went.
+  if (!(entry.text || '').trim() && !assigned.length) {
+    for (const pid of new Set(photoTags.map((t) => t.plantId))) assigned.push({ plantId: pid, noteId: null });
+  }
 
   return {
     status: { ...statusDoc, updatedAt: now, plants },
@@ -115,6 +123,7 @@ export function mergeDistill(statusDoc, entriesDoc, entry, result, now, photoIds
 }
 
 const MODEL = 'gemini-flash-latest';
+const TIMEOUT_MS = 20000;   // the page waits on this one; past this it says the AI could not be reached
 
 async function photoPart(env, id) {
   const obj = await env.PHOTOS.getWithMetadata('photo:' + id, { type: 'arrayBuffer' });
@@ -122,63 +131,89 @@ async function photoPart(env, id) {
   return { inline_data: { mime_type: (obj.metadata && obj.metadata.ct) || 'image/jpeg', data: bytesToBase64(obj.value) } };
 }
 
-async function tagPhoto(env, photoId, plantId) {
+export async function tagPhoto(env, photoId, plantId) {
   const cur = await env.PHOTOS.getWithMetadata('photo:' + photoId, { type: 'arrayBuffer' });
   if (!cur || !cur.value) return;
   await env.PHOTOS.put('photo:' + photoId, cur.value, { metadata: { ...(cur.metadata || {}), plant: plantId } });
 }
 
+/* The same version of the entry the model was shown: an edit or a retry while the
+   model was thinking makes this answer stale, and the newer run decides instead. */
+const sameVersion = (a, b) => !!a && !!b && a.text === b.text && a.date === b.date && a.editedAt === b.editedAt;
+
 /* Runs in ctx.waitUntil after the entry is already saved, so it must never throw.
+   roster is the plants the model may choose from (inventory plants only).
+
+   The model call is slow, so nothing read before it is written back after it:
+   the result is merged into fresh copies of the entries and the status, read
+   just before writing, and dropped if the entry has gone, changed, or been
+   filed some other way meanwhile. A failure always ends the entry as unsorted
+   with an error code, never pending for good.
+
+   Returns true when the entry landed on a plant, so the caller knows a care
+   run is worth scheduling. It never runs one itself.
+
    photosOnly: the gardener already tagged the plants, so only the photos are
-   sorted; the notes, the entry and the replan are left to the caller. */
+   sorted; the notes and the entry are left alone. */
 export async function distill(env, entryId, roster, { photosOnly = false } = {}) {
+  let shown = null;
+  const fail = async (code) => { if (!photosOnly) await markFailed(env, entryId, code, shown); return false; };
   try {
-    const entriesDoc = await readEntries(env);
-    const entry = entriesDoc.entries.find((e) => e.id === entryId);
-    if (!entry) return;
-    const status = await readStatus(env);
-    if (!Object.keys(status.plants).length) return;
+    shown = (await readEntries(env)).entries.find((e) => e.id === entryId);
+    if (!shown) return false;
+    if (!photosOnly && shown.status !== 'pending') return false;
+    if (!(roster || []).length) return fail('empty');
 
     // Only photos the gardener left untagged are put to the model; a hand-set tag wins.
     const untagged = [];
-    for (const pid of entry.photoIds || []) {
+    for (const pid of shown.photoIds || []) {
       const meta = (await env.PHOTOS.getWithMetadata('photo:' + pid, { type: 'stream' }))?.metadata;
       if (meta && meta.plant) continue;
       const part = await photoPart(env, pid);
       if (part) untagged.push({ id: pid, part });
     }
 
-    if (photosOnly && !untagged.length) return;
-    const body = buildDistillBody(entry, roster, untagged);
+    if (photosOnly && !untagged.length) return false;
+    const body = buildDistillBody(shown, roster, untagged);
     const url = `https://generativelanguage.googleapis.com/v1beta/models/${MODEL}:generateContent`;
     let res;
     try {
       res = await fetch(url, { method: 'POST',
         headers: { 'content-type': 'application/json', 'x-goog-api-key': env.GEMINI_API_KEY },
-        body: JSON.stringify(body) });
-    } catch { return void (photosOnly || await markFailed(env, entryId, 'network')); }
-    if (!res.ok) return void (photosOnly || await markFailed(env, entryId, 'model ' + res.status));
+        body: JSON.stringify(body), signal: AbortSignal.timeout(TIMEOUT_MS) });
+    } catch { return fail('ai'); }
+    if (!res.ok) return fail('ai');
 
     let result;
-    try { result = parseDistillResponse(await res.json()); }
-    catch (e) { return void (photosOnly || await markFailed(env, entryId, e.message)); }
+    try { result = parseDistillResponse(await res.json()); } catch { return fail('ai'); }
 
-    const merged = mergeDistill(status, entriesDoc, entry, result, Date.now(), untagged.map((p) => p.id));
+    const entriesDoc = await readEntries(env);
+    const entry = entriesDoc.entries.find((e) => e.id === entryId);
+    if (!sameVersion(entry, shown) || (!photosOnly && entry.status !== 'pending')) return false;
+    const status = await readStatus(env);
+    const allowed = new Set(roster.map((p) => p.id));
+    const merged = mergeDistill(status, entriesDoc, entry, result, Date.now(), untagged.map((p) => p.id), allowed);
     if (photosOnly) {
-      const pool = new Set(roster.map((p) => p.id));
-      for (const t of merged.photoTags) if (pool.has(t.plantId)) await tagPhoto(env, t.photoId, t.plantId);
-      return;
+      for (const t of merged.photoTags) await tagPhoto(env, t.photoId, t.plantId);
+      return merged.photoTags.length > 0;
     }
-    await writeStatus(env, merged.status);
+    const filed = merged.entries.entries.find((e) => e.id === entryId);
+    if (filed.assigned.some((a) => a.noteId)) await writeStatus(env, merged.status);
     await writeEntries(env, merged.entries);
     for (const t of merged.photoTags) await tagPhoto(env, t.photoId, t.plantId);
-    await replan(env, { trigger: 'entry' });
-  } catch { /* the entry is saved and stays unsorted; nothing else to do */ }
+    return filed.status === 'sorted';
+  } catch {
+    return fail('internal');
+  }
 }
 
-async function markFailed(env, entryId, error) {
+/* Ends a pending entry as unsorted with a short error code, unless something
+   newer has already dealt with it. */
+export async function markFailed(env, entryId, error, shown = null) {
   try {
     const doc = await readEntries(env);
+    const entry = doc.entries.find((e) => e.id === entryId);
+    if (!entry || entry.status !== 'pending' || (shown && !sameVersion(entry, shown))) return;
     await writeEntries(env, assignEntry(doc, entryId, { assigned: [], error }, Date.now()));
   } catch { /* give up quietly */ }
 }

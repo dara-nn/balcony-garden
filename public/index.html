@@ -117,7 +117,7 @@
     font-weight:400;line-height:1.18;letter-spacing:0}
   .sect > .hd .meta{margin-left:auto;font-size:var(--t2);color:var(--dim)}
   .sect > .hd .meta b{font-weight:600;color:var(--tomato)}
-  /* the plant list: one row per plant, health in words, season bar, guidance */
+  /* the plant list: one row per plant, status in words, season bar, guidance */
   /* One column for the names, so every bar starts and ends at the same x and
      the month scale above them lines up with all of them. */
   .sect{--namecol:300px}
@@ -411,12 +411,6 @@
     .wpics figure{flex:1 1 0;min-width:0}
   }
 
-  /* a sub-heading inside a section: smaller, its own rule, its own air */
-  .sub{display:flex;align-items:baseline;gap:var(--s2);margin:var(--s5) 0 var(--s2);font-size:var(--t5);
-    font-weight:600;color:var(--ink);padding-bottom:var(--s2);border-bottom:1px solid var(--rule)}
-  .sub:first-of-type{margin-top:var(--s4)}
-  .sub .n{margin-left:auto;font-weight:400;font-size:var(--t2);color:var(--dim)}
-
   /* ---- the nav: it governs the whole page, so it sits above the whole page ---- */
   /* Every plant is reachable without scrolling sideways, so the strip wraps.
      It gives up stickiness once it is more than a couple of rows tall, rather
@@ -501,12 +495,6 @@
     overflow:visible;transition:border-color .15s ease}
   .dock:focus-within .box{border-color:var(--leaf);box-shadow:0 0 0 3px color-mix(in srgb,var(--leaf) 14%,transparent)}
   .dock .top{display:flex;align-items:center;gap:var(--s2);padding:var(--s3) var(--s4);font-size:var(--t2);color:var(--dim)}
-  .dock .top .tag{display:inline-flex;align-items:center;gap:var(--s2);color:var(--ink);background:var(--wash);
-    border-radius:var(--r-pill);padding:var(--s1) var(--s3) var(--s1) var(--s1);max-width:52%;
-    overflow:hidden;white-space:nowrap}
-  .dock .top .tag svg{width:20px;height:20px;border-radius:var(--r-pill)}
-  .dock .top .fold{margin-left:auto;border:none;background:none;color:var(--dim);cursor:pointer;
-    font-size:var(--t1);padding:var(--s2);min-width:28px;border-radius:var(--r-pill)}
   .dock .in{padding:0 var(--s4) var(--s3)}
   .dock textarea{width:100%;min-height:52px;resize:none;font:inherit;
     font-family:var(--hand);font-size:var(--t4);line-height:1.6;color:var(--ink);
@@ -586,6 +574,14 @@
   /* ---- tags on a note ----
      Tags come from @names in the text. A small list under the caret offers
      the names to pick from. */
+  /* The date chip: reads "Today" until a past day is picked, then shows that
+     day in the pollen colour so a backdated note cannot go unnoticed. The
+     real date input sits invisibly over it and opens the calendar. */
+  .ndate{position:relative;display:inline-flex;align-items:center;border:1px solid var(--rule);
+    border-radius:var(--r-pill);padding:2px var(--s2);color:var(--ink);cursor:pointer;font-size:var(--t2)}
+  .ndate:hover,.ndate:focus-within{border-color:var(--leaf)}
+  .ndate.past{border-color:var(--pollen);color:var(--pollen);font-weight:600}
+  .ndate input{position:absolute;inset:0;opacity:0;cursor:pointer;width:100%;height:100%;border:0;padding:0}
   .mwrap{position:relative}
   /* The chip layer: the text box's twin, sitting exactly under it. Every
      property that moves a letter has to match the box, or the chips drift
@@ -663,6 +659,15 @@
     border-radius:var(--r-pill);padding:var(--s1) var(--s3);font-size:var(--t2);cursor:pointer}
   .changes .goto:hover{border-color:var(--leaf);color:var(--pine)}
   .note-end{margin:var(--s3) 0 0;font-size:var(--t2);color:var(--dim)}
+  .tickmark.ask{background:var(--pollen)}
+  .waiting .dated{margin:0 0 var(--s2);font-size:var(--t2);font-weight:600;color:var(--pollen)}
+  /* A small breathing dot while the care update runs behind the summary. */
+  .pulse{display:inline-block;width:8px;height:8px;border-radius:50%;background:var(--leaf);
+    margin-right:var(--s2);vertical-align:1px}
+  @media (prefers-reduced-motion:no-preference){
+    @keyframes breathe{0%,100%{opacity:.3;transform:scale(.8)}50%{opacity:1;transform:none}}
+    .pulse{animation:breathe 1.4s ease-in-out infinite}
+  }
   .guesses{display:flex;flex-wrap:wrap;gap:var(--s2);margin-top:var(--s2)}
   .guess{display:inline-flex;align-items:center;gap:var(--s2);border:1px solid var(--leaf);background:var(--field);
     color:var(--pine);border-radius:var(--r-pill);padding:var(--s1) var(--s3) var(--s1) var(--s1);
@@ -875,19 +880,12 @@
   .pk-head{display:flex;align-items:center;justify-content:space-between;font-size:var(--t5);font-weight:600;
     margin-bottom:var(--s3)}
   .pk-head button{border:none;background:none;color:var(--dim);font-size:var(--t7);cursor:pointer;min-width:38px}
-  .pk-grid,.cp-grid{display:grid;grid-template-columns:repeat(auto-fill,minmax(88px,1fr));gap:var(--s2)}
+  .pk-grid{display:grid;grid-template-columns:repeat(auto-fill,minmax(88px,1fr));gap:var(--s2)}
   .pk-grid button{border:1px solid var(--rule);background:var(--paper);border-radius:var(--r-md);
     padding:var(--s2);cursor:pointer;display:flex;flex-direction:column;align-items:center;
     gap:var(--s2);font-size:var(--t2);text-align:center}
   .pk-grid button .av{width:40px;height:40px;border-radius:var(--r-sm);overflow:hidden}
   .pk-grid button .av svg{width:100%;height:100%;display:block}
-  .cp-grid button{border:1px solid var(--rule);background:var(--paper);border-radius:var(--r-md);overflow:hidden;
-    cursor:pointer;padding:0;aspect-ratio:1;position:relative}
-  .cp-grid .cp-photo img{width:100%;height:100%;object-fit:cover;display:block}
-  .cp-grid .cp-photo.sel{outline:3px solid var(--leaf);outline-offset:-3px}
-  .cp-grid .cp-new,.cp-grid .cp-def{display:flex;flex-direction:column;align-items:center;justify-content:center;
-    gap:var(--s2);color:var(--dim);font-size:var(--t1)}
-  .cp-grid .cp-green{width:34px;height:34px;border-radius:var(--r-sm);background:linear-gradient(135deg,#2E7D52,#93BFA3)}
   .unlock-card{max-width:400px;border-radius:var(--r-lg);margin:auto var(--s3);padding:var(--s4)}
   .unlock-card h3{font-size:var(--t5);margin-bottom:var(--s2)}
   .unlock-card p{margin:0 0 var(--s3);font-size:var(--t3);color:var(--dim);line-height:1.55}
@@ -1063,12 +1061,6 @@
     <div class="pk-grid" id="pk-grid"></div></div>
 </div>
 
-<div id="coverpick" class="modal" role="dialog" aria-modal="true" aria-label="Cover photo">
-  <div class="pk-card"><div class="pk-head"><span>Cover photo</span>
-    <button id="cp-cancel" aria-label="Close">×</button></div>
-    <div class="cp-grid" id="cp-grid"></div></div>
-</div>
-
 <div id="unlock" class="modal center" role="dialog" aria-modal="true" aria-labelledby="unlock-h">
   <div class="pk-card unlock-card">
     <h3 id="unlock-h">Password</h3>
@@ -1084,8 +1076,8 @@ stored on this device only, so it is asked once.</p>
 
 <script src="/garden-data.js"></script>
 <script type="module">
-import { weatherAlerts, normalizeHealth } from '/care-rules.js';
-import { groupByArea, waterLabel, seasonSpans, withStart, phaseOfStage, chartWindow, monthTicks, tagEntryText, journalGroups, plantPhotos, findMentions, mentionQuery, mentionSegments } from '/garden-view.js';
+import { weatherAlerts } from '/care-rules.js';
+import { groupByArea, waterLabel, seasonSpans, withStart, phaseOfStage, chartWindow, monthTicks, tagEntryText, journalGroups, plantPhotos, findMentions, mentionQuery, mentionSegments, stageRecord } from '/garden-view.js';
 
 /* ================= basics ================= */
 const $=s=>document.querySelector(s);
@@ -1106,7 +1098,7 @@ async function loadStatus(){
   try{const r=await fetch('/api/status',{cache:'no-store'});
     if(r.ok){statusDoc=await r.json();store.set('statusDoc',statusDoc);}}catch(e){}
 }
-async function loadPlan(){
+async function loadCare(){
   try{const r=await fetch('/api/care',{cache:'no-store'});
     if(r.ok){const d=await r.json();careDoc=(d&&d.plants)?d:null;store.set('careDoc',careDoc);}}catch(e){}
 }
@@ -1119,45 +1111,67 @@ function relTime(ms){if(!ms)return'';
   if(s<90)return'just now';if(s<3600)return Math.round(s/60)+' min ago';
   if(s<86400)return Math.round(s/3600)+' h ago';return Math.round(s/86400)+' d ago';}
 
-/* The distiller takes a few seconds; poll until the entry stops being pending.
-   Redraw the open sheet too, that is where the entry the user just wrote is shown. */
+/* The distiller takes a few seconds; poll until the entry stops being pending. */
 function flashPlant(pid){touched.add(pid);setTimeout(()=>{touched.delete(pid);renderAll();},2600);}
-function refreshUI(){renderAll();}
-let _poll=null,busy='';
+/* pollGen: every watcher checks it after each wait, so a newer save, or "Let me
+   back in", stops an older one instead of the two racing for the lock. */
+let _poll=null,busy='',pollGen=0,pollSince=0,pollWatch=[];
 /* Saving kicks off two model calls back to back: the distiller sorts the note,
-   then the planner rebuilds the schedule. Watch for BOTH, or the task list stops
-   refreshing seconds before the new plan actually arrives. */
+   then the planner rewrites the guidance. Watch for BOTH, or the page stops
+   refreshing seconds before the new guidance actually arrives. */
 /* focus: the entry to report on when it is not a pending one, as when a
    note is filed onto a plant by hand. */
-function refreshSoon(focus){
-  clearTimeout(_poll);lockDone=null;
-  const planBefore=careDoc&&careDoc.generatedAt;
-  /* What every plant looked like before, so the end can say what moved. */
+function refreshSoon(focus,since){
+  const gen=++pollGen;clearTimeout(_poll);lockDone=null;
+  /* What every plant looked like before, so the summary can say what moved. */
   const before=Object.fromEntries(plants().map(p=>[p.id,{obs:p.observations||'',stage:p.stage,last:p.last||''}]));
   const watch=focus?[focus]:entriesDoc.entries.filter(e=>e.status==='pending').map(e=>e.id);
+  /* Guidance counts as new for this note once it was worked out from data at
+     least as new as the note's filing: care.basedOn against the entry's
+     filedAt (when it was put onto plants), else when it was saved. */
+  const baseline=()=>Math.max(since||0,...entriesDoc.entries.filter(e=>watch.includes(e.id))
+    .map(e=>e.filedAt||e.createdAt||0))||Date.now();
+  pollSince=baseline();
+  pollWatch=watch;
   let n=0;
   setBusy('read');
   const tick=async()=>{
-    const wasPending=entriesDoc.entries.filter(e=>e.status==='pending').map(e=>e.id);
-    await Promise.all([loadStatus(),loadPlan(),loadEntries()]);
-    refreshUI();
-    const landed=entriesDoc.entries.filter(e=>wasPending.includes(e.id)&&e.status==='sorted');
-    landed.forEach(e=>(e.assigned||[]).forEach(a=>flashPlant(a.plantId)));
-
-    const pending=entriesDoc.entries.some(e=>e.status==='pending');
-    const planFresh=(careDoc&&careDoc.generatedAt)!==planBefore;
-    const stuck=entriesDoc.entries.some(e=>wasPending.includes(e.id)&&e.status==='unsorted');
-    const late=++n>=20;                                                            // ~60s ceiling
-    if((!pending&&planFresh)||stuck||late){
-      lockDone=noteSummary(watch,before,{fresh:planFresh,stuck,late:late&&!(planFresh&&!pending)});
-      setBusy('');renderAll();
-      if(lockDone.late)waitForGuidance(planBefore);
-      return;
-    }
-    setBusy(pending?'read':'plan');
-    _poll=setTimeout(tick,3000);
+    await Promise.all([loadStatus(),loadCare(),loadEntries()]);
+    if(gen!==pollGen)return;
+    renderAll();
+    pollSince=baseline();
+    const mine=entriesDoc.entries.filter(e=>watch.includes(e.id));
+    const pending=mine.some(e=>e.status==='pending');
+    if(pending&&++n<12){_poll=setTimeout(tick,2000);return;}          // ~25 s to file it
+    mine.filter(e=>e.status==='sorted').forEach(e=>(e.assigned||[]).forEach(a=>flashPlant(a.plantId)));
+    const failed=mine.find(e=>e.status==='unsorted'&&e.error);
+    const stuck=!failed&&mine.some(e=>e.status==='unsorted');
+    const fresh=careFresh(pollSince);
+    lockDone=noteSummary(watch,before,{fresh,stuck,failed:!!failed,slow:pending,waiting:!fresh&&!stuck&&!failed&&!pending});
+    setBusy('');renderAll();
+    if(lockDone.waiting||lockDone.slow)followCare(gen,watch,before);
   };
-  _poll=setTimeout(tick,2500);
+  _poll=setTimeout(tick,focus?600:1200);
+}
+const careFresh=since=>!!(careDoc&&careDoc.basedOn&&careDoc.basedOn>=since);
+/* The care update carries on after the lock has let go. Keep looking, quietly:
+   when it lands the cards redraw and an open summary says so; when the server
+   reports it failed, the summary says that instead. */
+function followCare(gen,watch,before){
+  let n=0;
+  const look=async()=>{
+    await Promise.all([loadCare(),loadStatus(),loadEntries()]);
+    if(gen!==pollGen)return;
+    if(careFresh(pollSince)){
+      if(lockDone)lockDone={...noteSummary(watch,before,{fresh:true}),entryId:lockDone.entryId};
+      renderAll();renderLock();return;
+    }
+    const err=careDoc&&careDoc.lastError;
+    if(err&&err.at>=pollSince){if(lockDone){lockDone={...lockDone,waiting:false,careFailed:true};renderLock();}return;}
+    if(++n<45){_poll=setTimeout(look,4000);return;}                   // ~3 minutes
+    if(lockDone){lockDone={...lockDone,waiting:false,careSlow:true};renderLock();}
+  };
+  _poll=setTimeout(look,3000);
 }
 /* One state for the whole page while the two model calls run: everything on
    screen is about to be replaced, so nothing may be touched until it is. */
@@ -1210,10 +1224,12 @@ function plants(){
     return {id:sp.id,name:sp.name,species:sp.species,area:sp.area||'balcony',
       stage:s.stage||sp.stage,last:s.lastWatered||sp.water||'',
       started:sp.started||'',startedHow:sp.startedHow||'',
-      health:normalizeHealth(s.health),observations:s.observations,notes:s.notes||[]};
+      observations:s.observations,notes:s.notes||[]};
   });
 }
 const plantById=id=>plants().find(p=>p.id===id);
+/* A plant's stage record: what was noticed live plus what the notes date. */
+const stagesOf=id=>{const s=statusDoc.plants[id]||{};return stageRecord(s.history,s.noteStages);};
 
 /* ================= avatars ================= */
 const KEY_BY_ID={};
@@ -1561,7 +1577,7 @@ $('#ph-tag').onclick=async()=>{
   const pid=await pickPlant('Which plant is this photo of?');
   if(pid===null)return;
   const r=await apiWrite('PATCH','/api/photos/'+id+'?plant='+encodeURIComponent(pid));
-  if(r&&r.ok){const p=PHOTOS.find(x=>x.id===id);if(p)p.plant=pid;applyPhotos();fillSheet();}
+  if(r&&r.ok){const p=PHOTOS.find(x=>x.id===id);if(p)p.plant=pid;applyPhotos();}
 };
 $('#ph-del').onclick=()=>{
   const id=viewerKey;
@@ -1570,11 +1586,10 @@ $('#ph-del').onclick=()=>{
     const r=await apiWrite('DELETE','/api/photos/'+id);
     if(r&&(r.ok||r.status===204)){
       PHOTOS=PHOTOS.filter(x=>x.id!==id);
-      if(id===coverId)setCover('');
-      applyPhotos();fillSheet();
+      applyPhotos();
     }
-  },()=>{_hidden.delete(id);applyPhotos();fillSheet();});
-  _hidden.add(id);applyPhotos();fillSheet();
+  },()=>{_hidden.delete(id);applyPhotos();});
+  _hidden.add(id);applyPhotos();
 };
 
 /* ---- plant picker (a promise, so callers just await it) ---- */
@@ -1602,58 +1617,38 @@ $('#pk-grid').addEventListener('click',e=>{
 $('#pk-cancel').onclick=()=>closePicker(null);
 $('#picker').addEventListener('click',e=>{if(e.target.id==='picker')closePicker(null);});
 
-/* ---- cover ---- */
-let coverId='';
-async function loadCover(){
-  try{const r=await fetch('/api/cover');if(r.ok)coverId=(await r.json()).id||'';}catch(e){}
-}
-function openCover(){
-  const imgs=PHOTOS.slice().sort((a,b)=>(b.created||0)-(a.created||0));
-  $('#cp-grid').innerHTML=
-    `<button class="cp-new" id="cp-new">📷<span>Add</span></button>`+
-    `<button class="cp-def${coverId?'':' sel'}" data-cover=""><span class="cp-green"></span><span>Green</span></button>`+
-    imgs.map(x=>`<button class="cp-photo${x.id===coverId?' sel':''}" data-cover="${esc(x.id)}" aria-label="${esc(shortDate(x.date))}"><img src="${photoURL(x.id)}" alt="" loading="lazy" decoding="async"></button>`).join('');
-  $('#coverpick').classList.add('open');
-  $('#cp-new').onclick=()=>{fileMode='cover';$('#ph-input').click();};
-}
-function closeCover(){$('#coverpick').classList.remove('open');}
-async function setCover(id){
-  const r=await apiWrite('PUT','/api/cover?id='+encodeURIComponent(id||''));
-  if(r&&r.ok){coverId=id;}
-  closeCover();
-}
-$('#cp-grid').addEventListener('click',e=>{
-  const b=e.target.closest('[data-cover]');if(b)setCover(b.dataset.cover);
-});
-$('#cp-cancel').onclick=closeCover;
-$('#coverpick').addEventListener('click',e=>{if(e.target.id==='coverpick')closeCover();});
-
 function deleteEntry(id){
   hold('Entry deleted',async()=>{
     const r=await apiWrite('DELETE','/api/entries/'+encodeURIComponent(id));
-    if(r&&(r.ok||r.status===204)){await loadEntries();await loadStatus();renderAll();fillSheet();}
-  },()=>{_hidden.delete(id);renderAll();fillSheet();});
-  _hidden.add(id);renderAll();fillSheet();
+    if(r&&(r.ok||r.status===204)){await loadEntries();await loadStatus();renderAll();followQuietly();}
+  },()=>{_hidden.delete(id);renderAll();});
+  _hidden.add(id);renderAll();
 }
+/* After a change made outside the note box (a delete, a watering, an edited
+   note) the server rewrites the guidance a little later. Follow it quietly so
+   the open page shows the result without a reload. */
+function followQuietly(){const gen=++pollGen;clearTimeout(_poll);pollSince=Date.now()-2000;pollWatch=[];followCare(gen,[],{});}
 function deleteNote(pid,noteId){
   hold('Entry deleted',async()=>{
     const r=await apiWrite('POST','/api/notes',JSON.stringify({plantId:pid,op:'delete',id:noteId}),'application/json');
-    if(r&&r.ok){await loadStatus();renderAll();fillSheet();}
-  },()=>{_hidden.delete(noteId);renderAll();fillSheet();});
-  _hidden.add(noteId);renderAll();fillSheet();
+    /* The server also takes this plant off the note's journal entry. */
+    if(r&&r.ok){await Promise.all([loadStatus(),loadEntries()]);renderAll();followQuietly();}
+  },()=>{_hidden.delete(noteId);renderAll();});
+  _hidden.add(noteId);renderAll();
 }
 function focusEdit(){const t=$('#etext');if(t){t.focus();t.setSelectionRange(t.value.length,t.value.length);}}
 async function saveEdit(kind,id,plantId){
   const text=($('#etext')?.value||'').trim();
-  if(!text){editing=null;fillSheet();return;}
+  if(!text){editing=null;renderAll();return;}
   const r=kind==='note'
     ? await apiWrite('POST','/api/notes',JSON.stringify({plantId,op:'edit',id,text}),'application/json')
     : await apiWrite('PATCH','/api/entries/'+encodeURIComponent(id),JSON.stringify({text,mentions:noteMentions(text)}),'application/json');
-  if(!r||!r.ok){toast('Could not save. Try again.');return;}
+  if(!r||!r.ok){if(r)toast('Could not save. Try again.');return;}
   editing=null;
   await Promise.all([loadStatus(),loadEntries()]);
-  refreshUI();
-  if(kind==='entry')refreshSoon();          // the reworded entry is sorted again
+  renderAll();
+  if(kind==='entry')refreshSoon(id,Date.now()-2000);   // the reworded entry is filed again
+  else followQuietly();
 }
 
 /* ================= toasts + undo hold ================= */
@@ -1700,7 +1695,9 @@ $('#unlock').addEventListener('click',e=>{if(e.target.id==='unlock')closeUnlock(
 async function apiWrite(method,path,body,ct){
   let pass=store.get('uploadPass');
   if(!pass){pass=await askPass();if(!pass)return null;store.set('uploadPass',pass);syncLock();}
-  const r=await fetch(path,{method,headers:{'authorization':'Bearer '+pass,...(ct?{'content-type':ct}:{})},body});
+  let r;
+  try{r=await fetch(path,{method,headers:{'authorization':'Bearer '+pass,...(ct?{'content-type':ct}:{})},body});}
+  catch{toast('Could not reach the garden. Check the connection and try again.');return null;}
   if(r.status===401){store.set('uploadPass',null);syncLock();toast('Wrong passphrase. Try again.');return null;}
   return r;
 }
@@ -1805,11 +1802,14 @@ function syncMback(t){
 }
 function dockHTML(){
   const p=V.plant?plantById(V.plant):null;
-  const tags=noteTags();
   const can=!!noteWords(draft)||staged.top.length>0;
   return `<div class="dock ${draft.trim()?'tall':''}">
     <div class="box">
-      <div class="top"><span>New note · ${shortDate(todayISO())}</span></div>
+      <div class="top"><span>New note ·</span>
+        <label class="ndate ${staged.date?'past':''}" title="The day this note is about">
+          <span>${staged.date?esc(niceDate(staged.date)):'Today'} ▾</span>
+          <input type="date" id="cdate" min="${NOTE_MIN}" max="${todayISO()}" value="${staged.date||todayISO()}"
+            aria-label="Date of this note"></label></div>
       <div class="in">
         <label class="vhid" for="ctext">New note</label>
         <div class="mwrap">
@@ -1910,7 +1910,7 @@ const upcomingFor=id=>((careDoc&&careDoc.plants&&careDoc.plants[id])||{}).upcomi
    then begun where this plant actually began. */
 function plantSpans(p,end){
   const row=SEASON.find(r=>r.key===KEY_BY_ID[p.id]);
-  return withStart(seasonSpans(row?row.ph:[],(statusDoc.plants[p.id]||{}).history||[],
+  return withStart(seasonSpans(row?row.ph:[],stagesOf(p.id),
     upcomingFor(p.id),end,{stage:p.stage,date:todayISO()}),p.started,p.startedHow||'sown');
 }
 /* The phase covering today, in the bar's own words. The plant's recorded
@@ -1920,8 +1920,11 @@ function currentSpan(p,spans){
   const T=todayISO(),nowPh=phaseOfStage(p.stage);
   return spans.find(([c,f,to])=>f<=T&&to>=T&&c===nowPh)||spans.find(([,f,to])=>f<=T&&to>=T)||null;
 }
-const currentPhaseWord=p=>{const s=currentSpan(p,plantSpans(p,WIN.end));return s?PHASE_LABEL[s[0]]||s[0]:'';};
-const currentPhaseCode=p=>{const s=currentSpan(p,plantSpans(p,WIN.end));return s?s[0]:'';};
+/* When no band covers today (a basil that flowers, which its variety's season
+   does not include, or a plant past the end of its usual season), the tag still
+   names the stage the plant is in, rather than going blank. */
+const currentPhaseCode=p=>{const s=currentSpan(p,plantSpans(p,WIN.end));return s?s[0]:phaseOfStage(p.stage)||'';};
+const currentPhaseWord=p=>{const c=currentPhaseCode(p);return c?PHASE_LABEL[c]||c:'';};
 /* The phase the plant is in, as a tag in that phase's colour: it is the same
    fact the bar shows, so it wears the bar's colour and outranks the dates. */
 const phaseTagHTML=p=>{const w=currentPhaseWord(p);
@@ -1930,7 +1933,7 @@ function refreshWindow(){
   const list=plants();
   WIN=chartWindow({
     spans:list.map(p=>plantSpans(p,null)),
-    histories:list.map(p=>(statusDoc.plants[p.id]||{}).history||[]),
+    histories:list.map(p=>stagesOf(p.id)),
     upcomings:list.map(p=>upcomingFor(p.id)),
     today:todayISO(),monthsAhead:3});
 }
@@ -1971,7 +1974,7 @@ const inWindow=d=>d>=WIN.start&&d<=WIN.end;
    which parts of the year are recorded. */
 function recordedPhases(p){
   const T=todayISO(),done=new Set();
-  for(const h of (statusDoc.plants[p.id]||{}).history||[]){
+  for(const h of stagesOf(p.id)){
     const ph=phaseOfStage(h.stage);
     if(ph&&h.date&&h.date<=T)done.add(ph);
   }
@@ -2172,7 +2175,7 @@ function plantJournalHTML(p){
   return journalHTML(notes,count(notes.length,'entry','entries'));
 }
 
-/* ---- tasks and weather ---- */
+/* ---- weather ---- */
 /* The forecast is four numbers, so it rides the end of the area heading
    rather than taking a row of its own. The alert keeps its own line, since
    the reason is the useful half and hiding it would cost more than the row. */
@@ -2283,7 +2286,10 @@ function pfullStagesHTML(p,spans){
     </li>`;}).join('')}</ol>`;
   /* A plant resting outside every phase has nothing marked now. Say so in
      the bar's own terms rather than leaving the reader to spot it. */
-  return rows+(at<0?'<p class="pfull-none">Nothing on the bar is marked now.</p>':'');
+  const nowPh=phaseOfStage(p.stage);
+  return rows+(at<0?`<p class="pfull-none">${nowPh
+    ?`${esc(PHASE_LABEL[nowPh]||nowPh)} now, outside this variety's usual season, so the bar has no band for today.`
+    :'Nothing on the bar is marked now.'}</p>`:'');
 }
 
 function plantHTML(p){
@@ -2347,24 +2353,43 @@ function editBoxHTML(kind,id,plantId,text){
 /* ---- the lock ---- */
 function renderLock(){
   const el=$('#lock');
+  /* Nothing behind the lock can be typed into or pressed. */
+  const page=$('#page');if(page)page.inert=!!(busy||lockDone);
   if(!busy&&lockDone){el.className='on';document.body.classList.add('locked');
-    el.innerHTML=summaryHTML(lockDone);el.querySelector('.primary')?.focus();return;}
+    el.setAttribute('aria-label','What your note changed');
+    el.innerHTML=summaryHTML(lockDone);
+    /* Keyboard focus starts inside: on the main button, else the first choice. */
+    (el.querySelector('.primary')||el.querySelector('.guess')||el.querySelector('button'))?.focus();return;}
   if(!busy){el.className='';el.innerHTML='';document.body.classList.remove('locked');return;}
   const secs=Math.round((Date.now()-busyAt)/1000);
-  const e=shown(entriesDoc.entries).slice().sort((a,b)=>(a.createdAt||0)-(b.createdAt||0)).at(-1)||{text:''};
+  const byTime=(a,b)=>(a.createdAt||0)-(b.createdAt||0);
+  const e=entriesDoc.entries.filter(x=>pollWatch.includes(x.id)).sort(byTime).at(-1)
+    ||shown(entriesDoc.entries).slice().sort(byTime).at(-1)||{text:''};
   const who=(e.assigned||[]).map(a=>plantById(a.plantId)).filter(Boolean);
   el.className='on';document.body.classList.add('locked');
-  el.innerHTML=`<div class="waiting">
+  el.setAttribute('aria-label','Filing your note');
+  /* Already showing: change only what moved, so its button stays put. */
+  const open=el.querySelector('.waiting:not(.done)');
+  if(open&&open.dataset.entry===(e.id||'')){
+    const said=open.querySelector('.said');if(said)said.innerHTML=saidHTML(e);
+    const found=who.length?`<div class="found">${who.map(p=>{
+      const note=(p.notes||[]).find(n=>(e.assigned||[]).some(a=>a.noteId===n.id));
+      return `<div class="read"><span class="art">${avatarFor(p.id)}</span>
+        <span><b>${esc(p.name)}</b><span>${esc(note?note.text:'')}</span></span></div>`;}).join('')}</div>`:'';
+    const old=open.querySelector('.found');
+    if(old)old.outerHTML=found||'<span hidden></span>';else if(found)open.querySelector('.eta').insertAdjacentHTML('afterend',found);
+    return;
+  }
+  el.innerHTML=`<div class="waiting" data-entry="${esc(e.id||'')}">
     <p class="said">${saidHTML(e)}</p>
-    <div class="steps"><i><b style="width:${busy==='read'?Math.min(95,secs*9):100}%"></b></i>
-      <i><b style="width:${busy==='plan'?Math.min(95,(secs-10)*5):0}%"></b></i></div>
-    <div class="stage">${busy==='read'?'1/2 · Reading your note':'2/2 · Writing the guidance'}</div>
-    <div class="eta">${secs} s · the rest of the page is waiting</div>
+    <div class="steps"><i><b style="width:${Math.min(95,8+secs*7)}%"></b></i></div>
+    <div class="stage">Filing your note</div>
+    <div class="eta">${secs} s · the care guidance is updated after this</div>
     ${who.length?`<div class="found">${who.map(p=>{
       const note=(p.notes||[]).find(n=>(e.assigned||[]).some(a=>a.noteId===n.id));
       return `<div class="read"><span class="art">${avatarFor(p.id)}</span>
         <span><b>${esc(p.name)}</b><span>${esc(note?note.text:'')}</span></span></div>`;}).join('')}</div>`:''}
-    ${secs>45?'<button class="out" data-act="escape">Let me back in</button>':''}
+    ${secs>15?'<button class="out" data-act="escape">Let me back in</button>':''}
   </div>`;
 }
 
@@ -2389,7 +2414,7 @@ function saidHTML(e){
    what was filed under it, what else moved (stage, watering, its status),
    and a button that goes to that plant and flashes it. */
 let lockDone=null;
-function noteSummary(watch,before,{fresh,stuck,late}){
+function noteSummary(watch,before,flags={}){
   const e=entriesDoc.entries.filter(x=>watch.includes(x.id)).sort((a,b)=>(b.createdAt||0)-(a.createdAt||0))[0]
     ||entriesDoc.entries.slice().sort((a,b)=>(b.createdAt||0)-(a.createdAt||0))[0]||{};
   const rows=[],seen=new Set();
@@ -2410,14 +2435,23 @@ function noteSummary(watch,before,{fresh,stuck,late}){
   /* The guidance run rewrites every plant's status, so a plant the note never
      named only counts when something real moved: its stage or its watering. */
   for(const p of plants())row(p.id,'',false);
-  return {entryId:e.id,text:e.text||'',said:saidHTML(e),rows,fresh,stuck,late,
+  return {...flags,entryId:e.id,text:e.text||'',said:saidHTML(e),rows,
+    date:e.date&&e.date!==todayISO()?e.date:'',
     guesses:(e.suggestions||[]).filter(pid=>plantById(pid))};
 }
 function summaryHTML(d){
-  const head=d.stuck?'Saved, but no plant recognised'
+  const head=d.failed?'Saved. The AI could not be reached'
+    :d.stuck?'Which plant is this about?'
+    :d.slow?'Saved. Still working out which plant'
     :d.rows.length?`Done · ${count(d.rows.length,'plant')} updated`:'Saved';
-  return `<div class="waiting done" role="dialog" aria-label="What your note changed">
-    <div class="donehd"><span class="tickmark" aria-hidden="true">${d.stuck?'?':'✓'}</span><b>${head}</b></div>
+  const care=d.fresh?'Care guidance is refreshed for every plant.'
+    :d.careFailed?'The care update did not work this time. It runs again with your next note and every night.'
+    :d.careSlow?'The care update is taking a while. The page will show it when it arrives.'
+    :d.waiting?'<span class="pulse" aria-hidden="true"></span>Updating the care guidance…'
+    :d.slow?'The journal will update when it is done.':'';
+  return `<div class="waiting done">
+    <div class="donehd"><span class="tickmark ${d.failed||d.stuck?'ask':''}" aria-hidden="true">${d.failed||d.stuck?'?':'✓'}</span><b>${head}</b></div>
+    ${d.date?`<p class="dated">Dated ${esc(niceDate(d.date))}</p>`:''}
     ${d.text?`<p class="said small">${d.said}</p>`:''}
     ${d.rows.length?`<ul class="changes">${d.rows.map(r=>{const p=plantById(r.pid);return `<li>
       <span class="art">${avatarFor(r.pid)}</span>
@@ -2426,7 +2460,11 @@ function summaryHTML(d){
         ${r.moved.length?`<span class="moved">${r.moved.map(esc).join(' · ')}</span>`:''}
         ${r.status?`<span class="status-new">Status: ${esc(r.status)}</span>`:''}</span>
       <button class="goto" data-act="lock-go" data-val="${esc(r.pid)}">Show</button></li>`;}).join('')}</ul>`:''}
-    ${d.stuck?`<p class="note-end">${d.guesses.length?'It might be about one of these. Pick it and the note is filed straight away.'
+    ${d.failed?`<p class="note-end">Your note is kept. Try again now, or pick the plant yourself.</p>
+      <div class="doneacts"><button class="lnk" data-act="lock-close">Later</button>
+        <button class="lnk" data-act="lock-pick" data-val="${esc(d.entryId||'')}">Choose a plant</button>
+        <button class="primary" data-act="lock-retry" data-val="${esc(d.entryId||'')}">Try again</button></div>`
+    :d.stuck?`<p class="note-end">${d.guesses.length?'It might be one of these. Pick it and the note is filed straight away.'
         :'Pick the plant and the note is filed straight away.'}</p>
       ${d.guesses.length?`<div class="guesses">${d.guesses.map(pid=>`<button class="guess" data-act="lock-assign"
         data-val="${esc(d.entryId)}" data-plant="${esc(pid)}"><span class="av">${avatarFor(pid)}</span>${
@@ -2434,36 +2472,29 @@ function summaryHTML(d){
       <div class="doneacts"><button class="lnk" data-act="lock-close">Later</button>
         <button class="${d.guesses.length?'lnk':'primary'}" data-act="lock-pick" data-val="${esc(d.entryId||'')}">${
           d.guesses.length?'Another plant…':'Choose a plant'}</button></div>`
-    :`<p class="note-end">${d.late?'The care guidance is still being written. The page will update on its own.'
-        :d.fresh?'Care guidance is refreshed for every plant.':''}</p>
+    :`<p class="note-end">${care}</p>
       <div class="doneacts"><button class="primary" data-act="lock-close">Back to the garden</button></div>`}
   </div>`;
 }
 function closeSummary(){lockDone=null;renderLock();}
 /* File a note onto plants by hand, from the summary or the journal. */
 async function assignEntry(id,plantIds){
-  setBusy('plan');
+  const since=Date.now()-2000;      // the server's clock may run a little behind
+  setBusy('read');
   const r=await apiWrite('PATCH','/api/entries/'+encodeURIComponent(id),JSON.stringify({plantIds}),'application/json');
   if(!r||!r.ok){setBusy('');toast('Could not save. Try again.');return;}
-  await Promise.all([loadEntries(),loadStatus()]);
-  refreshUI();
-  refreshSoon(id);        // the guidance is rewritten behind this; the summary reports it
+  refreshSoon(id,since);   // filed already; the summary reports it and follows the care update
 }
-/* The guidance can take longer than the lock is willing to hold the page.
-   The summary promises it will turn up, so keep looking, quietly, for a few
-   more minutes: when it lands the cards redraw (and say so), and an open
-   summary changes its last line. */
-function waitForGuidance(planBefore){
-  let n=0;
-  const look=async()=>{
-    await Promise.all([loadPlan(),loadStatus()]);
-    if((careDoc&&careDoc.generatedAt)!==planBefore){
-      if(lockDone&&lockDone.late){lockDone={...lockDone,late:false,fresh:true};}
-      refreshUI();renderLock();return;
-    }
-    if(++n<36)_poll=setTimeout(look,5000);              // ~3 more minutes
-  };
-  _poll=setTimeout(look,4000);
+/* Send the note's own words back: the server matches it to plants again. */
+async function retryEntry(id){
+  const e=entriesDoc.entries.find(x=>x.id===id);if(!e)return;
+  const since=Date.now()-2000;
+  setBusy('read');
+  const r=await apiWrite('PATCH','/api/entries/'+encodeURIComponent(id),
+    JSON.stringify({text:e.text,mentions:noteMentions(e.text)}),'application/json');
+  if(!r||!r.ok){setBusy('');toast('Could not save. Try again.');return;}
+  await loadEntries();
+  refreshSoon(id,since);
 }
 /* Go to a plant from the summary: its card on the list, or its page. */
 function showChanged(pid){
@@ -2503,13 +2534,11 @@ function renderAll(){
          <span class="tl" data-for="dark">Dark</span>
        </label>
        <button id="lockbtn" hidden></button>
-       <button class="lnk" data-act="cover">Cover photo</button>
      </footer>`;
   wireFooter();
   renderLock();
   if(keep!=null){const t=$('#ctext');if(t){t.focus();t.setSelectionRange(keep,keep);}}
 }
-const fillSheet=()=>{};       /* the plant is a page now, not a sheet */
 function wireFooter(){
   syncThemeBtn();syncLock();
   const t=$('#theme-toggle');
@@ -2620,15 +2649,25 @@ function turnPage(){
 /* One composer, at the top of the page. A note carries the plants it is
    tagged with, the one the nav has selected and any named with @, so the
    distiller is not asked to guess them. */
-const staged={top:[]};
+/* date: the day the note is about when it is not today, so a catch-up note
+   about last week lands on last week, and so does what the AI reads into it. */
+const staged={top:[],date:null};
+const NOTE_MIN='2024-01-01';     // the garden's first season; nothing earlier is a real note date
 let draft='';
 let lastEntryId=null,savedAt=0;
-function clearDraft(){staged.top.forEach(s=>URL.revokeObjectURL(s.url));staged.top=[];draft='';closeMention();}
+function clearDraft(){staged.top.forEach(s=>URL.revokeObjectURL(s.url));staged.top=[];staged.date=null;draft='';closeMention();}
+let saving=false;
 async function saveEntry(){
+  /* One save at a time, and never from behind the lock. */
+  if(saving||busy||lockDone)return;
   /* A box holding only the page's own tag and some photos is a photo note. */
   const text=noteWords(draft)?draft.trim():'';
   if(!text&&!staged.top.length)return;
-  const date=todayISO(),tags=noteTags();
+  saving=true;
+  try{await saveNote(text);}finally{saving=false;}
+}
+async function saveNote(text){
+  const date=staged.date&&staged.date<todayISO()?staged.date:todayISO(),tags=noteTags();
   const btn=document.querySelector('[data-act="save"]');if(btn)btn.disabled=true;
   const photoIds=[];
   for(const s of staged.top){
@@ -2640,17 +2679,19 @@ async function saveEntry(){
   }
   const r=await apiWrite('POST','/api/entries',
     JSON.stringify({date,text,photoIds,...(tags.length?{plantIds:tags,mentions:noteMentions(text)}:{})}),'application/json');
-  if(!r||!r.ok){toast('Could not save. Try again.');if(btn)btn.disabled=false;return;}
+  if(!r||!r.ok){if(r)toast('Could not save. Try again.');if(btn)btn.disabled=false;return;}
   const entry=await r.json();
   entriesDoc={...entriesDoc,entries:[...entriesDoc.entries,entry]};
   store.set('entriesDoc',entriesDoc);
   lastEntryId=entry.id;savedAt=Date.now();
   burst(document.querySelector('[data-act="save"]'),'leaf');
-  clearDraft();renderAll();refreshSoon();
+  /* Let go of the box first, or the redraw puts the caret back in it and the
+     plant page writes its tag in again behind the lock. */
+  document.activeElement?.blur?.();
+  clearDraft();renderAll();refreshSoon(entry.id);
 }
 
 /* ================= actions ================= */
-let fileMode=null;
 const ACTIONS={
   plant:pid=>{goTo(pid,true);window.scrollTo({top:0,behavior:'smooth'});},
   all:()=>goTo(null,true),
@@ -2664,8 +2705,8 @@ const ACTIONS={
     burst(el,'water');
     const r=await apiWrite('PUT','/api/status/'+encodeURIComponent(id),
       JSON.stringify({lastWatered:todayISO()}),'application/json');
-    if(!r||!r.ok){toast('Could not save. Try again.');return;}
-    await loadStatus();renderAll();soak(id);
+    if(!r||!r.ok){if(r)toast('Could not save. Try again.');return;}
+    await loadStatus();renderAll();soak(id);followQuietly();
   },
   'mention-pick':id=>pickMention(id),
   'entry-del':id=>deleteEntry(id),
@@ -2674,9 +2715,11 @@ const ACTIONS={
   'note-edit':(id,el)=>{editing={kind:'note',id,plantId:el.dataset.plant};renderAll();focusEdit();},
   'edit-cancel':()=>{editing=null;renderAll();},
   'edit-save':(id,el)=>saveEdit(el.dataset.kind,id,el.dataset.plant),
-  cover:()=>openCover(),
-  escape:()=>{setBusy('');renderAll();},
+  /* Let me back in: stop holding the page, but keep following the care update
+     quietly, so the cards still change when it lands. */
+  escape:()=>{const gen=++pollGen;clearTimeout(_poll);setBusy('');renderAll();followCare(gen,pollWatch,{});},
   'lock-close':()=>closeSummary(),
+  'lock-retry':id=>{closeSummary();retryEntry(id);},
   'lock-go':pid=>showChanged(pid),
   'lock-assign':(id,el)=>{const pid=el.dataset.plant;closeSummary();assignEntry(id,[pid]);},
   'lock-pick':async id=>{closeSummary();const pid=await pickPlant('Which plant is this note about?');if(pid)assignEntry(id,[pid]);},
@@ -2703,6 +2746,23 @@ document.addEventListener('focusout',e=>{
     t.value='';draft='';syncMback(t);t.dispatchEvent(new Event('input',{bubbles:true}));},150);
 });
 document.addEventListener('scroll',e=>{if(e.target.id==='ctext')syncMback(e.target);},true);
+/* The note's date. A click anywhere on the chip opens the calendar; a day
+   after today cannot be picked, and picking today goes back to "Today". */
+document.addEventListener('click',e=>{
+  const l=e.target.closest('.ndate');if(!l)return;
+  const i=l.querySelector('input');try{i.showPicker();e.preventDefault();}catch{}
+});
+/* Changed in place, never by a redraw: a date can be typed a part at a time,
+   and a redraw would throw the box away halfway through the year. A day that
+   is not a real one between NOTE_MIN and today just means today. */
+document.addEventListener('change',e=>{
+  if(e.target.id!=='cdate')return;
+  const v=e.target.value,T=todayISO();
+  staged.date=/^\d{4}-\d{2}-\d{2}$/.test(v)&&v<T&&v>=NOTE_MIN?v:null;
+  const chip=e.target.closest('.ndate');
+  chip.classList.toggle('past',!!staged.date);
+  chip.querySelector('span').textContent=(staged.date?niceDate(staged.date):'Today')+' ▾';
+});
 /* A press on the list must not take focus from the note first. */
 document.addEventListener('pointerdown',e=>{if(e.target.closest('#mpop'))e.preventDefault();});
 /* One tooltip for the page. Over a chart it follows the pointer and answers
@@ -2810,13 +2870,12 @@ document.addEventListener('keydown',e=>{
   if(e.key==='Escape'){
     if(lockDone){closeSummary();return;}
     if($('#unlock').classList.contains('open'))closeUnlock(null);
-    else if($('#coverpick').classList.contains('open'))closeCover();
     else if($('#picker').classList.contains('open'))closePicker(null);
     else if(viewerOn()||galPlant)stepBack();
     else if(!busy&&V.plant){goTo(null,true);}
     return;
   }
-  if((e.metaKey||e.ctrlKey)&&e.key==='Enter'&&!busy)saveEntry();
+  if((e.metaKey||e.ctrlKey)&&e.key==='Enter'&&e.target.id==='ctext')saveEntry();
   if($('#viewer').classList.contains('on')){
     if(e.key==='ArrowLeft')showViewerAt(viewerIdx-1);
     else if(e.key==='ArrowRight')showViewerAt(viewerIdx+1);
@@ -2825,13 +2884,6 @@ document.addEventListener('keydown',e=>{
 $('#ph-input').onchange=async e=>{
   const files=[...e.target.files];e.target.value='';
   if(!files.length)return;
-  if(fileMode==='cover'){
-    fileMode=null;closeCover();
-    const blob=await shrink(files[0]);
-    const rec=await uploadOne(blob,todayISO(),'');
-    if(rec){applyPhotos();await setCover(rec.id);}
-    return;
-  }
   for(const f of files){
     const blob=await shrink(f);
     staged.top.push({blob,url:URL.createObjectURL(blob)});
@@ -2850,16 +2902,25 @@ const loading=[
     if(V.plant&&!plantById(V.plant)){V.plant=null;history.replaceState({},'','/');}
     syncTitle();renderAll();
   }),
-  loadPlan().then(renderAll),
+  loadCare().then(renderAll),
   loadEntries().then(renderAll),
-  loadPhotos(),loadCover()];
+  loadPhotos()];
 /* The intro waits for the data, but never longer than a moment. */
 Promise.race([Promise.allSettled(loading),new Promise(r=>setTimeout(r,1400))]).then(playIntro);
 addEventListener('visibilitychange',()=>{
   if(document.hidden)return;
-  Promise.all([loadEntries(),loadStatus()]).then(refreshUI);
+  Promise.all([loadEntries(),loadStatus(),loadCare()]).then(renderAll);
 });
-setInterval(()=>{if(busy)renderLock();},1000);
+/* The lock's clock ticks in place. Rebuilding the lock every second replaced
+   "Let me back in" under the pointer and threw keyboard focus away. */
+setInterval(()=>{
+  if(!busy)return;
+  const el=$('#lock .waiting:not(.done)');if(!el){renderLock();return;}
+  const secs=Math.round((Date.now()-busyAt)/1000);
+  const bar=el.querySelector('.steps b');if(bar)bar.style.width=Math.min(95,8+secs*7)+'%';
+  const eta=el.querySelector('.eta');if(eta)eta.textContent=`${secs} s · the care guidance is updated after this`;
+  if(secs>15&&!el.querySelector('.out'))el.insertAdjacentHTML('beforeend','<button class="out" data-act="escape">Let me back in</button>');
+},1000);
 
 </script>
 </body>

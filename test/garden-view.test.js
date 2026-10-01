@@ -1,6 +1,6 @@
 import { test } from 'node:test';
 import assert from 'node:assert/strict';
-import { groupByArea, daysSince, waterLabel, phaseOfStage, seasonSpans, withStart, chartWindow, monthTicks, tagEntryText, journalGroups, plantPhotos, findMentions, mentionQuery, mentionSegments } from '../public/garden-view.js';
+import { groupByArea, daysSince, waterLabel, phaseOfStage, seasonSpans, withStart, chartWindow, monthTicks, tagEntryText, journalGroups, plantPhotos, findMentions, mentionQuery, mentionSegments, stageRecord } from '../public/garden-view.js';
 
 const p = (id, area) => ({ id, name: id, area });
 
@@ -609,4 +609,33 @@ test('mentionSegments marks every @name, case-insensitive, and keeps the rest as
   ]);
   assert.deepEqual(mentionSegments('@Basilisk', LABELS), [{ text: '@Basilisk' }]);
   assert.deepEqual(mentionSegments('', LABELS), []);
+});
+
+test('stageRecord merges live history with note stages, the note winning a near duplicate', () => {
+  const live = [{ date: '2026-08-10', stage: 'fruiting' }, { date: '2026-09-20', stage: 'growing' }];
+  const notes = [{ date: '2026-08-03', stage: 'fruiting' }, { date: '2026-04-01', stage: 'growing' }];
+  assert.deepEqual(stageRecord(live, notes), [
+    { date: '2026-04-01', stage: 'growing' }, { date: '2026-08-03', stage: 'fruiting' },
+    { date: '2026-09-20', stage: 'growing' }]);
+});
+
+test('stageRecord copes with either list missing', () => {
+  assert.deepEqual(stageRecord(undefined, undefined), []);
+  assert.deepEqual(stageRecord([{ date: '2026-08-10', stage: 'fruiting' }], null), [{ date: '2026-08-10', stage: 'fruiting' }]);
+});
+
+test('stageRecord keeps the earlier date when live and note name the same stage', () => {
+  const live = [{ date: '2026-08-25', stage: 'harvesting' }];
+  const notes = [{ date: '2026-09-30', stage: 'harvesting' }];
+  assert.deepEqual(stageRecord(live, notes), [{ date: '2026-08-25', stage: 'harvesting' }]);
+});
+
+test('a recorded current stage still runs to today, so today is never bare', () => {
+  const table = [['grow', '2026-06-29', '2026-08-05'], ['harvest', '2026-08-05', '2026-09-30']];
+  const out = seasonSpans(table, [{ date: '2026-09-30', stage: 'growing' }], [], '2026-12-31',
+    { stage: 'growing', date: '2026-10-01' });
+  const today = out.find(([, f, t]) => f <= '2026-10-01' && t >= '2026-10-01');
+  assert.ok(today, 'some band covers today');
+  assert.equal(today[0], 'grow');
+  assert.equal(out[0][1], '2026-09-30', 'the recorded start is kept');
 });

@@ -36,6 +36,29 @@ export function recordStage(prev, stage, date) {
   return [...history, { date, stage }];
 }
 
+/* A real calendar day written YYYY-MM-DD: no 31 February, no month 13.
+   The date must survive a round trip through Date unchanged. */
+export function isRealDate(d) {
+  if (typeof d !== 'string' || !/^\d{4}-\d{2}-\d{2}$/.test(d)) return false;
+  const t = new Date(d + 'T00:00:00Z');
+  return !Number.isNaN(t.getTime()) && t.toISOString().slice(0, 10) === d;
+}
+
+/* The stage changes the model read out of the gardener's notes, each dated
+   from a note and carrying the id of that note (noteId) when it has one. They
+   are worked out afresh on every run and replace the last list, so deleting
+   or rewording a note corrects them, and a plant that goes back to a stage
+   (growing again after dormancy) keeps both. Only known stage words and real
+   dates up to today; exact repeats once; in date order. */
+export function cleanNoteStages(past, today, stages) {
+  const seen = new Set();
+  return (past || [])
+    .filter((p) => p && stages.includes(p.stage) && isRealDate(p.date) && p.date <= today)
+    .map((p) => ({ date: p.date, stage: p.stage, ...(typeof p.noteId === 'string' && p.noteId ? { noteId: p.noteId } : {}) }))
+    .filter((p) => !seen.has(p.date + p.stage) && seen.add(p.date + p.stage))
+    .sort((a, b) => a.date.localeCompare(b.date));
+}
+
 export function upsertPlant(doc, plantId, fields, now) {
   const prev = doc.plants[plantId] || { id: plantId, notes: [], history: [] };
   const history = recordStage(prev, fields.stage, new Date(now).toISOString().slice(0, 10));

@@ -1,7 +1,8 @@
 import { test } from 'node:test';
 import assert from 'node:assert/strict';
-import { buildDistillBody, parseDistillResponse, mergeDistill } from '../src/distill.js';
-import { addEntry } from '../src/entries.js';
+import { buildDistillBody, parseDistillResponse, mergeDistill, distill } from '../src/distill.js';
+import { addEntry, editEntry, ENTRY_KEY } from '../src/entries.js';
+import { KEYS } from '../src/garden.js';
 
 const ROSTER = [
   { id: 'tomato-1', name: 'Tigerella tomato', species: 'tomato', area: 'balcony', stage: 'flowering' },
@@ -150,4 +151,120 @@ test('a photo identification pointing nowhere is ignored', () => {
     confident: true,
   }, 100, ['p1']);
   assert.deepEqual(out.photoTags, []);
+});
+
+test('an older note saying watered never moves the last watering back', () => {
+  const doc = statusDoc();
+  doc.plants['tomato-1'].lastWatered = '2026-08-10';
+  const out = mergeDistill(doc, entriesDoc(), ENTRY, {
+    assignments: [{ plantId: 'tomato-1', text: 'Watered.', watered: true }], confident: true }, 100);
+  assert.equal(out.status.plants['tomato-1'].lastWatered, '2026-08-10');
+});
+
+test('an untagged photo-only entry is placed on the plants its photos show', () => {
+  const entry = { ...ENTRY, text: '', photoIds: ['p1', 'p2'] };
+  const out = mergeDistill(statusDoc(), addEntry({ updatedAt: 0, entries: [] }, entry, 10), entry, {
+    assignments: [], photos: [{ index: 0, plantId: 'monstera' }, { index: 1, plantId: 'monstera' }], confident: true,
+  }, 100, ['p1', 'p2']);
+  assert.deepEqual(out.entries.entries[0].assigned, [{ plantId: 'monstera', noteId: null }]);
+  assert.equal(out.entries.entries[0].status, 'sorted');
+});
+
+test('a plant the model was not offered is ignored', () => {
+  const out = mergeDistill(statusDoc(), entriesDoc(), ENTRY, {
+    assignments: [{ plantId: 'monstera', text: 'x', watered: false }], confident: true,
+  }, 100, [], new Set(['tomato-1']));
+  assert.equal(out.entries.entries[0].status, 'unsorted');
+});
+
+/* ---- a whole run against a fake store ---- */
+
+function fakeEnv(stored) {
+  const m = new Map(Object.entries(stored).map(([k, v]) => [k, JSON.stringify(v)]));
+  return { m, GEMINI_API_KEY: 'k', PHOTOS: {
+    get: async (k) => (m.has(k) ? m.get(k) : null),
+    put: async (k, v) => void m.set(k, v),
+    getWithMetadata: async () => null,
+  } };
+}
+const okReply = (obj) => new Response(JSON.stringify(reply(obj)));
+async function withFetch(fn, body) {
+  const real = globalThis.fetch;
+  globalThis.fetch = fn;
+  try { return await body(); } finally { globalThis.fetch = real; }
+}
+const entryOf = (env) => JSON.parse(env.m.get(ENTRY_KEY)).entries[0];
+const MATCH = { assignments: [{ plantId: 'tomato-1', text: 'Stripes.', quote: '', mention: '', watered: false }], confident: true };
+
+test('the result is merged into the docs as they are after the reply', async () => {
+  const env = fakeEnv({ [ENTRY_KEY]: entriesDoc(), [KEYS.status]: statusDoc() });
+  const placed = await withFetch(async (url, init) => {
+    assert.ok(init.signal, 'the call has a timeout');
+    const s = JSON.parse(env.m.get(KEYS.status));          // a hand note lands meanwhile
+    s.plants.monstera.notes.push({ id: 'meanwhile' });
+    env.m.set(KEYS.status, JSON.stringify(s));
+    return okReply(MATCH);
+  }, () => distill(env, 'e1', ROSTER));
+  assert.equal(placed, true);
+  const status = JSON.parse(env.m.get(KEYS.status));
+  assert.equal(status.plants.monstera.notes[0].id, 'meanwhile');
+  assert.equal(status.plants['tomato-1'].notes[0].text, 'Stripes.');
+  assert.equal(entryOf(env).status, 'sorted');
+});
+
+test('a result for an entry edited meanwhile is dropped', async () => {
+  const env = fakeEnv({ [ENTRY_KEY]: entriesDoc(), [KEYS.status]: statusDoc() });
+  const placed = await withFetch(async () => {
+    env.m.set(ENTRY_KEY, JSON.stringify(editEntry(JSON.parse(env.m.get(ENTRY_KEY)), 'e1', { text: 'other words' }, 50)));
+    return okReply(MATCH);
+  }, () => distill(env, 'e1', ROSTER));
+  assert.equal(placed, false);
+  assert.equal(entryOf(env).status, 'pending');
+  assert.equal(JSON.parse(env.m.get(KEYS.status)).plants['tomato-1'].notes.length, 0);
+});
+
+test('a result for an entry deleted meanwhile is dropped', async () => {
+  const env = fakeEnv({ [ENTRY_KEY]: entriesDoc(), [KEYS.status]: statusDoc() });
+  const placed = await withFetch(async () => {
+    env.m.set(ENTRY_KEY, JSON.stringify({ updatedAt: 1, entries: [] }));
+    return okReply(MATCH);
+  }, () => distill(env, 'e1', ROSTER));
+  assert.equal(placed, false);
+  assert.equal(JSON.parse(env.m.get(KEYS.status)).plants['tomato-1'].notes.length, 0);
+});
+
+for (const [name, fetcher] of [
+  ['cannot be reached', async () => { throw new Error('timeout'); }],
+  ['answers with an error', async () => new Response('no', { status: 500 })],
+  ['answers with junk', async () => new Response('{"candidates":[]}')],
+]) {
+  test(`when the model ${name} the entry ends unsorted with error 'ai'`, async () => {
+    const env = fakeEnv({ [ENTRY_KEY]: entriesDoc(), [KEYS.status]: statusDoc() });
+    assert.equal(await withFetch(fetcher, () => distill(env, 'e1', ROSTER)), false);
+    assert.equal(entryOf(env).status, 'unsorted');
+    assert.equal(entryOf(env).error, 'ai');
+  });
+}
+
+test('an empty garden ends the entry unsorted, not pending', async () => {
+  const env = fakeEnv({ [ENTRY_KEY]: entriesDoc(), [KEYS.status]: statusDoc() });
+  assert.equal(await distill(env, 'e1', []), false);
+  assert.equal(entryOf(env).error, 'empty');
+});
+
+test('a crash inside still ends the entry unsorted', async () => {
+  const env = fakeEnv({ [ENTRY_KEY]: entriesDoc(), [KEYS.status]: statusDoc() });
+  env.PHOTOS.getWithMetadata = async () => { throw new Error('kv down'); };
+  const e = entriesDoc(); e.entries[0].photoIds = ['p1'];
+  env.m.set(ENTRY_KEY, JSON.stringify(e));
+  await withFetch(async () => okReply(MATCH), () => distill(env, 'e1', ROSTER));
+  assert.equal(entryOf(env).status, 'unsorted');
+  assert.equal(entryOf(env).error, 'internal');
+});
+
+test('a low-confidence match reports nothing placed, so no care run follows', async () => {
+  const env = fakeEnv({ [ENTRY_KEY]: entriesDoc(), [KEYS.status]: statusDoc() });
+  const placed = await withFetch(async () => okReply({ ...MATCH, confident: false }), () => distill(env, 'e1', ROSTER));
+  assert.equal(placed, false);
+  assert.equal(entryOf(env).status, 'unsorted');
 });

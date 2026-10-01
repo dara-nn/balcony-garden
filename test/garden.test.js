@@ -1,6 +1,6 @@
 import { test } from 'node:test';
 import assert from 'node:assert/strict';
-import { readStatus, KEYS, upsertPlant, applyNoteOp, dropDerivedNotes, recordStage, readCare, writeCare } from '../src/garden.js';
+import { readStatus, KEYS, upsertPlant, applyNoteOp, dropDerivedNotes, recordStage, readCare, writeCare, cleanNoteStages, isRealDate } from '../src/garden.js';
 
 // minimal in-memory KV stub matching the Workers KV surface we use
 function fakeKV(initial = {}) {
@@ -178,4 +178,33 @@ test('the first real move after seeding is recorded', () => {
   let doc = upsertPlant({ updatedAt: 0, plants: {} }, 'chilli-3', { stage: 'seedling' }, Date.parse('2026-09-01T00:00:00Z'));
   doc = upsertPlant(doc, 'chilli-3', { stage: 'flowering' }, Date.parse('2026-09-29T00:00:00Z'));
   assert.deepEqual(doc.plants['chilli-3'].history, [{ date: '2026-09-29', stage: 'flowering' }]);
+});
+
+const STAGE_WORDS = ['seedling', 'growing', 'flowering', 'fruiting', 'harvesting', 'dormant'];
+
+test('cleanNoteStages keeps valid dated stages, in date order, repeats included', () => {
+  const past = [{ stage: 'growing', date: '2026-09-20' }, { stage: 'growing', date: '2026-04-01' },
+    { stage: 'dormant', date: '2026-06-15' }];
+  assert.deepEqual(cleanNoteStages(past, '2026-09-30', STAGE_WORDS), [
+    { date: '2026-04-01', stage: 'growing' }, { date: '2026-06-15', stage: 'dormant' },
+    { date: '2026-09-20', stage: 'growing' }]);
+});
+
+test('cleanNoteStages drops unknown stages, bad or future dates and exact repeats', () => {
+  const past = [{ stage: 'blooming', date: '2026-07-01' }, { stage: 'flowering', date: 'July' },
+    { stage: 'harvesting', date: '2026-10-05' }, null, {},
+    { stage: 'flowering', date: '2026-07-12' }, { stage: 'flowering', date: '2026-07-12' }];
+  assert.deepEqual(cleanNoteStages(past, '2026-09-30', STAGE_WORDS), [{ date: '2026-07-12', stage: 'flowering' }]);
+  assert.deepEqual(cleanNoteStages(undefined, '2026-09-30', STAGE_WORDS), []);
+});
+
+test('isRealDate takes only real calendar days', () => {
+  assert.equal(isRealDate('2026-02-28'), true);
+  assert.equal(isRealDate('2024-02-29'), true);
+  for (const d of ['2026-02-31', '2026-02-29', '2026-13-01', '2026-04-31', '2026-7-1', '', null, 20260701]) assert.equal(isRealDate(d), false);
+});
+
+test('cleanNoteStages drops impossible days and keeps each stage\'s noteId', () => {
+  const past = [{ stage: 'flowering', date: '2026-02-31', noteId: 'n0' }, { stage: 'fruiting', date: '2026-08-03', noteId: 'n2' }];
+  assert.deepEqual(cleanNoteStages(past, '2026-09-30', STAGE_WORDS), [{ date: '2026-08-03', stage: 'fruiting', noteId: 'n2' }]);
 });
