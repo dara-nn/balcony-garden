@@ -8,51 +8,16 @@ A personal tool, customized for my needs. I write short notes and take photos of
 
 ## What it does
 
-**The journal**
+- **Journal.** I write notes and add photos. Typing `@` tags plants; a note without tags is sorted onto plants by the AI. After saving, the page shows what changed for each plant.
+- **Care guidance.** For every plant the AI writes how it is doing and what to do now. It updates after every note and once a night.
+- **Season bar.** Each plant's year from sowing to harvest. Recorded stages are solid, expected ones hatched.
+- **Watering.** A droplet button on each plant logs when I last watered it.
+- **Weather.** The Tampere forecast, with an alert on cold nights and hot days, for the balcony plants only.
+- **Photos.** The newest photo sits on each plant's card, and a plant's page keeps all of them.
+- **Plant pages.** `/p/<plant-id>` has the full season, care, photos, journal and notes on the variety.
+- Light and dark theme, and a 3D view of the balcony at `/3d`.
 
-- I write a note the way I would say it ("tigerella has stripes, the mint looks thirsty") and can add photos.
-- Typing `@` opens a list of my plants, and each tag shows as a chip in the note. A tagged note goes straight onto those plants in my own words. A note with no tags is read by the AI, which works out which plants it is about and writes a short line for each.
-- On a plant's page the box starts with that plant's tag, which I can remove.
-- While the AI works, the page waits. Then it shows what the note changed, plant by plant, with a button that takes me to each one. If the AI could not tell which plant I meant, it offers its best guess and a picker.
-- The journal keeps every note and photo, newest first, grouped by month, for the whole garden or for one plant. Notes can be edited or deleted, with a few seconds to undo.
-
-**Care guidance**
-
-- Every plant shows how it is doing and what to do about it, both written by the AI.
-- The guidance is rewritten after every note and once a night, so it follows the weather even on days I write nothing.
-- My notes count as the facts. When a note says a plant has started fruiting, its status and stage follow, and the date I gave is recorded as the start of that stage.
-
-**Season bar**
-
-- Each plant's year at a glance: seedling, growing, flowering, fruiting and harvest, starting from the day it was sown.
-- Solid means recorded, hatched means expected. The expectation comes from the variety and from what the AI predicts next, and a real stage change redraws the bar around its date.
-
-**Watering**
-
-- A droplet button on each plant logs a watering. It only ever answers "when did I last water this", it never nags.
-- Watering is always logged per plant, since one note can name several plants that were not all watered.
-
-**Weather**
-
-- The balcony shows today's temperature, the night low and the chance of rain.
-- A cold night or a hot day brings a short alert with what to do. Indoor plants never get weather alerts.
-
-**Photos**
-
-- Each plant's newest photo sits on its card like a taped print.
-- A plant's page keeps all its photos in a pile. It opens them all, grouped by month, and any one of them full screen. The back button (or a back swipe) steps out one layer at a time.
-
-**A page per plant**
-
-- `/p/<plant-id>` is a page of its own that I can bookmark. It has the full season chart with every stage dated, the status and care, the photos, the plant's journal, and a section about the variety: a short description, a fact table and photos of the plant and its crop.
-
-**Everything else**
-
-- Light and dark theme.
-- Small animations: water drops when I log a watering, leaves when I save a note, and the cards and season bars come in on the first visit. All of it is off when my system asks for reduced motion.
-- A 3D view of the balcony at `/3d`.
-
-## How a note becomes care guidance
+## What happens when I save a note
 
 1. The note is saved straight away, exactly as I typed it.
 2. It is put onto plants: by its `@` tags if it has any, otherwise by the AI. With several tags and some photos, the AI only decides which tagged plant each photo shows.
@@ -60,6 +25,23 @@ A personal tool, customized for my needs. I write short notes and take photos of
 4. The page picks up the result and shows what changed.
 
 When the AI has not run yet, or a call failed, the plant says so plainly. There is no made-up fallback advice.
+
+## What the AI reads and writes
+
+There are two AI steps. The first only runs for a note without `@` tags (or to sort photos between several tagged plants). The second runs after every note and once a night.
+
+```mermaid
+flowchart LR
+  note["My note and its photos"] --> sort{{"AI step 1: sort the note"}}
+  list["My plant list"] --> sort
+  sort --> filed["For each plant it names:<br/>a short line,<br/>watered or not,<br/>which photo shows it"]
+  filed --> status[("Each plant: stage, waterings,<br/>my notes, the AI's last read")]
+  status --> care{{"AI step 2: write the care"}}
+  photos["Today's photos,<br/>up to 3 per plant"] --> care
+  weather["14 day Tampere forecast"] --> care
+  care --> out["For each plant:<br/>health (good, watch, bad) and issues,<br/>how it is doing,<br/>stage and since when,<br/>care guidance,<br/>stages expected next"]
+  out --> page["The page"]
+```
 
 ## How it is built
 
