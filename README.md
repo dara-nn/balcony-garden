@@ -8,7 +8,7 @@ A personal tool, customized for my needs. I write short notes and take photos of
 
 ## What it does
 
-- **Journal.** I write notes and add photos. Typing `@` tags plants; a note without tags is sorted onto plants by the AI. After saving, the page shows what changed for each plant.
+- **Journal.** I write notes and add photos. Typing `@` tags plants; the AI matches a note without tags to plants. After saving, the page shows what changed for each plant.
 - **Care guidance.** For every plant the AI writes how it is doing and what to do now. It updates after every note and once a night.
 - **Season bar.** Each plant's year from sowing to harvest. Recorded stages are solid, expected ones hatched.
 - **Watering.** A droplet button on each plant logs when I last watered it.
@@ -28,11 +28,11 @@ When the AI has not run yet, or a call failed, the plant says so plainly. There 
 
 ## What the AI reads and writes
 
-There are two AI steps. The first only runs for a note without `@` tags (or to sort photos between several tagged plants). The second runs after every note and once a night.
+There are two AI steps. The first only runs for a note without `@` tags (or to match photos to several tagged plants). The second runs after every note and once a night.
 
 ```mermaid
 flowchart LR
-  note["My note and its photos"] --> sort{{"AI step 1: sort the note"}}
+  note["My note and its photos"] --> sort{{"AI step 1: match the note to plants"}}
   list["My plant list"] --> sort
   sort --> filed["For each plant it names:<br/>a short line,<br/>watered or not,<br/>which photo shows it"]
   filed --> status[("Each plant: stage, waterings,<br/>my notes, the AI's last read")]
@@ -49,7 +49,7 @@ flowchart LR
 - **Shared logic:** [`public/garden-view.js`](public/garden-view.js) (season spans, the journal, `@` tags, photo order) and [`public/care-rules.js`](public/care-rules.js) (weather alerts, health labels). The page and the tests both load them.
 - **Plant list:** [`public/garden-data.js`](public/garden-data.js).
 - **Server:** a Cloudflare Worker, [`src/index.js`](src/index.js), serves the page and a small API. Everything is stored in one KV namespace.
-- **AI:** Gemini (`gemini-flash-latest`, free tier) through the `GEMINI_API_KEY` secret. [`src/distill.js`](src/distill.js) sorts notes onto plants and [`src/planner.js`](src/planner.js) writes the guidance. On the free tier Google may use the notes and photos to improve its models, which is fine for a balcony garden.
+- **AI:** Gemini (`gemini-flash-latest`, free tier) through the `GEMINI_API_KEY` secret. [`src/distill.js`](src/distill.js) matches notes to plants and [`src/planner.js`](src/planner.js) writes the guidance. On the free tier Google may use the notes and photos to improve its models, which is fine for a balcony garden.
 - **Weather:** the Open-Meteo forecast, no key needed.
 
 Stored data:
@@ -65,7 +65,7 @@ Reads are open. Writes need `Authorization: Bearer <UPLOAD_PASS>`.
 
 | Endpoint | Method | What it does |
 |---|---|---|
-| `/api/entries` | `GET`, `POST` | My notes as typed. `POST` saves one. With `plantIds` (and the `mentions` as typed) it goes straight onto those plants; without, the AI sorts it. |
+| `/api/entries` | `GET`, `POST` | My notes as typed. `POST` saves one. With `plantIds` (and the `mentions` as typed) it goes straight onto those plants; without, the AI matches it to plants. |
 | `/api/entries/:id` | `PATCH`, `DELETE` | Put a note onto plants by hand (`{plantIds}`), reword it, or delete it. |
 | `/api/status` | `GET` | Every plant's stage, last watering, notes, health and stage history. |
 | `/api/status/:id` | `PUT` | Change one plant's fields (`{stage}`, `{lastWatered}`). |
